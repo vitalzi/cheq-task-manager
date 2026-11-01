@@ -11,3 +11,8 @@ Small decisions the agent made while building, one entry per decision with the t
 
 - **Contract helper is `taskStore.contract.ts`, not `*.test.ts`:** Jest does not run it on its own; each store's test file calls `describeTaskStore`. `tsconfig.json` excludes it so test code is not compiled into `dist`.
 - **`list()` returns a copy (`[...this.tasks]`):** callers cannot change the store through the returned array; the contract test pins this.
+
+## Task 4: Task service
+
+- **Validation messages:** `title must be a string`, `title must not be empty`, `title must be at most 200 characters`. They are the `error` text clients see, so each names the rule that failed.
+- **`ValidationError` has no extra fields:** the error handler only needs `instanceof ValidationError` to pick `400`.

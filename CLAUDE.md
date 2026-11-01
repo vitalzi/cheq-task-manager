@@ -81,6 +81,10 @@ focus). Follow this loop for every task, in order:
   for hypothetical future needs.
 - No new dependencies without asking. Say why it is needed and what the
   alternative is.
+- Prefer classes over factory functions wherever a class fits (services,
+  stores, anything holding injected dependencies). Plain functions are fine
+  for stateless helpers and where a framework expects them (`buildApp`, React
+  components).
 - Match the existing style. Keep files small and names clear. Comment only
   where the "why" is not obvious.
 
@@ -104,6 +108,9 @@ focus). Follow this loop for every task, in order:
 - **`docs/decisions.md`:** decisions I approved or agreed beforehand. Edit only
   with my approval.
 - **`docs/agent-decisions.md`:** small decisions you make during implementation.
+- **`docs/pushbacks.md`:** every time I correct you or scrutinize your output and
+  ask for a change. Append an entry the same turn: what you did, my pushback,
+  the outcome, and the lesson. I use it in the final walkthrough.
 - **`README.md`:** how to run, how to test, key decisions, trade-offs, what I would
   do with more time. Keep it updated as we go, not at the end.
 

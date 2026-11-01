@@ -38,7 +38,7 @@ Cases the PDF does not spell out but a real user or reviewer will hit. Each one 
 | 1 | Repo foundation | G3 | [x] |
 | 2 | Backend scaffold and `/health` | B1, E1, T1 | [x] |
 | 3 | Task store and contract test | B2, T3 | [x] |
-| 4 | Task service | B4, T3 | [ ] |
+| 4 | Task service | B4, T3 | [x] |
 | 5 | Task routes, validation, error format | E2, E3, B4, B5 | [ ] |
 | 6 | Request logging, CORS, server entry | B3 | [ ] |
 | 7 | Coverage gate and report | T2, R2 | [ ] |
@@ -80,14 +80,14 @@ Cases the PDF does not spell out but a real user or reviewer will hit. Each one 
 ### 4. Task service
 
 - **What:** `taskService.ts`: trims the title, rejects empty or whitespace-only and over-200-char titles, generates `id` (`crypto.randomUUID()`) and `createdAt` (ISO 8601 UTC), delegates persistence to the store
-- **Interfaces:** consumes `TaskStore`; produces `createTaskService(store: TaskStore): { list(): Promise<Task[]>; create(title: unknown): Promise<Task> }` and `class ValidationError extends Error` (maps to `400`; any other error maps to `500`)
+- **Interfaces:** consumes `TaskStore`; produces `class TaskService { constructor(store: TaskStore); list(): Promise<Task[]>; create(title: unknown): Promise<Task> }` and `class ValidationError extends Error` (maps to `400`; any other error maps to `500`)
 - **Test first:** unit tests with a mocked `TaskStore`: trimming, each rejection (non-string, empty, whitespace-only, 201 characters after trim), 200 characters plus padding accepted, generated fields, store called once with the right object, store errors propagate
 - **Done when:** service tests pass with no real store involved
 
 ### 5. Task routes, validation, error format
 
 - **What:** `GET /tasks` and `POST /tasks` in `routes.ts` with a JSON Schema that requires `title` of type string (no `maxLength`; the service enforces length after trimming); one error handler plus a not-found handler that return `{ "error": "<message>" }`
-- **Interfaces:** consumes `createTaskService`, `ValidationError`; changes `buildApp()` to `buildApp(store: TaskStore): FastifyInstance`
+- **Interfaces:** consumes `TaskService`, `ValidationError`; changes `buildApp()` to `buildApp(store: TaskStore): FastifyInstance`
 - **Test first:** HTTP tests with the real in-memory store: `GET` returns `[]`; `POST` returns `201` + task; missing, empty, whitespace-only, non-string and too-long titles return `400`; malformed JSON returns `400`; body `null`, array, string, empty and wrong content type return `400`/`415` in the `{ error }` shape; unknown route returns `404` in the same shape; unknown fields are ignored; POST then GET returns the task
 - **Done when:** all HTTP tests pass; manual `curl` of both endpoints matches the PDF examples
 
