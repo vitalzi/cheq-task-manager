@@ -106,3 +106,15 @@ Small decisions the agent made while building, one entry per decision with the t
 - **Extra outputs (`ecs_cluster_name`, `ecs_service_name`, `frontend_bucket_name`):** the CI workflows in Tasks 15 and 16 need these as GitHub variables.
 - **No task role, only the execution role:** the app calls no AWS APIs.
 - **Log retention 14 days:** avoids unbounded log storage.
+
+## Task 14: CI access (GitHub OIDC)
+
+- **`github_repository` variable defaults to `vitalzi/cheq-task-manager`:** the owner gave the exact path; the repo has no remote yet, so it cannot be read from git. The value is public, so a default is safe and keeps `plan`/`apply` free of prompts.
+- **Trust rule matches `sub` exactly (`ref:refs/heads/main`) plus `aud = sts.amazonaws.com`:** a pull request or another branch cannot assume the role, which is what lets the policy hold write access.
+- **No `thumbprint_list` on the OIDC provider:** AWS now validates GitHub's certificate itself, and AWS provider 6 makes the field optional.
+- **Policy is inline on the role, not a separate managed policy:** it has no other user, so one resource fewer to explain.
+- **`ecr:GetAuthorizationToken` on `*`:** AWS does not support resource-level scoping for this call. Every other action is limited to the one repo, service or bucket.
+- **S3 has `PutObject`, `DeleteObject` and `ListBucket`:** `aws s3 sync` needs list to compare; delete is for removing old hashed assets with `--delete`. Task 16 may drop it if the workflow does not use `--delete`.
+- **`ecs:DescribeServices` on the same service:** the owner wants the backend workflow (Task 15) to run `aws ecs wait services-stable`, so a rollout that never becomes healthy fails the run. That command polls `DescribeServices`. I had first left it out because the plan only mentioned `update-service`.
+- **GitHub variable names are upper-case and mirror the Terraform outputs** (`CI_ROLE_ARN`, `ECR_REPOSITORY_URL`, `ECS_CLUSTER_NAME`, `ECS_SERVICE_NAME`, `FRONTEND_BUCKET_NAME`, `API_URL`): the usual convention for CI variables. They are variables, not secrets, because none is sensitive. `API_URL` is the ALB URL the frontend workflow passes as `VITE_API_URL`.
+- **Repository created public and the existing 20 commits pushed before the Task 14 commit:** the owner asked me to do the setup with `gh`. I checked tracked files and history for keys and `.env`/state files first and found none; `terraform.tfstate` is gitignored and was not pushed.

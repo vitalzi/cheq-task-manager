@@ -82,3 +82,15 @@ Every time the owner corrected the agent or scrutinized its output and asked for
 - **Pushback:** the owner rejected the call and asked what it was
 - **Outcome:** the agent explained (it needed a browser to see the badge), listed what was already verified, and the owner then allowed it. Badge seen green with the API up and red ("API: down") after the API was stopped
 - **Lesson:** say in one sentence why a tool is needed before the call, especially for tools the owner has not seen used yet (browser, network, anything outside the repo).
+
+## Session: Task 14 (2026-11-01)
+
+### 9. "Task 15 should wait for the service to be stable"
+
+- **What the agent did:** left `ecs:DescribeServices` out of the CI role because the task list only mentioned `update-service`, and wrote the gap down as a "Task 15 may need this" note
+- **Pushback:** the owner said waiting for the service to become stable is common practice and Task 15 should do it
+- **Outcome:**
+  - `ecs:DescribeServices` added to the role before the Task 14 apply, so no second apply is needed
+  - Task 15 in `docs/tasks.md` now includes `aws ecs wait services-stable`, and its "done when" requires a healthy rollout
+  - Without the wait, a pipeline goes green while a broken image is still failing health checks
+- **Lesson:** the agent followed the task list literally and deferred a known gap instead of asking. When the plan leaves out a standard step, such as verifying a deploy, propose it in one sentence at the time.

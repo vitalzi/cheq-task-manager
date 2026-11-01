@@ -24,3 +24,8 @@ output "ecs_service_name" {
 output "frontend_bucket_name" {
   value = aws_s3_bucket.frontend.bucket
 }
+
+output "ci_role_arn" {
+  description = "IAM role GitHub Actions assumes; set as a GitHub repository variable"
+  value       = aws_iam_role.ci.arn
+}

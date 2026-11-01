@@ -48,7 +48,7 @@ Cases the PDF does not spell out but a real user or reviewer will hit. Each one 
 | 11 | Responsive layout and local end-to-end check | F8, R1 | [x] |
 | 12 | Dockerfile | D1, D2 | [x] |
 | 13 | Terraform: app infrastructure | I1, I2, I3 | [x] |
-| 14 | Terraform: CI access (GitHub OIDC) | C5 | [ ] |
+| 14 | Terraform: CI access (GitHub OIDC) | C5 | [x] |
 | 15 | Backend workflow | C1, C2, C3, C4 | [ ] |
 | 16 | Frontend workflow | C1, C4 | [ ] |
 | 17 | First deploy and live verification | S2 | [ ] |
@@ -149,9 +149,9 @@ Cases the PDF does not spell out but a real user or reviewer will hit. Each one 
 
 ### 15. Backend workflow
 
-- **What:** `.github/workflows/backend.yml`, path-filtered on `backend/**`: `npm ci`, `npm test`, OIDC login, build and push image, `aws ecs update-service --force-new-deployment`
+- **What:** `.github/workflows/backend.yml`, path-filtered on `backend/**`: `npm ci`, `npm test`, OIDC login, build and push image, `aws ecs update-service --force-new-deployment`, then `aws ecs wait services-stable` (the role already allows `ecs:DescribeServices`, Task 14)
 - **Small decision to log:** image tag (`latest` vs commit SHA)
-- **Done when:** a push touching `backend/` runs green and ECS rolls a new task; a failing test stops the run before the push
+- **Done when:** a push touching `backend/` runs green only after ECS has rolled a new, healthy task; a failing test stops the run before the push
 
 ### 16. Frontend workflow
 
