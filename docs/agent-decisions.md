@@ -66,3 +66,11 @@ Small decisions the agent made while building, one entry per decision with the t
 - **Retry button disabled while refetching:** stops repeated clicks from stacking requests.
 - **List rows show title and local-time `createdAt`:** the PDF requires the list; the date costs one line and shows the order. No other fields exist.
 - **Manual checks used a throwaway stub server in the scratchpad (not in the repo):** the real API cannot answer slowly or with an HTML 502, which the "done when" check needs.
+
+## Task 10: Create form
+
+- **No frontend test, TDD skill conflict:** same as Task 8; no test framework in the approved stack, so CLAUDE.md wins. Checked in the browser against the real API instead.
+- **Validation lives in the component, not `api.ts`:** the check (`title.trim() === ''`) is one line and the server still enforces the real rules (200 chars, types). Only emptiness is checked client-side, as the PDF asks; over-long titles come back as the API's `400` message in the error alert.
+- **Submit guarded twice against double sends:** the button is disabled while pending, and `handleSubmit` returns early if the mutation is pending, because Enter submits even when the button is disabled. A real double-click sent one POST. Two synchronous scripted `click()` calls sent two, because React had not re-rendered between them; real input does not behave that way.
+- **Typed text is cleared only on success:** after a failed request the title stays so the user can retry without retyping.
+- **Validation message clears on the next keystroke:** otherwise it stays next to a now-valid input.

@@ -1,0 +1,28 @@
+.form {
+  margin: 1rem 0;
+}
+
+.row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.row input {
+  flex: 1;
+  padding: 0.4rem 0.6rem;
+}
+
+.validation {
+  margin: 0.4rem 0 0;
+  color: #8e1a1a;
+  font-size: 0.85rem;
+}
+
+.alert {
+  margin-top: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #c62828;
+  border-radius: 4px;
+  background: #fdecea;
+  color: #8e1a1a;
+}
