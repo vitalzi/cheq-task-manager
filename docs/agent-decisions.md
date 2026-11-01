@@ -43,3 +43,9 @@ Small decisions the agent made while building, one entry per decision with the t
 ## Restructure: `src/tasks/`
 
 - **Task files grouped in `backend/src/tasks/`, tests stay next to their code:** `src/` had 13 flat files. `docs/plan.md` had planned a separate `test/` folder; tests were co-located from Task 2 on without flagging the change. The owner agreed to co-location after the trade-offs were explained (a separate folder needs `rootDir`/`include` changes in the tsconfigs, longer imports and mirrored folders). `docs/plan.md` layout updated to match.
+
+## Task 7: Coverage gate
+
+- **Coverage runs on every `npm test` (`collectCoverage: true`):** the 80% gate then cannot be skipped by forgetting a flag, and CI (task 15) needs no extra command. Cost: about a second more per run.
+- **`collectCoverageFrom` lists `src/**/*.ts` minus `*.test.ts` and `*.contract.ts`:** without it Jest only counts files a test imports, so `server.ts` would be invisible. The contract file is test code and would inflate the numbers.
+- **`server.ts` is not excluded:** it sits at 0%, but total coverage is 89% (statements), well over 80%, so no exclusion is needed. The task allowed one; not taking it keeps the number honest.

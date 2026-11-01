@@ -21,7 +21,8 @@ cd backend
 npm install
 npm run dev      # API on http://localhost:3000 (override with PORT)
 curl localhost:3000/health
-npm test         # Jest
+npm test         # Jest + coverage; fails below 80%
 npm run build    # compiles to backend/dist
 npm start        # runs the compiled build
+open coverage/index.html   # HTML coverage report (after npm test)
 ```
