@@ -9,6 +9,7 @@
 
 .row input {
   flex: 1;
+  min-width: 0;
   padding: 0.4rem 0.6rem;
 }
 

@@ -74,3 +74,11 @@ Small decisions the agent made while building, one entry per decision with the t
 - **Submit guarded twice against double sends:** the button is disabled while pending, and `handleSubmit` returns early if the mutation is pending, because Enter submits even when the button is disabled. A real double-click sent one POST. Two synchronous scripted `click()` calls sent two, because React had not re-rendered between them; real input does not behave that way.
 - **Typed text is cleared only on success:** after a failed request the title stays so the user can retry without retyping.
 - **Validation message clears on the next keystroke:** otherwise it stays next to a now-valid input.
+
+## Task 11: Responsive layout
+
+- **One breakpoint, 480px:** below it each list row stacks title over date; above it they sit side by side. Nothing else needed to change. The form row already shrinks with `min-width: 0` on the input.
+- **Centered column, `max-width: 40rem`:** the PDF asks for a layout that works at both widths, not a design; a readable column is the least that does that.
+- **Small global `index.css` (box-sizing, body font, margin reset):** the only global CSS. Everything else stays in CSS Modules.
+- **Long titles wrap (`overflow-wrap: anywhere`):** a 200-character title with no spaces would otherwise push the page sideways on mobile. Checked with a 120-character unbroken title.
+- **375px checked in a same-origin iframe:** the Chrome window resize did not change the viewport (`innerWidth` stayed 1220), and the iframe applies media queries against its own width. Desktop was checked in the full window.
