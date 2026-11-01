@@ -145,3 +145,10 @@ Small decisions the agent made while building, one entry per decision with the t
 - **`VITE_API_URL` comes from the `API_URL` repository variable, set only on the build step:** Vite inlines it at build time, so it is not needed at upload.
 - **Same shape as the backend workflow:** one job, major-version action pins, region in `env`, Node from `.nvmrc`, own file in the path filter, `cancel-in-progress: false` (here to avoid two syncs interleaving and leaving a mix of two builds).
 - **No frontend tests step:** the frontend has no test suite; the PDF's test and coverage requirements are for the backend. The gate is lint plus `tsc --noEmit` (inside `npm run build`).
+
+## Task 18: README finish and clean-clone check
+
+- **README AI-use section uses two entries from `docs/pushbacks.md` (tests reported complete after one mutation; confident wrong tsconfig diagnosis):** they are the clearest cases where the output was wrong and the owner caught it. The section is written in the owner's voice and is theirs to edit.
+- **Scalability and observability sections describe this service, not generic advice:** the single-task limit comes from the in-memory store; observability lists what exists (JSON request lines to CloudWatch, ALB health check, rollout wait in CI) and what would be added. Nothing in those sections is claimed as built unless it is.
+- **Clean-clone check ran from the public GitHub repo into the scratchpad, not from the working tree:** `npm install`, lint, test (56 pass, 89% coverage), build, `npm start` plus `curl /health` and `POST /tasks`, the frontend lint and build, `docker build` with `id` showing `node`, and `terraform validate` (`init -backend=false`, no AWS calls). The clone was made before the README edits, so it checks the commands, which did not change, not the new text.
+- **Stale boxes ticked too:** B3, B5, E3, T2, F2-F5, F8, D1, D2, C2 and C3 were built and verified in earlier tasks. F9 (frontend tests, nice-to-have) stays unticked: not built.

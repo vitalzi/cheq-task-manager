@@ -2,7 +2,13 @@
 
 A small task manager: a REST API (create and list tasks) with a React frontend, deployed to AWS. Built as a hiring take-home; the assignment is in `cheq_assignment.pdf`.
 
-> Work in progress. Sections are added together with the code they describe.
+## Live deployment
+
+- **Frontend:** http://task-manager-frontend-762844037228.s3-website.eu-central-1.amazonaws.com
+- **API:** http://task-manager-api-1306913359.eu-central-1.elb.amazonaws.com (`GET /health`, `GET /tasks`, `POST /tasks`)
+- **Repository:** https://github.com/vitalzi/cheq-task-manager
+
+Both are plain HTTP (see Assumptions), so a browser in HTTPS-only mode shows a warning first. Tasks live in memory, so they disappear on every deploy or restart.
 
 ## Folder map
 
@@ -85,3 +91,75 @@ Two GitHub Actions workflows run on push to `main`, each only when its own folde
   - **Gate:** a lint error or a failing test stops the run before anything reaches AWS.
   - **Rollout:** the run waits for the service to become stable, so a new task that never turns healthy fails the run instead of going green. The old task keeps serving until then.
   - **Overlap:** runs queue and never cancel each other mid-rollout.
+- **Frontend (`.github/workflows/frontend.yml`, on `frontend/**`):**
+  - **Steps:** `npm ci`, `npm run lint`, `npm run build` (type-check, then Vite build) with `VITE_API_URL` set from the `API_URL` variable, then `aws s3 sync` to the bucket.
+  - **Gate:** a lint or type error stops the run before anything reaches AWS. The frontend has no tests (optional in the assignment).
+  - **Caching:** hashed files under `assets/` are uploaded first with a one-year `immutable` cache and `--delete`; `index.html` goes last with `no-cache`, so a visitor never gets a page that points at files not yet uploaded, and a new build shows up on the next load.
+
+## Design choices
+
+- **ECS Fargate behind an ALB instead of the assignment's default EC2:** the ALB gives a real health check on `/health`, a stable DNS name and rolling deploys that keep the old task serving until the new one is healthy; deploying needs no SSH keys. Cost: about $25-30 a month, mostly the ALB.
+- **In-memory store behind an async `TaskStore` interface:** the assignment allows it and it keeps the first version small. `buildApp(store)` takes the store as an argument, so a database-backed store needs no change to the routes or the service. The same contract test runs against any implementation.
+- **Frontend in its own public S3 bucket:** it releases independently of the API. The browser calls the ALB directly, so the API allows only the S3 website origin through CORS (`CORS_ORIGIN`, set by Terraform).
+- **Validation split:** the route schema checks the type (`title` is a string); the service trims and checks the length, so a title of 200 characters plus surrounding spaces is valid and 201 after trimming is a `400`. Every error, including unknown routes and malformed JSON, is `{ "error": "<message>" }`.
+- **Tests in three layers:** service unit tests with a mocked store, HTTP tests through `app.inject()` against the real in-memory store, and the shared store contract test. Coverage is enforced at 80% in the Jest config.
+
+## Assumptions
+
+Where the assignment was unclear, these are the readings used:
+
+- **Storage:** in-memory is acceptable, so data resets on restart and deploy. This also fixes the service at one task (see Scalability).
+- **Title:** a string, trimmed, 1-200 characters. Whitespace-only is a `400`. Unknown body fields are ignored.
+- **Fields:** `id` is a UUID from `crypto.randomUUID()`; `createdAt` is an ISO 8601 UTC string; `GET /tasks` returns oldest first.
+- **Health:** liveness only (the in-memory store has no dependency to check). `uptime` is whole seconds since the process started.
+- **HTTPS and domain:** not required, so the API and the website use plain HTTP on the AWS-generated hostnames. This also avoids browser mixed-content blocking.
+- **EC2, SSH and CI secrets:** the assignment's default is EC2 with SSH keys in CI secrets. With ECS there is no SSH. CI logs in with GitHub OIDC and assumes an IAM role, so no AWS keys are stored; the only thing in GitHub is the role ARN, as a repository variable.
+- **Terraform state:** local and gitignored; the owner applies once. CI deploys the app, never the infrastructure.
+
+## Unfinished and known limits
+
+Each item says how it would be completed.
+
+- **No persistence:** data is lost on every deploy. Add a `DynamoTaskStore` (on-demand table, `id` as key) that passes the existing contract test, then pass it to `buildApp` in `server.ts`.
+- **No HTTPS:** add an ACM certificate and an HTTPS listener on the ALB, which needs a domain. With a domain, put CloudFront in front of a private S3 bucket and route `/tasks*` and `/health` to the ALB, which also removes the CORS setup.
+- **Public S3 bucket:** it must be public for plain website hosting. CloudFront with a private bucket removes this.
+- **Terraform state on a laptop:** move it to an S3 backend with locking before a second person applies.
+- **No authentication, no rate limiting, unbounded list:** `GET /tasks` returns everything and any client can post. Add pagination (`limit` and a cursor) and an AWS WAF rate rule, and authentication if tasks become per-user.
+- **No frontend tests:** optional in the assignment. Component tests with Vitest or Jest and Testing Library would cover the form validation, double-submit and the three list states.
+- **No alarms or error tracking yet:** see Observability.
+
+## Scalability: 10x traffic tomorrow
+
+What would change in this design, in order:
+
+1. **Replace the in-memory store.** This is the blocker: each container holds its own tasks, so a second task would show a different list per request. Move to DynamoDB on-demand, which scales with no capacity planning for this access pattern.
+2. **Run several tasks.** Set `desired_count` to at least 2, spread over the default VPC's subnets in different availability zones (the ALB already spans them), and add ECS service auto scaling with target tracking, for example on `ALBRequestCountPerTarget` with CPU as a second signal. The rolling-deploy settings (`minimum_healthy_percent = 100`) already keep capacity during a release.
+3. **Cap the list response.** `GET /tasks` grows with the data; add pagination before the table is large.
+4. **Take static and read traffic off the origin.** The site is already static files on S3; CloudFront in front adds caching and absorbs spikes. A short cache on `GET /tasks` would only be safe once reads are the bulk of traffic and slightly stale lists are acceptable.
+5. **Protect the API.** AWS WAF rate limiting on the ALB so one noisy client cannot use up the capacity.
+6. **Size.** The task is 0.25 vCPU and 512 MB. Load-test one task first (for example with `autocannon` against `POST /tasks` and `GET /tasks`) and set the size and the scaling target from the measured requests per second, not a guess.
+
+## Observability
+
+What exists today:
+
+- **Logs:** the API writes one JSON line per request (method, path without query string, status, response time in ms) plus Fastify's startup and error lines. The ECS `awslogs` driver ships them to the CloudWatch log group, kept 14 days.
+- **Health:** the ALB checks `/health` every 15 seconds and removes an unhealthy task from rotation. The backend workflow waits for the rollout to become stable, so a release that never turns healthy fails the run.
+
+What I would add, in order:
+
+- **Alarms (CloudWatch to SNS to email or chat):** ALB `HTTPCode_Target_5XX_Count`, `TargetResponseTime` p95, `UnHealthyHostCount`, and ECS running task count below desired. A metric filter on the log group for lines with `status >= 500` gives an error-rate alarm with no code change.
+- **Log queries:** CloudWatch Logs Insights over the JSON fields, for example the slowest paths or the count of `400` by hour.
+- **Error tracking:** Sentry in the Fastify error handler (unexpected `500`s with stack traces) and in the React app (render and network errors the user sees), with the release set to the commit SHA the pipeline already tags images with.
+- **Uptime from outside:** a Route 53 health check or an external probe on `/health`, because the ALB check cannot tell you the ALB itself is unreachable.
+- **Request IDs:** return Fastify's request id in a response header and in the error body, so a user's failed request can be found in the logs.
+- **Container Insights** for CPU and memory per task, which also feeds the scaling policy.
+
+## AI use
+
+Claude Code (Anthropic's CLI agent) wrote most of the code and Terraform, one task at a time, from a requirements checklist and task list I reviewed. I made the hard-to-reverse choices (stack, hosting, storage, serving the frontend) and approved them before any code was written; the agent proposed, I decided. Where it helped: scaffolding, test-first work on the service and routes, the Terraform and the OIDC trust rule, and finding the causes of deployment failures from the logs (a wrong OIDC subject, a missing ECR permission).
+
+Every time I corrected it is recorded with the lesson in `docs/pushbacks.md`. Two concrete cases:
+
+- **Tests reported complete too early.** After writing the store tests, the agent said they were complete having broken the code only once to see a test fail. I doubted it, so it broke the store four more ways. All were caught. After that, every test set was checked by breaking the production code on purpose before being called done, and a logging test that asserted nothing was deleted.
+- **A confident wrong diagnosis.** When the editor showed type errors in the test files, the agent stated as fact that `tsconfig.json` excluded them. That was a guess; the real cause was the editor's bundled TypeScript no longer loading `@types/*` automatically, fixed with an explicit `types` list. It then removed the working setup on the strength of an empty result from a diagnostics tool that had not re-checked the file, and the errors came back. The rule since: treat a diagnosis as a hypothesis until it is confirmed in the place the problem is seen.

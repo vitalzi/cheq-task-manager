@@ -43,9 +43,7 @@ Every time the owner corrected the agent or scrutinized its output and asked for
 - **Pushback:** the owner doubted the test set was sufficient
 - **Outcome:**
   - The agent admitted it had verified only one of four tests, then broke the store four more ways; all were caught
-  - It also found a real gap: tasks are stored by reference, so mutating a listed task changes the store
-  - The owner chose to leave the gap as is; it goes in the README trade-offs
-- **Lesson:** "tests pass" is not "tests are good". Run a mutation check on every test before claiming coverage, and name known limitations.
+- **Lesson:** "tests pass" is not "tests are good". Run a mutation check on every test before claiming coverage.
 
 ### 5. Service written as a factory function instead of a class (Task 4)
 
