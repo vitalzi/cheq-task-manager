@@ -1,7 +1,10 @@
-variable "github_repository" {
-  description = "GitHub repository allowed to deploy, as owner/name"
+# GitHub puts the owner and repository IDs into the token's `sub` claim for this
+# repo, so a deleted and re-created repo with the same name cannot reuse the role.
+# Read it with: gh api repos/<owner>/<repo>/actions/oidc/customization/sub
+variable "github_sub_prefix" {
+  description = "Start of the OIDC sub claim GitHub issues for the deploying repository"
   type        = string
-  default     = "vitalzi/cheq-task-manager"
+  default     = "repo:vitalzi@80326103/cheq-task-manager@1442180647"
 }
 
 # Lets GitHub Actions prove its identity to AWS with a short-lived token,
@@ -24,7 +27,7 @@ resource "aws_iam_role" "ci" {
         StringEquals = {
           "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
           # Only workflow runs on this repo's main branch can assume the role
-          "token.actions.githubusercontent.com:sub" = "repo:${var.github_repository}:ref:refs/heads/main"
+          "token.actions.githubusercontent.com:sub" = "${var.github_sub_prefix}:ref:refs/heads/main"
         }
       }
     }]
@@ -54,6 +57,8 @@ resource "aws_iam_role_policy" "ci" {
           "ecr:UploadLayerPart",
           "ecr:CompleteLayerUpload",
           "ecr:PutImage",
+          # Docker checks the manifest with a HEAD request before finishing a push
+          "ecr:BatchGetImage",
         ]
         Resource = aws_ecr_repository.api.arn
       },

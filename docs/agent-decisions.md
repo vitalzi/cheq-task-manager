@@ -109,7 +109,7 @@ Small decisions the agent made while building, one entry per decision with the t
 
 ## Task 14: CI access (GitHub OIDC)
 
-- **`github_repository` variable defaults to `vitalzi/cheq-task-manager`:** the owner gave the exact path; the repo has no remote yet, so it cannot be read from git. The value is public, so a default is safe and keeps `plan`/`apply` free of prompts.
+- **Trust rule uses the repo's ID-based `sub` prefix (`github_sub_prefix`), not `owner/name`:** found when the first deploy failed with `Not authorized to perform sts:AssumeRoleWithWebIdentity`. New GitHub repos issue `repo:<owner>@<owner id>/<repo>@<repo id>:ref:...`; `gh api repos/<owner>/<repo>/actions/oidc/customization/sub` shows the prefix. The first version matched `repo:vitalzi/cheq-task-manager:...`, which this repo never sends. The ID form is also safer: a deleted and re-created repo with the same name gets new IDs. The value is public, so a default is fine.
 - **Trust rule matches `sub` exactly (`ref:refs/heads/main`) plus `aud = sts.amazonaws.com`:** a pull request or another branch cannot assume the role, which is what lets the policy hold write access.
 - **No `thumbprint_list` on the OIDC provider:** AWS now validates GitHub's certificate itself, and AWS provider 6 makes the field optional.
 - **Policy is inline on the role, not a separate managed policy:** it has no other user, so one resource fewer to explain.
@@ -135,3 +135,4 @@ Small decisions the agent made while building, one entry per decision with the t
 - **`checksVoidReturn.attributes` off in the frontend:** `onClick={() => refetch()}` in `TaskList` was the one real hit. TanStack Query's `refetch` resolves with the error instead of rejecting, so nothing is lost; this is the usual React setting.
 - **Configs are `eslint.config.mjs` in both packages:** the backend is CommonJS and the frontend is ESM; `.mjs` keeps the two files the same style. JS and config files get no type-aware rules because they are outside the tsconfig.
 - **The linter was checked by planting violations:** a floating promise, unused variable and explicit `any` in the backend; a floating promise and a conditional hook in the frontend. All were reported and the probe files deleted. Lint exits 0 on the real code and 1 on the probes.
+- **`ecr:BatchGetImage` added to the push statement:** the first deploy pushed every layer and then failed with `403 Forbidden` on `HEAD .../manifests/sha256:...`. Docker checks the manifest before it finishes a push, and ECR treats that read as `BatchGetImage`. The minimal push list from the AWS docs (`BatchCheckLayerAvailability`, `InitiateLayerUpload`, `UploadLayerPart`, `CompleteLayerUpload`, `PutImage`) was not enough for this runner's Docker. Still scoped to the one repository.
