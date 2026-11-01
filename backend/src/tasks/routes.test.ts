@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { buildApp } from './app';
+import { buildApp } from '../app';
 import { InMemoryTaskStore } from './inMemoryTaskStore';
 import type { Task, TaskStore } from './taskStore';
 

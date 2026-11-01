@@ -1,5 +1,5 @@
 import { buildApp } from './app';
-import { InMemoryTaskStore } from './inMemoryTaskStore';
+import { InMemoryTaskStore } from './tasks/inMemoryTaskStore';
 
 describe('GET /health', () => {
   it('returns 200 with status ok and uptime in whole seconds', async () => {

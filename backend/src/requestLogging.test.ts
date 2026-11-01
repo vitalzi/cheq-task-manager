@@ -1,6 +1,6 @@
 import { Writable } from 'node:stream';
 import { buildApp } from './app';
-import { InMemoryTaskStore } from './inMemoryTaskStore';
+import { InMemoryTaskStore } from './tasks/inMemoryTaskStore';
 
 function appWithCapturedLogs() {
   const lines: string[] = [];

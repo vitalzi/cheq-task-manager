@@ -1,5 +1,5 @@
 import { buildApp } from './app';
-import { InMemoryTaskStore } from './inMemoryTaskStore';
+import { InMemoryTaskStore } from './tasks/inMemoryTaskStore';
 
 const allowed = 'http://my-bucket.s3-website.eu-west-1.amazonaws.com';
 

@@ -1,8 +1,8 @@
 import cors from '@fastify/cors';
 import Fastify, { FastifyError, FastifyInstance, FastifyServerOptions, LogController } from 'fastify';
-import { registerTaskRoutes } from './routes';
-import { TaskService, ValidationError } from './taskService';
-import type { TaskStore } from './taskStore';
+import { registerTaskRoutes } from './tasks/routes';
+import { TaskService, ValidationError } from './tasks/taskService';
+import type { TaskStore } from './tasks/taskStore';
 
 export interface AppOptions {
   logger?: FastifyServerOptions['logger'];

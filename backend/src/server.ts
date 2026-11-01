@@ -1,5 +1,5 @@
 import { buildApp } from './app';
-import { InMemoryTaskStore } from './inMemoryTaskStore';
+import { InMemoryTaskStore } from './tasks/inMemoryTaskStore';
 
 const port = Number(process.env.PORT) || 3000;
 

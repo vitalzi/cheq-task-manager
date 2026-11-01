@@ -39,3 +39,7 @@ Small decisions the agent made while building, one entry per decision with the t
 - **CORS origin passed as a one-item array:** with a plain string, `@fastify/cors` sends the allowed origin to every caller. The browser still blocks the mismatch, but the array makes the server compare and send nothing to other sites.
 - **No `CORS_ORIGIN` means no CORS plugin:** same-origin only. Local dev goes through the Vite proxy (task 8); the deployed API gets the S3 website URL from Terraform (task 13).
 - **`npm audit` reports `deepmerge` in Jest's dev tree:** not from `@fastify/cors`, not in the production image. The suggested fix downgrades Jest to v25, so I did not apply it.
+
+## Restructure: `src/tasks/`
+
+- **Task files grouped in `backend/src/tasks/`, tests stay next to their code:** `src/` had 13 flat files. `docs/plan.md` had planned a separate `test/` folder; tests were co-located from Task 2 on without flagging the change. The owner agreed to co-location after the trade-offs were explained (a separate folder needs `rootDir`/`include` changes in the tsconfigs, longer imports and mirrored folders). `docs/plan.md` layout updated to match.

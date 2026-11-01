@@ -20,12 +20,14 @@ Browser ──HTTP──> S3 website (static React build)
 backend/
   src/
     server.ts            entry: reads PORT and CORS_ORIGIN, starts the app
-    app.ts               buildApp(store): routes, CORS, logging hook, error handler
-    routes.ts            GET /health, GET /tasks, POST /tasks (+ JSON Schemas)
-    taskService.ts       business logic: validates/trims title, generates id and createdAt
-    taskStore.ts         TaskStore interface (async list, create)
-    inMemoryTaskStore.ts
-  test/                  service unit tests, HTTP tests, store contract test
+    app.ts               buildApp(store, options): CORS, logging hook, error handlers, /health
+    app.test.ts, cors.test.ts, requestLogging.test.ts   app-level HTTP tests
+    tasks/               everything about tasks; each test sits next to its code
+      routes.ts          GET /tasks, POST /tasks (+ JSON Schema)
+      taskService.ts     business logic: validates/trims title, generates id and createdAt
+      taskStore.ts       Task + TaskStore interface (async list, create)
+      inMemoryTaskStore.ts
+      taskStore.contract.ts   shared store contract test, called by each store's test
   Dockerfile, .dockerignore
 frontend/
   src/
