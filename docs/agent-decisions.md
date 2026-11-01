@@ -59,3 +59,10 @@ Small decisions the agent made while building, one entry per decision with the t
 - **`VITE_API_URL ?? ''`:** empty locally (calls go through the Vite proxy), the ALB URL in the deployed build.
 - **Health badge has three states (up / down / checking) and `retry: false`:** "checking" avoids a red flash on first load; no retry so one failed poll turns it red at once.
 - **`build` script runs `tsc --noEmit` before `vite build`:** Vite does not type-check, so without it type errors would ship.
+
+## Task 9: Task list
+
+- **`retry: false` on the tasks query:** TanStack Query retries 3 times with backoff by default, so the alert would appear about 7 seconds late. The alert has its own Retry button.
+- **Retry button disabled while refetching:** stops repeated clicks from stacking requests.
+- **List rows show title and local-time `createdAt`:** the PDF requires the list; the date costs one line and shows the order. No other fields exist.
+- **Manual checks used a throwaway stub server in the scratchpad (not in the repo):** the real API cannot answer slowly or with an HTML 502, which the "done when" check needs.

@@ -43,7 +43,7 @@ Cases the PDF does not spell out but a real user or reviewer will hit. Each one 
 | 6 | Request logging, CORS, server entry | B3 | [x] |
 | 7 | Coverage gate and report | T2, R2 | [x] |
 | 8 | Frontend scaffold, `api.ts`, health badge | F1, F5, F6, F7 | [x] |
-| 9 | Task list with loading, empty, error states | F2, F4 | [ ] |
+| 9 | Task list with loading, empty, error states | F2, F4 | [x] |
 | 10 | Create form with validation | F3, F4 | [ ] |
 | 11 | Responsive layout and local end-to-end check | F8, R1 | [ ] |
 | 12 | Dockerfile | D1, D2 | [ ] |

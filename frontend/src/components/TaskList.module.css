@@ -1,0 +1,25 @@
+.list {
+  list-style: none;
+  padding: 0;
+}
+
+.item {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.item time {
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.alert {
+  padding: 0.75rem 1rem;
+  border: 1px solid #c62828;
+  border-radius: 4px;
+  background: #fdecea;
+  color: #8e1a1a;
+}
