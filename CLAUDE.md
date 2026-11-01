@@ -49,6 +49,23 @@ Do not change or add to this without my explicit approval. Reasons are in
 - One task = one commit, with a clear message. Only commit when I say so.
 - Write a failing test first for core logic, then the minimal code to pass it.
 
+### Per-task loop
+
+Tasks live in `docs/tasks.md` (tracker table, global constraints, review
+focus). Follow this loop for every task, in order:
+
+1. **Announce:** 2-4 sentences on what you will do and which files you touch.
+2. **Skills:** use `superpowers:test-driven-development` for core logic and
+   `superpowers:verification-before-completion` before calling a task done.
+   This file wins if a skill conflicts with it.
+3. **Red:** write the failing test and run it to show it fails.
+4. **Green:** write the minimal code and run the test to show it passes.
+5. **Verify:** run the task's "done when" check and show the real output.
+6. **Walkthrough:** each new or changed file, briefly.
+7. **Track:** set the task's status in the `docs/tasks.md` tracker.
+8. **Stop:** wait for my "commit" and/or "next". Never start the next task
+   or commit on your own.
+
 ## Scope and simplicity
 
 - Build only what the PDF requires. If you think something extra is valuable,
