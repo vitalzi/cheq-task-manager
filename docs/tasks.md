@@ -37,7 +37,7 @@ Cases the PDF does not spell out but a real user or reviewer will hit. Each one 
 |---|------|--------------|--------|
 | 1 | Repo foundation | G3 | [x] |
 | 2 | Backend scaffold and `/health` | B1, E1, T1 | [x] |
-| 3 | Task store and contract test | B2, T3 | [ ] |
+| 3 | Task store and contract test | B2, T3 | [x] |
 | 4 | Task service | B4, T3 | [ ] |
 | 5 | Task routes, validation, error format | E2, E3, B4, B5 | [ ] |
 | 6 | Request logging, CORS, server entry | B3 | [ ] |
