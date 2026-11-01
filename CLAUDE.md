@@ -4,6 +4,33 @@ This is a hiring task. The goal is to show good engineering judgment, and the
 owner must understand and be able to defend every line. The task description is
 in the PDF in this folder.
 
+## Stack (fixed)
+
+Do not change or add to this without my explicit approval. Reasons are in
+`docs/decisions.md`.
+
+- Language: TypeScript (backend and frontend)
+- Package manager: npm. Plain folders, each with its own `package.json`, no workspaces
+- Repo: one public GitHub repo. Folders: `backend/`, `frontend/`, `infra/`,
+  `.github/workflows/`, `docs/`
+- Backend: Fastify, JSON Schema validation, `tsx` for dev, `tsc` for build
+- Storage: in-memory `InMemoryTaskStore` behind an async `TaskStore` interface,
+  injected as an argument to `buildApp(store)`. No DI container
+- Frontend: Vite, React, CSS Modules, TanStack Query (plain `fetch` functions in
+  `api.ts`, `useQuery` in components). No Zustand in the MVP
+- Frontend serving: built static files served by the Fastify container
+  (`@fastify/static`)
+- Testing: Jest with ts-jest. Service unit tests with a mocked `TaskStore`; HTTP
+  tests with `app.inject()`; shared store contract test. Coverage >= 80%
+- Hosting: AWS ECS Fargate behind an ALB, default VPC, public subnets, no NAT,
+  one task
+- Registry: Amazon ECR
+- IaC: Terraform, local state, applied once by me from my laptop
+- CI/CD: GitHub Actions on push to `main`: test, build image, push to ECR,
+  `aws ecs update-service --force-new-deployment`. AWS auth via GitHub OIDC
+- Phases: Phase 1 = the PDF MVP. Phase 2 = my own extras (DynamoDB store, more
+  endpoints, real styling), only after Phase 1 is live
+
 ## How to work
 
 - Work in small steps. Finish one task, then STOP and wait for my "next".
