@@ -39,3 +39,16 @@ npm run build    # type-check, then build to frontend/dist
 ```
 
 - **`VITE_API_URL`:** the API base URL baked into the build. Leave it unset locally: the app calls its own origin and the Vite dev server proxies `/health` and `/tasks` to `http://localhost:3000`. Set it for a deployed build, for example `VITE_API_URL=http://<alb-dns> npm run build`; the API must then allow the page's origin through `CORS_ORIGIN`.
+
+## Docker
+
+The API ships as a container image (multi-stage, Node 24 Alpine, runs as the unprivileged `node` user). The frontend is static files and is not containerized.
+
+```bash
+cd backend
+docker build -t task-api .
+docker run --rm --init -p 3000:3000 task-api   # add -e CORS_ORIGIN=<site origin> if needed
+curl localhost:3000/health
+```
+
+`--init` makes `docker stop` immediate: the image runs `node` as PID 1, which ignores SIGTERM without a handler, so without it a stop waits for the kill timeout.

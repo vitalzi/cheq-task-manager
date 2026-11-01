@@ -46,7 +46,7 @@ Cases the PDF does not spell out but a real user or reviewer will hit. Each one 
 | 9 | Task list with loading, empty, error states | F2, F4 | [x] |
 | 10 | Create form with validation | F3, F4 | [x] |
 | 11 | Responsive layout and local end-to-end check | F8, R1 | [x] |
-| 12 | Dockerfile | D1, D2 | [ ] |
+| 12 | Dockerfile | D1, D2 | [x] |
 | 13 | Terraform: app infrastructure | I1, I2, I3 | [ ] |
 | 14 | Terraform: CI access (GitHub OIDC) | C5 | [ ] |
 | 15 | Backend workflow | C1, C2, C3, C4 | [ ] |
@@ -138,6 +138,7 @@ Cases the PDF does not spell out but a real user or reviewer will hit. Each one 
 ### 13. Terraform: app infrastructure
 
 - **What:** `infra/` with ECR repo, ECS cluster, task definition and service (1 task, default VPC, public subnets), ALB with `/health` target group check, security groups, CloudWatch log group, public S3 website bucket (Block Public Access off for this bucket only); outputs for ALB URL, S3 website URL, ECR URL
+- **Container settings:** `initProcessEnabled = true` in the container's `linuxParameters` (Node runs as PID 1 in the image and ignores SIGTERM, so without it every rollout waits out the stop timeout; see `docs/agent-decisions.md`, Task 12); CPU architecture set explicitly (`X86_64`), because the image was first built locally on arm64
 - **README:** how infrastructure is provisioned
 - **Done when:** `terraform validate` and `terraform plan` look right and the owner reviews the plan; **`apply` is run by the owner**
 

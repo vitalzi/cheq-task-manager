@@ -82,3 +82,12 @@ Small decisions the agent made while building, one entry per decision with the t
 - **Small global `index.css` (box-sizing, body font, margin reset):** the only global CSS. Everything else stays in CSS Modules.
 - **Long titles wrap (`overflow-wrap: anywhere`):** a 200-character title with no spaces would otherwise push the page sideways on mobile. Checked with a 120-character unbroken title.
 - **375px checked in a same-origin iframe:** the Chrome window resize did not change the viewport (`innerWidth` stayed 1220), and the iframe applies media queries against its own width. Desktop was checked in the full window.
+
+## Task 12: Dockerfile
+
+- **No test written first, configuration not code:** the red step was `docker build` with no Dockerfile (fails: file not found); the green check is build, run, `/health`, `id`.
+- **Base image `node:24.22.2-alpine`, by version tag not digest:** `node:24-alpine` resolved to 24.22.2 at build time. An exact version is reproducible and readable; a digest would pin harder but hides which Node it is. Alpine keeps the image at 257 MB.
+- **Final stage runs `npm ci --omit=dev` itself instead of copying `node_modules` from the build stage:** the build stage's `node_modules` includes Jest, ts-jest and tsx.
+- **`USER node`:** the official image already has an unprivileged user (uid 1000), so no `adduser` needed.
+- **No `HEALTHCHECK` in the image:** the ALB target group checks `/health` (Task 13), and Alpine has no `curl`; adding one would be extra for no benefit.
+- **Node as PID 1 ignores SIGTERM:** `docker stop` took 10 s (the kill timeout) without `--init` and 0.15 s with it. I did not add a signal handler to `server.ts` (extra app code and a test). **Task 13 must set `initProcessEnabled = true` in the ECS container definition's `linuxParameters`**, otherwise each rollout waits out ECS's stop timeout (30 s by default) for the old task.
