@@ -9,27 +9,34 @@ in the PDF in this folder.
 Do not change or add to this without my explicit approval. Reasons are in
 `docs/decisions.md`.
 
-- Language: TypeScript (backend and frontend)
-- Package manager: npm. Plain folders, each with its own `package.json`, no workspaces
-- Repo: one public GitHub repo. Folders: `backend/`, `frontend/`, `infra/`,
+- **Language:** TypeScript (backend and frontend)
+- **Package manager:** npm. Plain folders, each with its own `package.json`, no workspaces
+- **Repo:** one public GitHub repo. Folders: `backend/`, `frontend/`, `infra/`,
   `.github/workflows/`, `docs/`
-- Backend: Fastify, JSON Schema validation, `tsx` for dev, `tsc` for build
-- Storage: in-memory `InMemoryTaskStore` behind an async `TaskStore` interface,
+- **Backend:** Fastify, JSON Schema validation, `tsx` for dev, `tsc` for build
+- **Storage:** in-memory `InMemoryTaskStore` behind an async `TaskStore` interface,
   injected as an argument to `buildApp(store)`. No DI container
-- Frontend: Vite, React, CSS Modules, TanStack Query (plain `fetch` functions in
+- **Frontend:** Vite, React, CSS Modules, TanStack Query (plain `fetch` functions in
   `api.ts`, `useQuery` in components). No Zustand in the MVP
-- Frontend serving: built static files served by the Fastify container
-  (`@fastify/static`)
-- Testing: Jest with ts-jest. Service unit tests with a mocked `TaskStore`; HTTP
+- **Frontend serving:** built static files in a public S3 bucket (S3 website
+  hosting, HTTP), deployed independently from the API
+  - The browser calls the ALB directly, so the API enables CORS (`@fastify/cors`)
+  - The API URL is a build-time setting (`VITE_API_URL`)
+  - No CloudFront in the MVP
+- **Testing:** Jest with ts-jest. Service unit tests with a mocked `TaskStore`; HTTP
   tests with `app.inject()`; shared store contract test. Coverage >= 80%
-- Hosting: AWS ECS Fargate behind an ALB, default VPC, public subnets, no NAT,
+- **Hosting:** AWS ECS Fargate behind an ALB, default VPC, public subnets, no NAT,
   one task
-- Registry: Amazon ECR
-- IaC: Terraform, local state, applied once by me from my laptop
-- CI/CD: GitHub Actions on push to `main`: test, build image, push to ECR,
-  `aws ecs update-service --force-new-deployment`. AWS auth via GitHub OIDC
-- Phases: Phase 1 = the PDF MVP. Phase 2 = my own extras (DynamoDB store, more
-  endpoints, real styling), only after Phase 1 is live
+- **Registry:** Amazon ECR
+- **IaC:** Terraform, local state, applied once by me from my laptop
+- **CI/CD:** GitHub Actions on push to `main`, two independent path-filtered
+  workflows. AWS auth via GitHub OIDC
+  - Backend: test, build image, push to ECR,
+    `aws ecs update-service --force-new-deployment`
+  - Frontend: build, `aws s3 sync`
+- **Phases:** Phase 1 = the PDF MVP. Phase 2 = my own extras (DynamoDB store, more
+  endpoints, real styling, CloudFront in front of S3 and the ALB), only after
+  Phase 1 is live
 
 ## How to work
 
@@ -65,12 +72,12 @@ Do not change or add to this without my explicit approval. Reasons are in
 
 ## Documents
 
-- `docs/requirements.md`: checklist derived from the PDF (must / nice-to-have /
+- **`docs/requirements.md`:** checklist derived from the PDF (must / nice-to-have /
   ambiguous). Source of truth for scope.
-- `docs/tasks.md`: small tasks, each tied to a requirement, each with a clear
+- **`docs/tasks.md`:** small tasks, each tied to a requirement, each with a clear
   "done" check.
-- `docs/decisions.md`: running decision log.
-- `README.md`: how to run, how to test, key decisions, trade-offs, what I would
+- **`docs/decisions.md`:** running decision log.
+- **`README.md`:** how to run, how to test, key decisions, trade-offs, what I would
   do with more time. Keep it updated as we go, not at the end.
 
 ## Order of work

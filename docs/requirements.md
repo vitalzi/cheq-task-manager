@@ -6,7 +6,7 @@ This is the source of truth for scope. Anything not listed here is out of scope.
 ## Phases
 
 - **Phase 1: MVP.** Exactly what the PDF requires (everything in sections 1–7). Built, deployed and documented first.
-- **Phase 2: Extra mile.** Owner-chosen additions beyond the PDF, started only after Phase 1 is live and the README is complete. Candidates so far: DynamoDB store implementation, additional API methods, real styling, Zustand if client state needs it. Each item is proposed and agreed before work starts.
+- **Phase 2: Extra mile.** Owner-chosen additions beyond the PDF, started only after Phase 1 is live and the README is complete. Candidates so far: DynamoDB store implementation, additional API methods, real styling, Zustand if client state needs it, CloudFront in front of a private S3 bucket and the ALB. Each item is proposed and agreed before work starts.
 
 Everything below this section is Phase 1 unless stated otherwise.
 
@@ -74,7 +74,7 @@ CI/CD:
 - [x] **C1 MUST** GitHub Actions or GitLab CI, on every push to `main`. ***Decision:*** GitHub Actions.
 - [ ] **C2 MUST** Install dependencies and run unit tests; stop if any test fails.
 - [ ] **C3 MUST** Build the Docker image.
-- [x] **C4 MUST** Deploy the new container automatically, with no manual steps. → AMB-3, AMB-12 ***Decision:*** push to ECR, then `aws ecs update-service --force-new-deployment`. No SSH.
+- [x] **C4 MUST** Deploy the new container automatically, with no manual steps. → AMB-3, AMB-12 ***Decision:*** push to ECR, then `aws ecs update-service --force-new-deployment`. No SSH. The frontend deploys separately: build, `aws s3 sync`.
 - [x] **C5 MUST** AWS credentials and SSH keys stored as CI secrets. Registry choice is open. ***Decision:*** GitHub OIDC; CI assumes an IAM role, so no long-lived AWS keys and only the role ARN is stored in GitHub. No SSH keys, since ECS has no SSH. Registry: ECR.
 
 ## 6. Documentation (root `README.md`)
@@ -102,14 +102,14 @@ Items marked **(step 2)** are hard to reverse and get decided in the plan. The r
 | ID | Ambiguity | Proposed interpretation |
 |----|-----------|-------------------------|
 | AMB-1 | Real DB or in-memory store? | **(step 2)** In-memory store with async functions. The PDF allows it, and it's the simplest option. Trade-off: data resets on every deploy/restart. Write this in the README. ***Decision:*** in-memory behind a swappable `TaskStore`; DynamoDB in Phase 2. |
-| AMB-2 | How is the frontend served at the live URL? | **(step 2)** Build the SPA and serve it from the same container as the API. That gives one origin, no CORS and one deploy. Alternative: S3 + CloudFront. ***Decision:*** served from the Fastify container (`@fastify/static`). |
-| AMB-3 | Does the pipeline also deploy the frontend? | It does automatically if AMB-2 is accepted: one image contains both. ***Decision:*** yes, one image holds both. |
+| AMB-2 | How is the frontend served at the live URL? | **(step 2)** Alternatives: serve it from the API container (one origin, coupled releases), or host it separately. ***Decision:*** separate public S3 bucket with website hosting, independent of the API. The browser calls the ALB directly (CORS on the API, `VITE_API_URL` at build time). CloudFront + private bucket is the Phase 2 upgrade. |
+| AMB-3 | Does the pipeline also deploy the frontend? | ***Decision:*** yes, with its own path-filtered workflow (build, `s3 sync`), independent of the backend workflow. The Docker image holds only the API. |
 | AMB-4 | Validation limits beyond "non-empty string" | `title` must be a string, trimmed, 1–200 characters. Whitespace-only → 400. Malformed JSON → 400. Unknown fields are ignored. ***Decision:*** as proposed. |
 | AMB-5 | What is a "clear error message"? | One shape for every error: `{ "error": "<message>" }`. ***Decision:*** as proposed. |
 | AMB-6 | Health semantics and uptime unit | Liveness only (an in-memory store has no dependencies to check). `uptime` = whole seconds since process start. ***Decision:*** as proposed. |
 | AMB-7 | ID format | UUID from Node's built-in `crypto.randomUUID()`, so no extra dependency. `createdAt` is an ISO 8601 UTC string. ***Decision:*** as proposed. |
 | AMB-8 | Order of `GET /tasks` | Creation order, oldest first. ***Decision:*** as proposed. |
-| AMB-9 | HTTPS / custom domain | Not required. Plain HTTP on the EC2 public DNS/IP. ***Decision:*** the EC2 part does not apply (ECS + ALB). Plain HTTP on the ALB DNS name, no custom domain. |
+| AMB-9 | HTTPS / custom domain | Not required. Plain HTTP on the EC2 public DNS/IP. ***Decision:*** the EC2 part does not apply (ECS + ALB). Plain HTTP on the ALB DNS name and the S3 website endpoint, no custom domain. |
 | AMB-10 | Where Terraform state lives, and who runs `apply` | **(step 2)** The owner runs `terraform apply` once, locally. State stays local and gitignored. CI deploys the app only, not the infrastructure. ***Decision:*** as proposed. |
 | AMB-11 | "Unit tests mock data access" vs. testing HTTP behaviour | Unit tests for business logic with the store mocked. HTTP-level tests check status codes and the 400 cases. Both count toward coverage. ***Decision:*** as proposed, plus a shared store contract test. |
 | AMB-12 | How CI reaches EC2 | **(step 2)** Push the image to a registry, then SSH to the instance to pull and restart. The PDF's mention of SSH keys suggests this path. Alternative: AWS SSM. ***Decision:*** not applicable. ECS has no SSH; CI deploys via ECR + `update-service` with OIDC. |
