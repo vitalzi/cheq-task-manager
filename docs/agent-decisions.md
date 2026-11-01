@@ -91,3 +91,18 @@ Small decisions the agent made while building, one entry per decision with the t
 - **`USER node`:** the official image already has an unprivileged user (uid 1000), so no `adduser` needed.
 - **No `HEALTHCHECK` in the image:** the ALB target group checks `/health` (Task 13), and Alpine has no `curl`; adding one would be extra for no benefit.
 - **Node as PID 1 ignores SIGTERM:** `docker stop` took 10 s (the kill timeout) without `--init` and 0.15 s with it. I did not add a signal handler to `server.ts` (extra app code and a test). **Task 13 must set `initProcessEnabled = true` in the ECS container definition's `linuxParameters`**, otherwise each rollout waits out ECS's stop timeout (30 s by default) for the old task.
+
+## Task 13: Terraform app infrastructure
+
+- **Region `eu-central-1`, as a variable:** it is the region already configured in the owner's AWS CLI.
+- **Provider `hashicorp/aws ~> 6.0`, lock file committed:** a lock file pins exact provider versions for reproducible applies. `.terraform/` stays gitignored.
+- **One file per concern (`network`, `ecr`, `alb`, `ecs`, `s3`, `outputs`):** each stays short and is easy to explain.
+- **Bucket named `task-manager-frontend-<account id>`:** bucket names are global; the account id avoids collisions without a `random` provider.
+- **Image `:latest` in the task definition:** matches the plan; CI only forces a new deployment, so the task definition never changes after the first apply. The first apply creates a service whose task cannot start until the first image is pushed (Task 17).
+- **Task 256 CPU / 512 MB:** the smallest Fargate size; the API is three trivial endpoints.
+- **Target group `deregistration_delay = 30`:** the default of 300 s would hold every rollout open for 5 minutes.
+- **`force_delete` on ECR and `force_destroy` on S3:** so `terraform destroy` works when the owner tears the demo down.
+- **Two security groups:** ALB takes port 80 from anywhere; the task takes port 3000 only from the ALB group. Tasks have public IPs (no NAT), so this is what keeps them closed to the internet.
+- **Extra outputs (`ecs_cluster_name`, `ecs_service_name`, `frontend_bucket_name`):** the CI workflows in Tasks 15 and 16 need these as GitHub variables.
+- **No task role, only the execution role:** the app calls no AWS APIs.
+- **Log retention 14 days:** avoids unbounded log storage.

@@ -47,7 +47,7 @@ Cases the PDF does not spell out but a real user or reviewer will hit. Each one 
 | 10 | Create form with validation | F3, F4 | [x] |
 | 11 | Responsive layout and local end-to-end check | F8, R1 | [x] |
 | 12 | Dockerfile | D1, D2 | [x] |
-| 13 | Terraform: app infrastructure | I1, I2, I3 | [ ] |
+| 13 | Terraform: app infrastructure | I1, I2, I3 | [x] |
 | 14 | Terraform: CI access (GitHub OIDC) | C5 | [ ] |
 | 15 | Backend workflow | C1, C2, C3, C4 | [ ] |
 | 16 | Frontend workflow | C1, C4 | [ ] |

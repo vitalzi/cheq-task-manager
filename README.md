@@ -52,3 +52,22 @@ curl localhost:3000/health
 ```
 
 `--init` makes `docker stop` immediate: the image runs `node` as PID 1, which ignores SIGTERM without a handler, so without it a stop waits for the kill timeout.
+
+## Infrastructure
+
+All AWS resources are Terraform in `infra/`, with local state (gitignored). CI deploys the app only; it never changes infrastructure. Needs Terraform >= 1.5 and AWS credentials.
+
+```bash
+cd infra
+terraform init
+terraform plan    # review: 16 resources to add
+terraform apply   # run once from a laptop
+terraform output  # alb_url, s3_website_url, ecr_repository_url, ...
+```
+
+- **API:** ECS Fargate (one task, 0.25 vCPU / 512 MB) behind an Application Load Balancer that checks `GET /health`. It runs in the default VPC's public subnets with no NAT gateway; the task's security group accepts port 3000 only from the load balancer.
+- **Frontend:** a public S3 bucket with website hosting (HTTP). Block Public Access is off for this bucket only.
+- **Wiring:** Terraform passes the S3 website URL to the container as `CORS_ORIGIN`; the ALB URL (`alb_url`) is what the frontend build takes as `VITE_API_URL`.
+- **First apply:** the ECS service is created before any image exists in ECR, so its task cannot start until the first image is pushed (the first push to `main` does this).
+- **Region:** `eu-central-1`; change with `-var aws_region=...`.
+- **Teardown:** `terraform destroy` (the ECR repository and the S3 bucket are emptied automatically).
