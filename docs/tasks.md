@@ -49,7 +49,7 @@ Cases the PDF does not spell out but a real user or reviewer will hit. Each one 
 | 12 | Dockerfile | D1, D2 | [x] |
 | 13 | Terraform: app infrastructure | I1, I2, I3 | [x] |
 | 14 | Terraform: CI access (GitHub OIDC) | C5 | [x] |
-| 15 | Backend workflow | C1, C2, C3, C4 | [~] |
+| 15 | Backend workflow | C1, C2, C3, C4 | [x] |
 | 16 | Frontend workflow | C1, C4 | [ ] |
 | 17 | First deploy and live verification | S2 | [ ] |
 | 18 | README finish and clean-clone check | R3-R7, G4, G5, S1, S3 | [ ] |
