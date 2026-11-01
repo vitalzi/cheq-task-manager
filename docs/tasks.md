@@ -35,7 +35,7 @@ Cases the PDF does not spell out but a real user or reviewer will hit. Each one 
 
 | # | Task | Requirements | Status |
 |---|------|--------------|--------|
-| 1 | Repo foundation | G3 | [ ] |
+| 1 | Repo foundation | G3 | [x] |
 | 2 | Backend scaffold and `/health` | B1, E1, T1 | [ ] |
 | 3 | Task store and contract test | B2, T3 | [ ] |
 | 4 | Task service | B4, T3 | [ ] |

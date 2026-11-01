@@ -1,0 +1,22 @@
+# Dependencies and build output
+node_modules/
+dist/
+coverage/
+
+# Secrets and local config (config is env-vars only)
+.env
+.env.*
+!.env.example
+
+# Terraform: local state holds resource details, providers are downloaded
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+crash.log
+
+# OS and editor
+.DS_Store
+.vscode/
+.idea/
