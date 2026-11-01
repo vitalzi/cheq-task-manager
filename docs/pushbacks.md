@@ -75,3 +75,10 @@ Every time the owner corrected the agent or scrutinized its output and asked for
   - The agent broke the code four ways: the four real assertions caught all four
   - The weak test was deleted
 - **Lesson:** this repeats lesson 4. Before writing a test, name the production change that would make it fail; if there is none, do not write it. Run the mutation check before reporting, not when asked.
+
+### 8. "What is this?" (Task 8)
+
+- **What the agent did:** to finish the "badge turns red" check it loaded the Chrome tools and called one without saying why, so the owner saw an unexplained permission prompt
+- **Pushback:** the owner rejected the call and asked what it was
+- **Outcome:** the agent explained (it needed a browser to see the badge), listed what was already verified, and the owner then allowed it. Badge seen green with the API up and red ("API: down") after the API was stopped
+- **Lesson:** say in one sentence why a tool is needed before the call, especially for tools the owner has not seen used yet (browser, network, anything outside the repo).

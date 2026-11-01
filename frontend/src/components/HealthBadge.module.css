@@ -1,0 +1,19 @@
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  color: #fff;
+}
+
+.up {
+  background: #2e7d32;
+}
+
+.down {
+  background: #c62828;
+}
+
+.checking {
+  background: #757575;
+}

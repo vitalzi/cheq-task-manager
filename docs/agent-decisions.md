@@ -49,3 +49,13 @@ Small decisions the agent made while building, one entry per decision with the t
 - **Coverage runs on every `npm test` (`collectCoverage: true`):** the 80% gate then cannot be skipped by forgetting a flag, and CI (task 15) needs no extra command. Cost: about a second more per run.
 - **`collectCoverageFrom` lists `src/**/*.ts` minus `*.test.ts` and `*.contract.ts`:** without it Jest only counts files a test imports, so `server.ts` would be invisible. The contract file is test code and would inflate the numbers.
 - **`server.ts` is not excluded:** it sits at 0%, but total coverage is 89% (statements), well over 80%, so no exclusion is needed. The task allowed one; not taking it keeps the number honest.
+
+## Task 8: Frontend scaffold
+
+- **No frontend tests, no test dependency:** `plan.md` and `decisions.md` skip frontend tests in the MVP and Jest/Vitest for React is not in the approved stack. The TDD skill conflicts; CLAUDE.md wins. Check is the browser check from tasks.md.
+- **`typescript@~5.9` in the frontend:** npm picked 7.x by default; matching the backend keeps one compiler version across the repo.
+- **`@vitejs/plugin-react` added:** the standard glue that makes Vite compile JSX with Fast Refresh. Needed for any Vite + React app, so treated as part of the approved stack.
+- **Proxy target hardcoded to `http://localhost:3000`:** an env override needs `@types/node` for no current benefit. It is a dev-only setting.
+- **`VITE_API_URL ?? ''`:** empty locally (calls go through the Vite proxy), the ALB URL in the deployed build.
+- **Health badge has three states (up / down / checking) and `retry: false`:** "checking" avoids a red flash on first load; no retry so one failed poll turns it red at once.
+- **`build` script runs `tsc --noEmit` before `vite build`:** Vite does not type-check, so without it type errors would ship.
