@@ -88,9 +88,10 @@ focus). Follow this loop for every task, in order:
 
 - Ask at most 1-2 questions at a time, and always include your recommended
   default so I can just say "yes".
-- Make small decisions yourself and append them to `docs/decisions.md`
-  (one line: decision, reason). Ask me only for choices that are hard to
-  reverse (stack, database, cloud provider, framework).
+- Make small decisions yourself and append them to `docs/agent-decisions.md`
+  (one line: decision, reason, grouped by task). Ask me only for choices that
+  are hard to reverse (stack, database, cloud provider, framework).
+- Never write to `docs/decisions.md` without my explicit approval.
 - If the PDF is ambiguous, list the ambiguity and your proposed interpretation
   instead of silently choosing.
 
@@ -100,7 +101,9 @@ focus). Follow this loop for every task, in order:
   ambiguous). Source of truth for scope.
 - **`docs/tasks.md`:** small tasks, each tied to a requirement, each with a clear
   "done" check.
-- **`docs/decisions.md`:** running decision log.
+- **`docs/decisions.md`:** decisions I approved or agreed beforehand. Edit only
+  with my approval.
+- **`docs/agent-decisions.md`:** small decisions you make during implementation.
 - **`README.md`:** how to run, how to test, key decisions, trade-offs, what I would
   do with more time. Keep it updated as we go, not at the end.
 

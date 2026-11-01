@@ -11,3 +11,17 @@ A small task manager: a REST API (create and list tasks) with a React frontend, 
 - **`infra/`:** Terraform for the AWS resources
 - **`.github/workflows/`:** CI/CD pipelines, one per deployable
 - **`docs/`:** requirements, decisions, plan and task list
+
+## Backend
+
+Requires Node 24 (see `.nvmrc`) and npm.
+
+```bash
+cd backend
+npm install
+npm run dev      # API on http://localhost:3000 (override with PORT)
+curl localhost:3000/health
+npm test         # Jest
+npm run build    # compiles to backend/dist
+npm start        # runs the compiled build
+```
