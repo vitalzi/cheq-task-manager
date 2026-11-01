@@ -1,0 +1,60 @@
+name: Frontend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend.yml"
+
+# Needed to request the OIDC token that AWS exchanges for role credentials
+permissions:
+  id-token: write
+  contents: read
+
+# Two syncs at once could leave the bucket with a mix of two builds; the next one waits
+concurrency:
+  group: frontend-deploy
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: eu-central-1
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # A lint error or build failure stops the run here, before anything reaches AWS
+      - name: Install, lint and build
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run lint
+          npm run build
+        env:
+          VITE_API_URL: ${{ vars.API_URL }}
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.CI_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Hashed files never change under the same name, so browsers may keep them for a year.
+      # index.html goes last: it must not point at assets that are not uploaded yet.
+      - name: Upload to S3
+        working-directory: frontend/dist
+        run: |
+          aws s3 sync . "s3://$BUCKET" --delete --exclude index.html \
+            --cache-control "public, max-age=31536000, immutable"
+          aws s3 cp index.html "s3://$BUCKET/index.html" \
+            --cache-control "no-cache" --content-type "text/html"
+        env:
+          BUCKET: ${{ vars.FRONTEND_BUCKET_NAME }}
