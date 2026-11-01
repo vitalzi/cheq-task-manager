@@ -21,6 +21,7 @@ cd backend
 npm install
 npm run dev      # API on http://localhost:3000 (override with PORT)
 curl localhost:3000/health
+npm run lint     # ESLint; also runs in CI before the tests
 npm test         # Jest + coverage; fails below 80%
 npm run build    # compiles to backend/dist
 npm start        # runs the compiled build
@@ -35,6 +36,7 @@ Requires Node 24 and npm. Start the backend first (see above).
 cd frontend
 npm install
 npm run dev      # app on http://localhost:5173
+npm run lint     # ESLint (typescript-eslint and React hooks rules)
 npm run build    # type-check, then build to frontend/dist
 ```
 
@@ -73,3 +75,13 @@ terraform output  # alb_url, s3_website_url, ecr_repository_url, ...
 - **GitHub variables:** after `apply`, the workflows read six repository variables (Settings → Secrets and variables → Actions → Variables), each set from a Terraform output with `gh variable set`: `CI_ROLE_ARN` (`ci_role_arn`), `ECR_REPOSITORY_URL` (`ecr_repository_url`), `ECS_CLUSTER_NAME` (`ecs_cluster_name`), `ECS_SERVICE_NAME` (`ecs_service_name`), `FRONTEND_BUCKET_NAME` (`frontend_bucket_name`) and `API_URL` (`alb_url`, used as `VITE_API_URL`). None is a secret.
 - **Region:** `eu-central-1`; change with `-var aws_region=...`.
 - **Teardown:** `terraform destroy` (the ECR repository and the S3 bucket are emptied automatically).
+
+## CI/CD
+
+Two GitHub Actions workflows run on push to `main`, each only when its own folder changes. They assume the AWS role from the CI access section above, using the repository variables.
+
+- **Backend (`.github/workflows/backend.yml`, on `backend/**`):**
+  - **Steps:** `npm ci`, `npm run lint`, `npm test` (fails below 80% coverage), build the image, push it to ECR as `latest` and as the commit SHA, then force a new ECS deployment.
+  - **Gate:** a lint error or a failing test stops the run before anything reaches AWS.
+  - **Rollout:** the run waits for the service to become stable, so a new task that never turns healthy fails the run instead of going green. The old task keeps serving until then.
+  - **Overlap:** runs queue and never cancel each other mid-rollout.

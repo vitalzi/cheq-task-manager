@@ -94,3 +94,13 @@ Every time the owner corrected the agent or scrutinized its output and asked for
   - Task 15 in `docs/tasks.md` now includes `aws ecs wait services-stable`, and its "done when" requires a healthy rollout
   - Without the wait, a pipeline goes green while a broken image is still failing health checks
 - **Lesson:** the agent followed the task list literally and deferred a known gap instead of asking. When the plan leaves out a standard step, such as verifying a deploy, propose it in one sentence at the time.
+
+### 10. "There is no linter in the project"
+
+- **What the agent did:** built nine tasks of backend, frontend, Dockerfile, Terraform and the CI workflow without adding or proposing a linter, because the PDF does not list one and the working agreement says build only what it requires
+- **Pushback:** the owner pointed out there was no linter and asked for one, inside the current task, with nothing committed or pushed until it was tested
+- **Outcome:**
+  - ESLint with `typescript-eslint` added to both packages, run in the backend workflow before the tests
+  - The first config (full type-checked preset) produced 37 errors on working code; it was narrowed to the standard rules plus three async rules
+  - The linter was proved by planting violations, not just by seeing a clean run
+- **Lesson:** "only what the PDF requires" does not cover basic engineering hygiene a senior reviewer expects. Propose the one-sentence addition early, as the agreement says, instead of waiting to be asked. Also: a clean run proves nothing about a linter; plant a violation.

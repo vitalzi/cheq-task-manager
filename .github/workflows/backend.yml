@@ -1,0 +1,72 @@
+name: Backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend.yml"
+
+# Needed to request the OIDC token that AWS exchanges for role credentials
+permissions:
+  id-token: write
+  contents: read
+
+# Never cancel a run halfway through a rollout; the next one waits
+concurrency:
+  group: backend-deploy
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: eu-central-1
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      # A lint error or failing test stops the run here, before anything reaches AWS
+      - name: Install, lint and test
+        working-directory: backend
+        run: |
+          npm ci
+          npm run lint
+          npm test
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.CI_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: aws-actions/amazon-ecr-login@v2
+
+      # The task definition points at :latest; the SHA tag says which commit an image is
+      - name: Build and push image
+        working-directory: backend
+        run: |
+          docker build -t "$ECR_REPOSITORY_URL:$GITHUB_SHA" -t "$ECR_REPOSITORY_URL:latest" .
+          docker push "$ECR_REPOSITORY_URL:$GITHUB_SHA"
+          docker push "$ECR_REPOSITORY_URL:latest"
+        env:
+          ECR_REPOSITORY_URL: ${{ vars.ECR_REPOSITORY_URL }}
+
+      - name: Roll out
+        run: |
+          aws ecs update-service \
+            --cluster "$ECS_CLUSTER_NAME" \
+            --service "$ECS_SERVICE_NAME" \
+            --force-new-deployment > /dev/null
+          # Fails the run if the new task never becomes healthy
+          aws ecs wait services-stable \
+            --cluster "$ECS_CLUSTER_NAME" \
+            --services "$ECS_SERVICE_NAME"
+        env:
+          ECS_CLUSTER_NAME: ${{ vars.ECS_CLUSTER_NAME }}
+          ECS_SERVICE_NAME: ${{ vars.ECS_SERVICE_NAME }}

@@ -49,7 +49,7 @@ Cases the PDF does not spell out but a real user or reviewer will hit. Each one 
 | 12 | Dockerfile | D1, D2 | [x] |
 | 13 | Terraform: app infrastructure | I1, I2, I3 | [x] |
 | 14 | Terraform: CI access (GitHub OIDC) | C5 | [x] |
-| 15 | Backend workflow | C1, C2, C3, C4 | [ ] |
+| 15 | Backend workflow | C1, C2, C3, C4 | [~] |
 | 16 | Frontend workflow | C1, C4 | [ ] |
 | 17 | First deploy and live verification | S2 | [ ] |
 | 18 | README finish and clean-clone check | R3-R7, G4, G5, S1, S3 | [ ] |
@@ -149,13 +149,14 @@ Cases the PDF does not spell out but a real user or reviewer will hit. Each one 
 
 ### 15. Backend workflow
 
-- **What:** `.github/workflows/backend.yml`, path-filtered on `backend/**`: `npm ci`, `npm test`, OIDC login, build and push image, `aws ecs update-service --force-new-deployment`, then `aws ecs wait services-stable` (the role already allows `ecs:DescribeServices`, Task 14)
+- **What:** `.github/workflows/backend.yml`, path-filtered on `backend/**`: `npm ci`, `npm run lint`, `npm test`, OIDC login, build and push image, `aws ecs update-service --force-new-deployment`, then `aws ecs wait services-stable` (the role already allows `ecs:DescribeServices`, Task 14)
+- **Linter (added to this task at the owner's request):** ESLint with `typescript-eslint` in `backend/` and `frontend/` (plus `eslint-plugin-react-hooks` in the frontend), `npm run lint` in both, no Prettier. The frontend workflow (Task 16) runs the frontend lint too
 - **Small decision to log:** image tag (`latest` vs commit SHA)
-- **Done when:** a push touching `backend/` runs green only after ECS has rolled a new, healthy task; a failing test stops the run before the push
+- **Done when:** `npm run lint` is clean in both packages and reports a planted violation; a push touching `backend/` runs green only after ECS has rolled a new, healthy task; a lint error or a failing test stops the run before the push
 
 ### 16. Frontend workflow
 
-- **What:** `.github/workflows/frontend.yml`, path-filtered on `frontend/**`: `npm ci`, build with `VITE_API_URL`, `aws s3 sync` (long cache for hashed assets, no-cache for `index.html`)
+- **What:** `.github/workflows/frontend.yml`, path-filtered on `frontend/**`: `npm ci`, `npm run lint`, build with `VITE_API_URL`, `aws s3 sync` (long cache for hashed assets, no-cache for `index.html`)
 - **Done when:** a push touching `frontend/` runs green and the S3 website shows the new build
 
 ## Ship
