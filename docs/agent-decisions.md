@@ -30,3 +30,12 @@ Small decisions the agent made while building, one entry per decision with the t
 
 - **`"types": ["node", "jest"]` in `tsconfig.json`:** fixes the editor errors on `describe`/`expect`. VS Code bundles TypeScript 6.0, which no longer loads `@types/*` automatically (our CLI uses 5.9, which does). Listing them works on both.
 - **Tests stay in `tsconfig.json`; `tsconfig.build.json` excludes them for `npm run build`:** I tried putting the `exclude` back and deleting the second file, and the owner still saw red underlines in VS Code. The diagnostics tool had reported no errors for those files, so it is not a reliable check for excluded files. Only the owner's editor settles this. Bonus: `tsc --noEmit` type-checks tests too.
+
+## Task 6: Logging, CORS, server entry
+
+- **`buildApp(store, options)` with `AppOptions { logger, corsOrigin }`:** tests need to inject a log stream and an origin; `server.ts` fills them from the environment. Both are optional, so `buildApp(store)` still works and stays silent (logger off) in tests.
+- **Our own `onResponse` hook, Fastify's request logging off:** Fastify normally logs two lines per request ("incoming request", "request completed") without the fields the task asks for. `LogController({ disableRequestLogging: true })` leaves only our single line. The top-level `disableRequestLogging` option works but prints a deprecation warning in this Fastify version.
+- **Log fields `method`, `path`, `status`, `responseTimeMs`:** `path` has the query string stripped, because query values can carry secrets. Pino adds `reqId`, `time` and `level`. `responseTimeMs` comes from `reply.elapsedTime` and is not rounded.
+- **CORS origin passed as a one-item array:** with a plain string, `@fastify/cors` sends the allowed origin to every caller. The browser still blocks the mismatch, but the array makes the server compare and send nothing to other sites.
+- **No `CORS_ORIGIN` means no CORS plugin:** same-origin only. Local dev goes through the Vite proxy (task 8); the deployed API gets the S3 website URL from Terraform (task 13).
+- **`npm audit` reports `deepmerge` in Jest's dev tree:** not from `@fastify/cors`, not in the production image. The suggested fix downgrades Jest to v25, so I did not apply it.

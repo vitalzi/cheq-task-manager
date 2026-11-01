@@ -56,3 +56,22 @@ Every time the owner corrected the agent or scrutinized its output and asked for
   - `docs/tasks.md` (Tasks 4 and 5) updated to the class
   - New rule in `CLAUDE.md`: prefer classes, except stateless helpers and framework-shaped functions such as `buildApp` and React components
 - **Lesson:** the agent followed the plan without flagging that "factory vs class" was an open style choice. Surface style choices that the plan fixes by accident.
+
+### 6. "The red underlines are back" (Task 5, editor setup)
+
+- **What the agent did:** told the owner the test files were red in VS Code because `tsconfig.json` excluded them, as a fact and not a guess. When that did not fix it, it found the real cause (VS Code bundles TypeScript 6, which no longer loads `@types/*` automatically; fixed with `"types": ["node", "jest"]`). It then tried to simplify by deleting the second tsconfig and putting the `exclude` back, and trusted an empty result from the VS Code diagnostics tool as proof it worked
+- **Pushback:** the owner said the red underlines were back
+- **Outcome:**
+  - Reverted to the setup that worked: tests in `tsconfig.json`, `tsconfig.build.json` excludes them for `npm run build`
+  - Learned that the diagnostics tool can return an empty list for a file it has not re-checked
+  - `docs/agent-decisions.md` records the failed simplification
+- **Lesson:** call a diagnosis a hypothesis until it is confirmed. Do not undo a working setup on evidence from a tool that cannot see what the owner sees; ask the owner to confirm in their editor first.
+
+### 7. "Remove the unnecessary test" (Task 6)
+
+- **What the agent did:** wrote a test named "logs nothing when no logger is configured" that only checked for a `200`, so it proved nothing about logging. It also ran no mutation check on the logging tests until the owner asked how they were verified
+- **Pushback:** the owner asked how the tests are verified and agreed the weak one should go
+- **Outcome:**
+  - The agent broke the code four ways: the four real assertions caught all four
+  - The weak test was deleted
+- **Lesson:** this repeats lesson 4. Before writing a test, name the production change that would make it fail; if there is none, do not write it. Run the mutation check before reporting, not when asked.
