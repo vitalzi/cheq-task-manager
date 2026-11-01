@@ -1,8 +1,9 @@
 import { buildApp } from './app';
+import { InMemoryTaskStore } from './inMemoryTaskStore';
 
 describe('GET /health', () => {
   it('returns 200 with status ok and uptime in whole seconds', async () => {
-    const app = buildApp();
+    const app = buildApp(new InMemoryTaskStore());
 
     const res = await app.inject({ method: 'GET', url: '/health' });
 

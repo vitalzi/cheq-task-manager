@@ -39,7 +39,7 @@ Cases the PDF does not spell out but a real user or reviewer will hit. Each one 
 | 2 | Backend scaffold and `/health` | B1, E1, T1 | [x] |
 | 3 | Task store and contract test | B2, T3 | [x] |
 | 4 | Task service | B4, T3 | [x] |
-| 5 | Task routes, validation, error format | E2, E3, B4, B5 | [ ] |
+| 5 | Task routes, validation, error format | E2, E3, B4, B5 | [x] |
 | 6 | Request logging, CORS, server entry | B3 | [ ] |
 | 7 | Coverage gate and report | T2, R2 | [ ] |
 | 8 | Frontend scaffold, `api.ts`, health badge | F1, F5, F6, F7 | [ ] |
