@@ -20,7 +20,8 @@ Do not change or add to this without my explicit approval. Reasons are in
   `api.ts`, `useQuery` in components). No Zustand in the MVP
 - **Frontend serving:** built static files in a public S3 bucket (S3 website
   hosting, HTTP), deployed independently from the API
-  - The browser calls the ALB directly, so the API enables CORS (`@fastify/cors`)
+  - Phase 1: the browser calls the ALB directly, so the API enables CORS (`@fastify/cors`).
+    Removed in Phase 2: CloudFront serves the site and the API from one origin
   - The API URL is a build-time setting (`VITE_API_URL`)
   - No CloudFront in the MVP
 - **Testing:** Jest with ts-jest. Service unit tests with a mocked `TaskStore`; HTTP

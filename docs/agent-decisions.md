@@ -164,8 +164,14 @@ Small decisions the agent made while building, one entry per decision with the t
 
 ## Task 20: Pipeline switch
 
-- **`@fastify/cors` kept (proposed default, owner to confirm):** it still serves local use and direct API calls, and removing it means touching code and tests for no gain. `CORS_ORIGIN` already holds the CloudFront URL from Task 19.
+- **`@fastify/cors` kept at first, then removed at the owner's request (see below):** `CORS_ORIGIN` already held the CloudFront URL from Task 19.
 - **`VITE_API_URL` removed from the workflow instead of set to an empty string:** `api.ts` uses `?? ''`, so an unset variable gives same-origin paths, and there is no `.env` file that could set it. One line less, same result.
 - **Invalidation of `/index.html` only, no wait:** hashed assets get new names on each build. `aws cloudfront wait` would need an extra `cloudfront:GetInvalidation` permission, and `index.html` is served with `no-cache` anyway.
 - **Stale README text from Task 19 fixed here:** the "Frontend in its own public S3 bucket" design bullet and the `alb_url` output description still described the old setup.
+
+## Task 20 follow-up: CORS plugin removed
+
+- **Removed `@fastify/cors`, `cors.test.ts`, the `corsOrigin` option, and the `CORS_ORIGIN` env var in `server.ts` and `ecs.tf`:** the owner asked for it. The browser calls its own origin in dev (Vite proxy) and deployed (CloudFront), so the headers were never used. `AppOptions` keeps only `logger`.
+- **Test-first rule not applicable:** the change deletes behavior and adds none, so there is no new failing test. The existing suite, run before and after, is the guard.
+- **Left as they were, for the owner to decide:** `CLAUDE.md` (stack section) and `docs/decisions.md` still mention CORS; `docs/plan.md` and the Phase 1 task text are history and are not rewritten.
 

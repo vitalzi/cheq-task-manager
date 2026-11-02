@@ -53,8 +53,6 @@ resource "aws_ecs_task_definition" "api" {
 
     environment = [
       { name = "PORT", value = tostring(local.container_port) },
-      # The S3 website endpoint is gone; the site is now served from CloudFront
-      { name = "CORS_ORIGIN", value = "https://${aws_cloudfront_distribution.main.domain_name}" },
     ]
 
     # Node runs as PID 1 and ignores SIGTERM; the init process forwards it,

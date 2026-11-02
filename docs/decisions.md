@@ -65,6 +65,7 @@ _None. All planned questions are decided._
     - Private bucket + CloudFront routing `/tasks*` and `/health` to the ALB
     - Set `VITE_API_URL` empty and drop CORS
     - With a domain: add ACM and an HTTPS listener
+  - **Phase 2 update (owner-approved):** the upgrade path above was carried out in Tasks 19-20: private bucket, CloudFront routing `/tasks*` and `/health` to the ALB, empty `VITE_API_URL`. `@fastify/cors` and `CORS_ORIGIN` were then removed, because the browser calls its own origin in dev (Vite proxy) and deployed (CloudFront). The Phase 1 text above is kept as the record of what was decided at the time
 
 ### Infrastructure and delivery
 
