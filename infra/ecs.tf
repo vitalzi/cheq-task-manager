@@ -26,6 +26,20 @@ resource "aws_iam_role_policy_attachment" "task_execution" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+# What the container itself is allowed to do (permissions are in dynamodb.tf)
+resource "aws_iam_role" "task" {
+  name = "${var.project}-task"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Action    = "sts:AssumeRole"
+      Principal = { Service = "ecs-tasks.amazonaws.com" }
+    }]
+  })
+}
+
 resource "aws_ecs_cluster" "main" {
   name = var.project
 }
@@ -37,6 +51,7 @@ resource "aws_ecs_task_definition" "api" {
   cpu                      = 256
   memory                   = 512
   execution_role_arn       = aws_iam_role.task_execution.arn
+  task_role_arn            = aws_iam_role.task.arn
 
   # Explicit: the image was first built locally on arm64, Fargate defaults to X86_64
   runtime_platform {
@@ -53,6 +68,9 @@ resource "aws_ecs_task_definition" "api" {
 
     environment = [
       { name = "PORT", value = tostring(local.container_port) },
+      { name = "TABLE_NAME", value = aws_dynamodb_table.tasks.name },
+      # The AWS SDK in the container needs a region to find DynamoDB
+      { name = "AWS_REGION", value = var.aws_region },
     ]
 
     # Node runs as PID 1 and ignores SIGTERM; the init process forwards it,
@@ -74,7 +92,7 @@ resource "aws_ecs_service" "api" {
   name            = "${var.project}-api"
   cluster         = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.api.arn
-  desired_count   = 1 # in-memory store: more than one task would split the data
+  desired_count   = 1 # one is enough for now; the DynamoDB store would allow more
   launch_type     = "FARGATE"
 
   # Keep the old task until the new one is healthy

@@ -8,7 +8,7 @@ A small task manager: a REST API (create and list tasks) with a React frontend, 
 - **API:** the same address (`GET /health`, `GET /tasks`, `POST /tasks`); CloudFront sends `/tasks*` and `/health` to the API
 - **Repository:** https://github.com/vitalzi/cheq-task-manager
 
-The site and the API share one HTTPS address with a valid certificate. The old S3 website URL no longer exists, and the ALB's plain-HTTP address still answers but is not the entry point (see Unfinished and known limits). Tasks live in memory, so they disappear on every deploy or restart.
+The site and the API share one HTTPS address with a valid certificate. The old S3 website URL no longer exists, and the ALB's plain-HTTP address still answers but is not the entry point (see Unfinished and known limits). Tasks are stored in DynamoDB, so they survive deploys and restarts.
 
 ## Folder map
 
@@ -43,7 +43,7 @@ npm run test:integration   # DYNAMODB_ENDPOINT overrides http://localhost:8000
 docker stop dynamodb-local
 ```
 
-Each test creates its own table and the tests delete them afterwards. `DynamoTaskStore` is not wired into the server yet (that is a separate step), so the deployed API still uses the in-memory store.
+Each test creates its own table and the tests delete them afterwards. The server picks its store at startup: `DynamoTaskStore` when `TABLE_NAME` is set (the deployed container), the in-memory store otherwise, so `npm run dev` needs nothing.
 
 ## Frontend
 
@@ -79,7 +79,7 @@ All AWS resources are Terraform in `infra/`, with local state (gitignored). CI d
 ```bash
 cd infra
 terraform init
-terraform plan    # review: 20 resources to add
+terraform plan    # review: 23 resources to add
 terraform apply   # run once from a laptop
 terraform output  # alb_url, cloudfront_url, ecr_repository_url, ...
 ```
@@ -87,6 +87,7 @@ terraform output  # alb_url, cloudfront_url, ecr_repository_url, ...
 - **API:** ECS Fargate (one task, 0.25 vCPU / 512 MB) behind an Application Load Balancer that checks `GET /health`. It runs in the default VPC's public subnets with no NAT gateway; the task's security group accepts port 3000 only from the load balancer.
 - **Frontend and HTTPS:** a CloudFront distribution is the entry point at `https://<id>.cloudfront.net` (`cloudfront_url`), which has a valid certificate without a domain. Its default behavior serves the site from a private S3 bucket; `/tasks*` and `/health` go to the ALB with caching off and all methods allowed. The hop from CloudFront to the ALB is plain HTTP inside AWS.
 - **Why the bucket is private:** Block Public Access is on, website hosting is off, and the bucket policy lets only this one distribution read objects (Origin Access Control). Nobody can reach the files except through CloudFront, so there is one front door that serves HTTPS.
+- **Storage:** one DynamoDB table (`task-manager-tasks`, on demand, `id` as the key). The container runs with its own IAM task role that may only `Scan` and `PutItem` on that table, the two calls the store makes. Terraform passes the table name as `TABLE_NAME` and the region as `AWS_REGION`. Data survives deploys and restarts. The service stays at one task (see Scalability).
 - **Wiring:** the frontend build sets no `VITE_API_URL`, so the browser calls its own origin and the API needs no CORS. The container gets only `PORT`.
 - **First apply:** the ECS service is created before any image exists in ECR, so its task cannot start until the first image is pushed (the first push to `main` does this).
 - **CI access:** GitHub Actions authenticates with OpenID Connect (OIDC), so no AWS access keys are stored anywhere. Terraform creates the GitHub OIDC provider and one IAM role, `task-manager-ci`, that only workflow runs on `main` of this repository can assume. The trust rule matches the `sub` claim GitHub issues for the repo, which includes the owner and repo IDs (`github_sub_prefix`), so a deleted and re-created repo with the same name cannot reuse the role. Its policy allows only ECR push on the API repository, `ecs:UpdateService` and `ecs:DescribeServices` on the API service (the workflow waits for the rollout to become stable), S3 list/write/delete on the frontend bucket, and `cloudfront:CreateInvalidation` on the one distribution. The PDF asks for credentials as CI secrets; here the only thing stored in GitHub is the role ARN (a repository variable, not a secret), and access keys in secrets were the considered alternative.
@@ -111,7 +112,7 @@ Two GitHub Actions workflows run on push to `main`, each only when its own folde
 ## Design choices
 
 - **ECS Fargate behind an ALB instead of the assignment's default EC2:** the ALB gives a real health check on `/health`, a stable DNS name and rolling deploys that keep the old task serving until the new one is healthy; deploying needs no SSH keys. Cost: about $25-30 a month, mostly the ALB.
-- **In-memory store behind an async `TaskStore` interface:** the assignment allows it and it keeps the first version small. `buildApp(store)` takes the store as an argument, so a database-backed store needs no change to the routes or the service. The same contract test runs against any implementation.
+- **Async `TaskStore` interface with two implementations:** in-memory (the assignment allows it, and it is what runs locally) and DynamoDB (deployed). `buildApp(store)` takes the store as an argument, so switching needed no change to the routes or the service, and the same contract test runs against both.
 - **Frontend in its own private S3 bucket behind CloudFront:** it releases independently of the API. CloudFront serves the site and routes `/tasks*` and `/health` to the ALB, so the browser sees one HTTPS origin and needs no CORS. The API has no CORS plugin; locally the Vite dev proxy gives the same single origin.
 - **Validation split:** the route schema checks the type (`title` is a string); the service trims and checks the length, so a title of 200 characters plus surrounding spaces is valid and 201 after trimming is a `400`. Every error, including unknown routes and malformed JSON, is `{ "error": "<message>" }`.
 - **Tests in three layers:** service unit tests with a mocked store, HTTP tests through `app.inject()` against the real in-memory store, and the shared store contract test. Coverage is enforced at 80% in the Jest config.
@@ -120,10 +121,10 @@ Two GitHub Actions workflows run on push to `main`, each only when its own folde
 
 Where the assignment was unclear, these are the readings used:
 
-- **Storage:** in-memory is acceptable, so data resets on restart and deploy. This also fixes the service at one task (see Scalability).
+- **Storage:** the assignment accepts in-memory. The first version used it; the deployed API now uses DynamoDB so data survives a deploy.
 - **Title:** a string, trimmed, 1-200 characters. Whitespace-only is a `400`. Unknown body fields are ignored.
 - **Fields:** `id` is a UUID from `crypto.randomUUID()`; `createdAt` is an ISO 8601 UTC string; `GET /tasks` returns oldest first.
-- **Health:** liveness only (the in-memory store has no dependency to check). `uptime` is whole seconds since the process started.
+- **Health:** liveness only (it does not check DynamoDB). `uptime` is whole seconds since the process started.
 - **HTTPS and domain:** not required, so the API and the website use plain HTTP on the AWS-generated hostnames. This also avoids browser mixed-content blocking.
 - **EC2, SSH and CI secrets:** the assignment's default is EC2 with SSH keys in CI secrets. With ECS there is no SSH. CI logs in with GitHub OIDC and assumes an IAM role, so no AWS keys are stored; the only thing in GitHub is the role ARN, as a repository variable.
 - **Terraform state:** local and gitignored; the owner applies once. CI deploys the app, never the infrastructure.
@@ -132,7 +133,6 @@ Where the assignment was unclear, these are the readings used:
 
 Each item says how it would be completed.
 
-- **No persistence:** data is lost on every deploy. Add a `DynamoTaskStore` (on-demand table, `id` as key) that passes the existing contract test, then pass it to `buildApp` in `server.ts`.
 - **Plain HTTP between CloudFront and the ALB:** users get HTTPS, but the last hop inside AWS is HTTP because the ALB has no certificate. With a domain, add an ACM certificate and an HTTPS listener on the ALB and switch the origin to `https-only`.
 - **Terraform state on a laptop:** move it to an S3 backend with locking before a second person applies.
 - **No authentication, no rate limiting, unbounded list:** `GET /tasks` returns everything and any client can post. Add pagination (`limit` and a cursor) and an AWS WAF rate rule, and authentication if tasks become per-user.

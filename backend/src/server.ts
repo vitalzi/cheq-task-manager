@@ -1,9 +1,9 @@
 import { buildApp } from './app';
-import { InMemoryTaskStore } from './tasks/inMemoryTaskStore';
+import { storeFromEnv } from './storeFromEnv';
 
 const port = Number(process.env.PORT) || 3000;
 
-buildApp(new InMemoryTaskStore(), { logger: true })
+buildApp(storeFromEnv(process.env), { logger: true })
   .listen({ port, host: '0.0.0.0' })
   .catch((err) => {
     console.error(err);

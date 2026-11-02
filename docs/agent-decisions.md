@@ -188,3 +188,14 @@ Small decisions the agent made while building, one entry per decision with the t
 - **Separate `jest.integration.config.js`, standalone (no `require` of the base config):** importing the base config tripped two lint rules, and the integration run needs only three settings. `jest.config.js` ignores `*.integration.test.ts`, so `npm test` stays dependency-free.
 - **`npm audit`:** 0 findings in production dependencies after adding the SDK. The 30 findings in the dev tree (Jest, typescript-eslint) are not new and I did not touch them.
 - **No `waitUntilTableExists` in the integration test:** found when the test first ran against DynamoDB Local. The waiter's default poll delay is 20 s, so a 10 s maximum is rejected, and Local creates tables already active anyway. The table name is recorded for cleanup right after creation.
+
+## Task 22: DynamoDB table, IAM and wiring
+
+- **A new task role, separate from the execution role:** the execution role lets ECS pull the image and write logs, and the container never runs under it. App permissions go on a task role, so the app can read and write the table and nothing else.
+- **Policy lists only `dynamodb:Scan` and `dynamodb:PutItem`, on the table ARN:** that is what `DynamoTaskStore` calls today. Task 24 adds `UpdateItem` and `DeleteItem` with the code that uses them.
+- **`AWS_REGION` passed explicitly in the task definition:** the SDK needs a region to find DynamoDB. I did not rely on Fargate setting it, because an unset region fails at the first request, not at startup.
+- **`storeFromEnv(env)` in its own file:** `server.ts` starts listening when imported, so it cannot be tested. The function takes `env` as an argument, so the test needs no environment changes. An empty `TABLE_NAME` counts as unset.
+- **Checked the DynamoDB path locally before AWS:** the SDK reads `AWS_ENDPOINT_URL_DYNAMODB`, so the real server ran against DynamoDB Local with no code for it. A task created before a restart was still listed after it.
+- **`desired_count` stays 1 and its comment is reworded:** more than one task is possible with DynamoDB, but scaling is not part of this task (see "Open questions").
+- **README "Scalability" and the Phase 1 Assumptions text are only partly updated:** the Scalability section is rewritten in Task 29, as planned. Assumptions now says the deployed API uses DynamoDB.
+
