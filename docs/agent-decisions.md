@@ -187,4 +187,4 @@ Small decisions the agent made while building, one entry per decision with the t
 - **Integration test: one table per test (`tasks-<uuid>`), deleted in `afterAll`:** tests cannot see each other's data. Dummy credentials and region `local`, because DynamoDB Local ignores them. The endpoint is `DYNAMODB_ENDPOINT`, default `http://localhost:8000`.
 - **Separate `jest.integration.config.js`, standalone (no `require` of the base config):** importing the base config tripped two lint rules, and the integration run needs only three settings. `jest.config.js` ignores `*.integration.test.ts`, so `npm test` stays dependency-free.
 - **`npm audit`:** 0 findings in production dependencies after adding the SDK. The 30 findings in the dev tree (Jest, typescript-eslint) are not new and I did not touch them.
-
+- **No `waitUntilTableExists` in the integration test:** found when the test first ran against DynamoDB Local. The waiter's default poll delay is 20 s, so a 10 s maximum is rejected, and Local creates tables already active anyway. The table name is recorded for cleanup right after creation.

@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { CreateTableCommand, DeleteTableCommand, DynamoDBClient, waitUntilTableExists } from '@aws-sdk/client-dynamodb';
+import { CreateTableCommand, DeleteTableCommand, DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 import { DynamoTaskStore } from './dynamoTaskStore';
 import { describeTaskStore } from './taskStore.contract';
@@ -13,7 +13,8 @@ const raw = new DynamoDBClient({
 const client = DynamoDBDocumentClient.from(raw);
 const tables: string[] = [];
 
-// A new table per test, so no test sees another one's tasks
+// A new table per test, so no test sees another one's tasks. DynamoDB Local creates
+// tables already active, so there is nothing to wait for.
 async function createStore(): Promise<DynamoTaskStore> {
   const name = `tasks-${randomUUID()}`;
   await raw.send(
@@ -24,7 +25,6 @@ async function createStore(): Promise<DynamoTaskStore> {
       BillingMode: 'PAY_PER_REQUEST',
     }),
   );
-  await waitUntilTableExists({ client: raw, maxWaitTime: 10 }, { TableName: name });
   tables.push(name);
   return new DynamoTaskStore(name, client);
 }
