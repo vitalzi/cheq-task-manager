@@ -3,9 +3,14 @@ output "alb_url" {
   value       = "http://${aws_lb.api.dns_name}"
 }
 
-output "s3_website_url" {
-  description = "Frontend URL"
-  value       = "http://${aws_s3_bucket_website_configuration.frontend.website_endpoint}"
+output "cloudfront_url" {
+  description = "Site and API entry point (HTTPS)"
+  value       = "https://${aws_cloudfront_distribution.main.domain_name}"
+}
+
+# Needed by the frontend workflow for cache invalidation (task 20)
+output "cloudfront_distribution_id" {
+  value = aws_cloudfront_distribution.main.id
 }
 
 output "ecr_repository_url" {

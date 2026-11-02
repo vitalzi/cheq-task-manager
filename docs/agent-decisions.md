@@ -152,3 +152,13 @@ Small decisions the agent made while building, one entry per decision with the t
 - **Scalability and observability sections describe this service, not generic advice:** the single-task limit comes from the in-memory store; observability lists what exists (JSON request lines to CloudWatch, ALB health check, rollout wait in CI) and what would be added. Nothing in those sections is claimed as built unless it is.
 - **Clean-clone check ran from the public GitHub repo into the scratchpad, not from the working tree:** `npm install`, lint, test (56 pass, 89% coverage), build, `npm start` plus `curl /health` and `POST /tasks`, the frontend lint and build, `docker build` with `id` showing `node`, and `terraform validate` (`init -backend=false`, no AWS calls). The clone was made before the README edits, so it checks the commands, which did not change, not the new text.
 - **Stale boxes ticked too:** B3, B5, E3, T2, F2-F5, F8, D1, D2, C2 and C3 were built and verified in earlier tasks. F9 (frontend tests, nice-to-have) stays unticked: not built.
+
+## Task 19: CloudFront and private bucket
+
+- **`CORS_ORIGIN` switched to the CloudFront URL in this task, not Task 20:** `ecs.tf` read the S3 website endpoint, which this task removes, so Terraform would not validate. Pointing it at CloudFront is the smallest fix. The cost is a new task definition and a rolling deploy at `apply`.
+- **Managed cache and origin-request policies looked up by name (data sources):** no hardcoded policy ids. API behaviors use `Managed-CachingDisabled` and `Managed-AllViewerExceptHostHeader` (forwards `Origin` and `Content-Type`, not `Host`, which would not match the ALB's domain).
+- **`PriceClass_100`:** Europe and North America edges only, the cheapest class; the users are in one region.
+- **`viewer_protocol_policy = redirect-to-https` on all behaviors:** plain-HTTP requests to the CloudFront address are redirected, not served.
+- **`s3_website_url` output removed:** the endpoint no longer exists. `cloudfront_url` and `cloudfront_distribution_id` replace it (the id is for Task 20).
+- **README Live deployment section left for Task 20:** the CloudFront URL does not exist until the owner applies, and the spec puts the "old URLs no longer the entry point" note in Task 20.
+

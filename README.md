@@ -68,14 +68,15 @@ All AWS resources are Terraform in `infra/`, with local state (gitignored). CI d
 ```bash
 cd infra
 terraform init
-terraform plan    # review: 19 resources to add
+terraform plan    # review: 20 resources to add
 terraform apply   # run once from a laptop
-terraform output  # alb_url, s3_website_url, ecr_repository_url, ...
+terraform output  # alb_url, cloudfront_url, ecr_repository_url, ...
 ```
 
 - **API:** ECS Fargate (one task, 0.25 vCPU / 512 MB) behind an Application Load Balancer that checks `GET /health`. It runs in the default VPC's public subnets with no NAT gateway; the task's security group accepts port 3000 only from the load balancer.
-- **Frontend:** a public S3 bucket with website hosting (HTTP). Block Public Access is off for this bucket only.
-- **Wiring:** Terraform passes the S3 website URL to the container as `CORS_ORIGIN`; the ALB URL (`alb_url`) is what the frontend build takes as `VITE_API_URL`.
+- **Frontend and HTTPS:** a CloudFront distribution is the entry point at `https://<id>.cloudfront.net` (`cloudfront_url`), which has a valid certificate without a domain. Its default behavior serves the site from a private S3 bucket; `/tasks*` and `/health` go to the ALB with caching off and all methods allowed. The hop from CloudFront to the ALB is plain HTTP inside AWS.
+- **Why the bucket is private:** Block Public Access is on, website hosting is off, and the bucket policy lets only this one distribution read objects (Origin Access Control). Nobody can reach the files except through CloudFront, so there is one front door that serves HTTPS.
+- **Wiring:** Terraform passes the CloudFront URL to the container as `CORS_ORIGIN`; the ALB URL (`alb_url`) is still what the current frontend build takes as `VITE_API_URL` until the pipeline is switched to the same-origin setup.
 - **First apply:** the ECS service is created before any image exists in ECR, so its task cannot start until the first image is pushed (the first push to `main` does this).
 - **CI access:** GitHub Actions authenticates with OpenID Connect (OIDC), so no AWS access keys are stored anywhere. Terraform creates the GitHub OIDC provider and one IAM role, `task-manager-ci`, that only workflow runs on `main` of this repository can assume. The trust rule matches the `sub` claim GitHub issues for the repo, which includes the owner and repo IDs (`github_sub_prefix`), so a deleted and re-created repo with the same name cannot reuse the role. Its policy allows only ECR push on the API repository, `ecs:UpdateService` and `ecs:DescribeServices` on the API service (the workflow waits for the rollout to become stable), and S3 list/write/delete on the frontend bucket. The PDF asks for credentials as CI secrets; here the only thing stored in GitHub is the role ARN (a repository variable, not a secret), and access keys in secrets were the considered alternative.
 - **GitHub variables:** after `apply`, the workflows read six repository variables (Settings → Secrets and variables → Actions → Variables), each set from a Terraform output with `gh variable set`: `CI_ROLE_ARN` (`ci_role_arn`), `ECR_REPOSITORY_URL` (`ecr_repository_url`), `ECS_CLUSTER_NAME` (`ecs_cluster_name`), `ECS_SERVICE_NAME` (`ecs_service_name`), `FRONTEND_BUCKET_NAME` (`frontend_bucket_name`) and `API_URL` (`alb_url`, used as `VITE_API_URL`). None is a secret.
@@ -121,8 +122,7 @@ Where the assignment was unclear, these are the readings used:
 Each item says how it would be completed.
 
 - **No persistence:** data is lost on every deploy. Add a `DynamoTaskStore` (on-demand table, `id` as key) that passes the existing contract test, then pass it to `buildApp` in `server.ts`.
-- **No HTTPS:** add an ACM certificate and an HTTPS listener on the ALB, which needs a domain. With a domain, put CloudFront in front of a private S3 bucket and route `/tasks*` and `/health` to the ALB, which also removes the CORS setup.
-- **Public S3 bucket:** it must be public for plain website hosting. CloudFront with a private bucket removes this.
+- **Plain HTTP between CloudFront and the ALB:** users get HTTPS, but the last hop inside AWS is HTTP because the ALB has no certificate. With a domain, add an ACM certificate and an HTTPS listener on the ALB and switch the origin to `https-only`.
 - **Terraform state on a laptop:** move it to an S3 backend with locking before a second person applies.
 - **No authentication, no rate limiting, unbounded list:** `GET /tasks` returns everything and any client can post. Add pagination (`limit` and a cursor) and an AWS WAF rate rule, and authentication if tasks become per-user.
 - **No frontend tests:** optional in the assignment. Component tests with Vitest or Jest and Testing Library would cover the form validation, double-submit and the three list states.

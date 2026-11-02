@@ -23,7 +23,7 @@ Phase 2 is the owner's own extras on top of the finished PDF MVP (`docs/tasks/ph
 
 | # | Task | Area | Status |
 |---|------|------|--------|
-| 19 | CloudFront: private bucket and distribution (Terraform) | Infra | [ ] |
+| 19 | CloudFront: private bucket and distribution (Terraform) | Infra | [x] |
 | 20 | CloudFront: switch the pipeline and live check | CI, frontend | [ ] |
 | 21 | `DynamoTaskStore` and integration test | Backend | [ ] |
 | 22 | DynamoDB table, IAM and wiring (Terraform) | Infra, backend | [ ] |
@@ -52,7 +52,14 @@ The goal is HTTPS for the user without buying a domain: CloudFront's free `https
   - **CI permission:** add `cloudfront:CreateInvalidation` on the one distribution to the CI role (Terraform, applied by the owner)
   - **Frontend workflow:** after `aws s3 sync`, create an invalidation for `/index.html`; the build gets an empty `VITE_API_URL` so the app calls its own origin
   - **GitHub variables:** set the new distribution id; `API_URL` is no longer used by the frontend build
-  - **API:** `CORS_ORIGIN` points at the CloudFront URL (or the CORS plugin is removed; see "Open questions")
+  - **API:** `CORS_ORIGIN` already points at the CloudFront URL (done in Task 19, because `ecs.tf` read the removed website endpoint). What is left is the decision to keep or remove the CORS plugin (see "Open questions")
+- **Findings from Task 19 to act on:**
+  - **Order matters:** (1) owner applies the CI role change (`cloudfront:CreateInvalidation`), (2) owner sets the `CLOUDFRONT_DISTRIBUTION_ID` variable, (3) only then push `frontend/`. Otherwise the workflow fails at the invalidation step
+  - **Degraded gap:** from the Task 19 `apply` until this task's deploy, the live site shows the old build, which calls the ALB over plain HTTP from an HTTPS page. The browser blocks that (mixed content), so the task list does not load. This task closes the gap; do it right after Task 19
+  - **Empty `VITE_API_URL`:** check that `frontend/src/api.ts` builds same-origin paths (`/tasks`, `/health`) when it is empty, and that the Vite dev proxy still works locally, before relying on it
+  - **README, four places:** "Live deployment" (frontend and API URLs become the CloudFront address; `.../health` for the API; the ALB and S3 website URLs noted as no longer the entry point), the Infrastructure "Wiring" bullet (it says the build still takes the ALB URL as `VITE_API_URL`), the "GitHub variables" bullet (add the distribution id, drop `API_URL` from the frontend build), and the "plain HTTP" sentence under Live deployment
+  - **Missing files:** with the private bucket and an OAC policy that grants only `s3:GetObject`, a missing key returns `403`, not `404`. Harmless here (no router); it matters only if a 404 page is added later
+  - **Caching:** the default behavior uses the managed `CachingOptimized` policy (up to a day for anything without `Cache-Control`). Hashed assets get new names on each build, so only `/index.html` needs the invalidation
 - **Done when:** a push touching `frontend/` runs green; the site opens over `https://` with no browser warning; badge is green; a task created in the UI is still there after a reload; the old S3 website URL and plain-HTTP ALB paths are noted in the README as no longer the entry point
 
 ## Persistence (DynamoDB)
@@ -126,4 +133,5 @@ The goal is HTTPS for the user without buying a domain: CloudFront's free `https
 - **Task 20, CORS:** after CloudFront the browser calls its own origin, so CORS is not needed. Keep `@fastify/cors` for local use and direct API calls, or remove the plugin and its tests?
 - **Task 25, `PATCH` or `PUT`:** `PATCH` with only `title` fits a partial update; `PUT` would replace the whole task. Proposed: `PATCH`
 - **Task 22, more than one task:** once the store is DynamoDB, `desired_count` could go above 1 and auto scaling could be added. Not in this phase unless the owner asks
+- **Unknown paths and the 404 fallback (Task 19 / Task 20):** the distribution has no `custom_error_response`, so a missing file on the site (for example `/foo`) shows S3's raw error page. The bucket is private with an OAC policy that grants only `s3:GetObject`, so a missing key returns `403`, not `404`. No fallback is needed today: the site has one page and no client-side router, so every real URL is a real file or an API path. If a router is added, map both `403` and `404` to `/index.html` with status `200` in `cloudfront.tf`. Open choice if no router comes: leave S3's error page, or map `403`/`404` to a small custom `404.html` served with a `404` status. Proposed: leave as is
 - **Optional hardening, not scheduled:** limit the ALB's security group to CloudFront's address range so the plain-HTTP ALB address stops answering directly
