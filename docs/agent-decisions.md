@@ -175,3 +175,16 @@ Small decisions the agent made while building, one entry per decision with the t
 - **Test-first rule not applicable:** the change deletes behavior and adds none, so there is no new failing test. The existing suite, run before and after, is the guard.
 - **Left as they were, for the owner to decide:** `CLAUDE.md` (stack section) and `docs/decisions.md` still mention CORS; `docs/plan.md` and the Phase 1 task text are history and are not rewritten.
 
+## Task 21: DynamoTaskStore
+
+- **Contract factory may be async (`() => TaskStore | Promise<TaskStore>`):** each DynamoDB test needs a fresh table, and creating one is async. The in-memory test is unchanged.
+- **Order test uses 10 tasks, and the timestamp helper pads the seconds:** a scan returns items in hash order, so with 3 tasks an unsorted store passes by chance one time in six. With 10 it almost never does. The old helper only worked up to 9.
+- **`list()` is a paginated `Scan` plus a sort in code:** the table has only `id` as its key, so DynamoDB cannot order by `createdAt`. A global secondary index would need a constant partition key for no benefit at this size. The README already lists the unbounded list as a known limit.
+- **Plain `<`/`>` comparison for the sort, not `localeCompare`:** ISO 8601 UTC strings sort by time as text, and collation rules could treat the punctuation differently.
+- **Constructor is `(tableName, client)` with a `DynamoDBDocumentClient`:** no manual attribute marshalling, and tests pass a fake client for the pagination case.
+- **Small unit test with a fake client (in `npm test`) for pagination and the table name:** a real scan only paginates above 1 MB, which is not worth building in DynamoDB Local. Everything else is tested against the real thing.
+- **`create` is a plain `Put`, no condition:** the service generates random UUIDs, and the in-memory store does not reject duplicates either. Update and delete in Task 24 do need existence conditions.
+- **Integration test: one table per test (`tasks-<uuid>`), deleted in `afterAll`:** tests cannot see each other's data. Dummy credentials and region `local`, because DynamoDB Local ignores them. The endpoint is `DYNAMODB_ENDPOINT`, default `http://localhost:8000`.
+- **Separate `jest.integration.config.js`, standalone (no `require` of the base config):** importing the base config tripped two lint rules, and the integration run needs only three settings. `jest.config.js` ignores `*.integration.test.ts`, so `npm test` stays dependency-free.
+- **`npm audit`:** 0 findings in production dependencies after adding the SDK. The 30 findings in the dev tree (Jest, typescript-eslint) are not new and I did not touch them.
+

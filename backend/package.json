@@ -7,9 +7,12 @@
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/server.js",
     "test": "jest",
+    "test:integration": "jest --config jest.integration.config.js",
     "lint": "eslint ."
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1161.0",
+    "@aws-sdk/lib-dynamodb": "^3.1161.0",
     "fastify": "^5.12.7"
   },
   "devDependencies": {

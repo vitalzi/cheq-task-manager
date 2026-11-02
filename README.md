@@ -34,6 +34,17 @@ npm start        # runs the compiled build
 open coverage/index.html   # HTML coverage report (after npm test)
 ```
 
+**Integration test (DynamoDB Local).** `DynamoTaskStore` runs the same contract test as the in-memory store, against a local DynamoDB in Docker. It is a separate script so `npm test` needs nothing but Node.
+
+```bash
+docker run --rm -d -p 8000:8000 --name dynamodb-local amazon/dynamodb-local -jar DynamoDBLocal.jar -inMemory
+cd backend
+npm run test:integration   # DYNAMODB_ENDPOINT overrides http://localhost:8000
+docker stop dynamodb-local
+```
+
+Each test creates its own table and the tests delete them afterwards. `DynamoTaskStore` is not wired into the server yet (that is a separate step), so the deployed API still uses the in-memory store.
+
 ## Frontend
 
 Requires Node 24 and npm. Start the backend first (see above).

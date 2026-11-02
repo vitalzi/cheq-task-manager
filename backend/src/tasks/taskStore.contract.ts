@@ -2,18 +2,19 @@ import type { Task, TaskStore } from './taskStore';
 
 // Shared behaviour every TaskStore implementation must satisfy.
 // Not a *.test.ts file: each implementation's own test file calls it.
-export function describeTaskStore(createStore: () => TaskStore): void {
+// createStore may be async: a database-backed store needs a fresh table per test.
+export function describeTaskStore(createStore: () => TaskStore | Promise<TaskStore>): void {
   const task = (n: number): Task => ({
     id: `id-${n}`,
     title: `Task ${n}`,
-    createdAt: `2026-11-02T09:30:0${n}Z`,
+    createdAt: `2026-11-02T09:30:${String(n).padStart(2, '0')}Z`,
   });
 
   describe('TaskStore contract', () => {
     let store: TaskStore;
 
-    beforeEach(() => {
-      store = createStore();
+    beforeEach(async () => {
+      store = await createStore();
     });
 
     it('lists no tasks when empty', async () => {
@@ -28,11 +29,12 @@ export function describeTaskStore(createStore: () => TaskStore): void {
     });
 
     it('lists tasks in creation order, oldest first', async () => {
-      await store.create(task(1));
-      await store.create(task(2));
-      await store.create(task(3));
+      // Ten tasks: a store that does not sort (DynamoDB scans in hash order) would
+      // pass three by chance one time in six, and ten almost never.
+      const tasks = Array.from({ length: 10 }, (_, i) => task(i + 1));
+      for (const t of tasks) await store.create(t);
 
-      expect(await store.list()).toEqual([task(1), task(2), task(3)]);
+      expect(await store.list()).toEqual(tasks);
     });
 
     it('is not affected by changes to the array returned by list()', async () => {

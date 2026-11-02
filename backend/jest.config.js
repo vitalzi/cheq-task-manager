@@ -6,6 +6,8 @@ module.exports = {
   // Let ts-jest transpile it (needs allowJs in tsconfig.json) instead of ignoring node_modules.
   transform: { '^.+\\.[tj]sx?$': 'ts-jest' },
   transformIgnorePatterns: ['/node_modules/(?!cookie/)'],
+  // Needs DynamoDB Local, so it only runs through `npm run test:integration`
+  testPathIgnorePatterns: ['\\.integration\\.test\\.ts$'],
   collectCoverage: true,
   // Listed explicitly so files no test imports (server.ts) still count; the
   // shared contract test is test code, not product code.
