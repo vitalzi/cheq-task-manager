@@ -48,13 +48,16 @@ Do not change or add to this without my explicit approval. Reasons are in
   connects to the rest).
 - One task = one commit. Only commit when I say so.
 - Commit message format: `Task <N>: <short description>`, for example
-  `Task 1: Repo foundation`. N is the task number in `docs/tasks.md`.
+  `Task 1: Repo foundation`. N is the task number in `docs/tasks/` (numbering runs on across the
+  phase files: Phase 1 is 1-18, Phase 2 starts at 19).
 - Write a failing test first for core logic, then the minimal code to pass it.
 
 ### Per-task loop
 
-Tasks live in `docs/tasks.md` (tracker table, global constraints, review
-focus). Follow this loop for every task, in order:
+Tasks live in `docs/tasks/`: `phase-1.md` (the PDF MVP, Tasks 1-18, done) and
+`phase-2.md` (my extras, Task 19 on, current). Each has a tracker table and
+global constraints; Phase 1 also has the review focus. Follow this loop for
+every task, in order:
 
 1. **Announce:** 2-4 sentences on what you will do and which files you touch.
 2. **Skills (mandatory, no judgment calls):**
@@ -69,7 +72,7 @@ focus). Follow this loop for every task, in order:
 4. **Green:** write the minimal code and run the test to show it passes.
 5. **Verify:** run the task's "done when" check and show the real output.
 6. **Walkthrough:** each new or changed file, briefly.
-7. **Track:** set the task's status in the `docs/tasks.md` tracker.
+7. **Track:** set the task's status in the tracker of its phase file.
 8. **Stop:** wait for my "commit" and/or "next". Never start the next task
    or commit on your own.
 
@@ -103,8 +106,8 @@ focus). Follow this loop for every task, in order:
 
 - **`docs/requirements.md`:** checklist derived from the PDF (must / nice-to-have /
   ambiguous). Source of truth for scope.
-- **`docs/tasks.md`:** small tasks, each tied to a requirement, each with a clear
-  "done" check.
+- **`docs/tasks/phase-1.md`, `docs/tasks/phase-2.md`:** small tasks, each with a
+  clear "done" check; Phase 1 tasks are tied to a requirement.
 - **`docs/decisions.md`:** decisions I approved or agreed beforehand. Edit only
   with my approval.
 - **`docs/agent-decisions.md`:** small decisions you make during implementation.

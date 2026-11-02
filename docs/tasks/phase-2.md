@@ -1,6 +1,6 @@
 # Tasks: Phase 2
 
-Phase 2 is the owner's own extras on top of the finished PDF MVP (`docs/tasks.md`, Tasks 1-18). Nothing here is graded by the PDF. Scope and reasons come from `docs/requirements.md` (Phase 2 section) and `docs/decisions.md`.
+Phase 2 is the owner's own extras on top of the finished PDF MVP (`docs/tasks/phase-1.md`, Tasks 1-18). Nothing here is graded by the PDF. Scope and reasons come from `docs/requirements.md` (Phase 2 section) and `docs/decisions.md`.
 
 **Rules**
 

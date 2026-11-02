@@ -1,6 +1,6 @@
 # Implementation plan
 
-Scope comes from `docs/requirements.md`, reasons from `docs/decisions.md`. This page is the "what and in what order". The task list (`docs/tasks.md`) breaks it down further.
+Scope comes from `docs/requirements.md`, reasons from `docs/decisions.md`. This page is the "what and in what order". The task lists (`docs/tasks/phase-1.md`, `docs/tasks/phase-2.md`) breaks it down further.
 
 ## Architecture
 

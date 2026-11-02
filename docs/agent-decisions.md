@@ -52,7 +52,7 @@ Small decisions the agent made while building, one entry per decision with the t
 
 ## Task 8: Frontend scaffold
 
-- **No frontend tests, no test dependency:** `plan.md` and `decisions.md` skip frontend tests in the MVP and Jest/Vitest for React is not in the approved stack. The TDD skill conflicts; CLAUDE.md wins. Check is the browser check from tasks.md.
+- **No frontend tests, no test dependency:** `plan.md` and `decisions.md` skip frontend tests in the MVP and Jest/Vitest for React is not in the approved stack. The TDD skill conflicts; CLAUDE.md wins. Check is the browser check from `docs/tasks/phase-1.md`.
 - **`typescript@~5.9` in the frontend:** npm picked 7.x by default; matching the backend keeps one compiler version across the repo.
 - **`@vitejs/plugin-react` added:** the standard glue that makes Vite compile JSX with Fast Refresh. Needed for any Vite + React app, so treated as part of the approved stack.
 - **Proxy target hardcoded to `http://localhost:3000`:** an env override needs `@types/node` for no current benefit. It is a dev-only setting.

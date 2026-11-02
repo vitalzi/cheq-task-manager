@@ -51,7 +51,7 @@ Every time the owner corrected the agent or scrutinized its output and asked for
 - **Pushback:** the owner finds classes more readable and prefers them wherever they fit
 - **Outcome:**
   - Service rewritten as `class TaskService` with the store in the constructor; tests changed first, then code
-  - `docs/tasks.md` (Tasks 4 and 5) updated to the class
+  - `docs/tasks/phase-1.md` (Tasks 4 and 5) updated to the class
   - New rule in `CLAUDE.md`: prefer classes, except stateless helpers and framework-shaped functions such as `buildApp` and React components
 - **Lesson:** the agent followed the plan without flagging that "factory vs class" was an open style choice. Surface style choices that the plan fixes by accident.
 
@@ -89,7 +89,7 @@ Every time the owner corrected the agent or scrutinized its output and asked for
 - **Pushback:** the owner said waiting for the service to become stable is common practice and Task 15 should do it
 - **Outcome:**
   - `ecs:DescribeServices` added to the role before the Task 14 apply, so no second apply is needed
-  - Task 15 in `docs/tasks.md` now includes `aws ecs wait services-stable`, and its "done when" requires a healthy rollout
+  - Task 15 in `docs/tasks/phase-1.md` now includes `aws ecs wait services-stable`, and its "done when" requires a healthy rollout
   - Without the wait, a pipeline goes green while a broken image is still failing health checks
 - **Lesson:** the agent followed the task list literally and deferred a known gap instead of asking. When the plan leaves out a standard step, such as verifying a deploy, propose it in one sentence at the time.
 
