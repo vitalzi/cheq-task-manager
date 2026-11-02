@@ -162,3 +162,10 @@ Small decisions the agent made while building, one entry per decision with the t
 - **`s3_website_url` output removed:** the endpoint no longer exists. `cloudfront_url` and `cloudfront_distribution_id` replace it (the id is for Task 20).
 - **README Live deployment section left for Task 20:** the CloudFront URL does not exist until the owner applies, and the spec puts the "old URLs no longer the entry point" note in Task 20.
 
+## Task 20: Pipeline switch
+
+- **`@fastify/cors` kept (proposed default, owner to confirm):** it still serves local use and direct API calls, and removing it means touching code and tests for no gain. `CORS_ORIGIN` already holds the CloudFront URL from Task 19.
+- **`VITE_API_URL` removed from the workflow instead of set to an empty string:** `api.ts` uses `?? ''`, so an unset variable gives same-origin paths, and there is no `.env` file that could set it. One line less, same result.
+- **Invalidation of `/index.html` only, no wait:** hashed assets get new names on each build. `aws cloudfront wait` would need an extra `cloudfront:GetInvalidation` permission, and `index.html` is served with `no-cache` anyway.
+- **Stale README text from Task 19 fixed here:** the "Frontend in its own public S3 bucket" design bullet and the `alb_url` output description still described the old setup.
+

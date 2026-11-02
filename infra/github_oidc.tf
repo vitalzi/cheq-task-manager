@@ -81,6 +81,12 @@ resource "aws_iam_role_policy" "ci" {
         Action   = ["s3:PutObject", "s3:DeleteObject"]
         Resource = "${aws_s3_bucket.frontend.arn}/*"
       },
+      {
+        Sid      = "FrontendInvalidate"
+        Effect   = "Allow"
+        Action   = "cloudfront:CreateInvalidation"
+        Resource = aws_cloudfront_distribution.main.arn
+      },
     ]
   })
 }

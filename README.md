@@ -4,11 +4,11 @@ A small task manager: a REST API (create and list tasks) with a React frontend, 
 
 ## Live deployment
 
-- **Frontend:** http://task-manager-frontend-762844037228.s3-website.eu-central-1.amazonaws.com
-- **API:** http://task-manager-api-1306913359.eu-central-1.elb.amazonaws.com (`GET /health`, `GET /tasks`, `POST /tasks`)
+- **Frontend:** https://d1vsq2jivxqe81.cloudfront.net
+- **API:** the same address (`GET /health`, `GET /tasks`, `POST /tasks`); CloudFront sends `/tasks*` and `/health` to the API
 - **Repository:** https://github.com/vitalzi/cheq-task-manager
 
-Both are plain HTTP (see Assumptions), so a browser in HTTPS-only mode shows a warning first. Tasks live in memory, so they disappear on every deploy or restart.
+The site and the API share one HTTPS address with a valid certificate. The old S3 website URL no longer exists, and the ALB's plain-HTTP address still answers but is not the entry point (see Unfinished and known limits). Tasks live in memory, so they disappear on every deploy or restart.
 
 ## Folder map
 
@@ -46,7 +46,7 @@ npm run lint     # ESLint (typescript-eslint and React hooks rules)
 npm run build    # type-check, then build to frontend/dist
 ```
 
-- **`VITE_API_URL`:** the API base URL baked into the build. Leave it unset locally: the app calls its own origin and the Vite dev server proxies `/health` and `/tasks` to `http://localhost:3000`. Set it for a deployed build, for example `VITE_API_URL=http://<alb-dns> npm run build`; the API must then allow the page's origin through `CORS_ORIGIN`.
+- **`VITE_API_URL`:** the API base URL baked into the build. Leave it unset locally: the app calls its own origin and the Vite dev server proxies `/health` and `/tasks` to `http://localhost:3000`. The deployed build leaves it unset too, because CloudFront serves the site and the API from one origin. Set it only to point a build at a different API; the API must then allow the page's origin through `CORS_ORIGIN`.
 
 ## Docker
 
@@ -76,10 +76,10 @@ terraform output  # alb_url, cloudfront_url, ecr_repository_url, ...
 - **API:** ECS Fargate (one task, 0.25 vCPU / 512 MB) behind an Application Load Balancer that checks `GET /health`. It runs in the default VPC's public subnets with no NAT gateway; the task's security group accepts port 3000 only from the load balancer.
 - **Frontend and HTTPS:** a CloudFront distribution is the entry point at `https://<id>.cloudfront.net` (`cloudfront_url`), which has a valid certificate without a domain. Its default behavior serves the site from a private S3 bucket; `/tasks*` and `/health` go to the ALB with caching off and all methods allowed. The hop from CloudFront to the ALB is plain HTTP inside AWS.
 - **Why the bucket is private:** Block Public Access is on, website hosting is off, and the bucket policy lets only this one distribution read objects (Origin Access Control). Nobody can reach the files except through CloudFront, so there is one front door that serves HTTPS.
-- **Wiring:** Terraform passes the CloudFront URL to the container as `CORS_ORIGIN`; the ALB URL (`alb_url`) is still what the current frontend build takes as `VITE_API_URL` until the pipeline is switched to the same-origin setup.
+- **Wiring:** Terraform passes the CloudFront URL to the container as `CORS_ORIGIN`; the frontend build sets no `VITE_API_URL`, so the browser calls its own origin and needs no CORS. The plugin stays for local use and direct API calls.
 - **First apply:** the ECS service is created before any image exists in ECR, so its task cannot start until the first image is pushed (the first push to `main` does this).
-- **CI access:** GitHub Actions authenticates with OpenID Connect (OIDC), so no AWS access keys are stored anywhere. Terraform creates the GitHub OIDC provider and one IAM role, `task-manager-ci`, that only workflow runs on `main` of this repository can assume. The trust rule matches the `sub` claim GitHub issues for the repo, which includes the owner and repo IDs (`github_sub_prefix`), so a deleted and re-created repo with the same name cannot reuse the role. Its policy allows only ECR push on the API repository, `ecs:UpdateService` and `ecs:DescribeServices` on the API service (the workflow waits for the rollout to become stable), and S3 list/write/delete on the frontend bucket. The PDF asks for credentials as CI secrets; here the only thing stored in GitHub is the role ARN (a repository variable, not a secret), and access keys in secrets were the considered alternative.
-- **GitHub variables:** after `apply`, the workflows read six repository variables (Settings → Secrets and variables → Actions → Variables), each set from a Terraform output with `gh variable set`: `CI_ROLE_ARN` (`ci_role_arn`), `ECR_REPOSITORY_URL` (`ecr_repository_url`), `ECS_CLUSTER_NAME` (`ecs_cluster_name`), `ECS_SERVICE_NAME` (`ecs_service_name`), `FRONTEND_BUCKET_NAME` (`frontend_bucket_name`) and `API_URL` (`alb_url`, used as `VITE_API_URL`). None is a secret.
+- **CI access:** GitHub Actions authenticates with OpenID Connect (OIDC), so no AWS access keys are stored anywhere. Terraform creates the GitHub OIDC provider and one IAM role, `task-manager-ci`, that only workflow runs on `main` of this repository can assume. The trust rule matches the `sub` claim GitHub issues for the repo, which includes the owner and repo IDs (`github_sub_prefix`), so a deleted and re-created repo with the same name cannot reuse the role. Its policy allows only ECR push on the API repository, `ecs:UpdateService` and `ecs:DescribeServices` on the API service (the workflow waits for the rollout to become stable), S3 list/write/delete on the frontend bucket, and `cloudfront:CreateInvalidation` on the one distribution. The PDF asks for credentials as CI secrets; here the only thing stored in GitHub is the role ARN (a repository variable, not a secret), and access keys in secrets were the considered alternative.
+- **GitHub variables:** after `apply`, the workflows read six repository variables (Settings → Secrets and variables → Actions → Variables), each set from a Terraform output with `gh variable set`: `CI_ROLE_ARN` (`ci_role_arn`), `ECR_REPOSITORY_URL` (`ecr_repository_url`), `ECS_CLUSTER_NAME` (`ecs_cluster_name`), `ECS_SERVICE_NAME` (`ecs_service_name`), `FRONTEND_BUCKET_NAME` (`frontend_bucket_name`) and `CLOUDFRONT_DISTRIBUTION_ID` (`cloudfront_distribution_id`). None is a secret. The old `API_URL` variable is no longer used and can be deleted.
 - **Region:** `eu-central-1`; change with `-var aws_region=...`.
 - **Teardown:** `terraform destroy` (the ECR repository and the S3 bucket are emptied automatically).
 
@@ -93,15 +93,15 @@ Two GitHub Actions workflows run on push to `main`, each only when its own folde
   - **Rollout:** the run waits for the service to become stable, so a new task that never turns healthy fails the run instead of going green. The old task keeps serving until then.
   - **Overlap:** runs queue and never cancel each other mid-rollout.
 - **Frontend (`.github/workflows/frontend.yml`, on `frontend/**`):**
-  - **Steps:** `npm ci`, `npm run lint`, `npm run build` (type-check, then Vite build) with `VITE_API_URL` set from the `API_URL` variable, then `aws s3 sync` to the bucket.
+  - **Steps:** `npm ci`, `npm run lint`, `npm run build` (type-check, then Vite build) with no `VITE_API_URL` (same-origin), then `aws s3 sync` to the bucket and a CloudFront invalidation of `/index.html`.
   - **Gate:** a lint or type error stops the run before anything reaches AWS. The frontend has no tests (optional in the assignment).
-  - **Caching:** hashed files under `assets/` are uploaded first with a one-year `immutable` cache and `--delete`; `index.html` goes last with `no-cache`, so a visitor never gets a page that points at files not yet uploaded, and a new build shows up on the next load.
+  - **Caching:** hashed files under `assets/` are uploaded first with a one-year `immutable` cache and `--delete`; `index.html` goes last with `no-cache`, so a visitor never gets a page that points at files not yet uploaded. The invalidation makes CloudFront drop its copy of `index.html`, so a new build shows on the next load.
 
 ## Design choices
 
 - **ECS Fargate behind an ALB instead of the assignment's default EC2:** the ALB gives a real health check on `/health`, a stable DNS name and rolling deploys that keep the old task serving until the new one is healthy; deploying needs no SSH keys. Cost: about $25-30 a month, mostly the ALB.
 - **In-memory store behind an async `TaskStore` interface:** the assignment allows it and it keeps the first version small. `buildApp(store)` takes the store as an argument, so a database-backed store needs no change to the routes or the service. The same contract test runs against any implementation.
-- **Frontend in its own public S3 bucket:** it releases independently of the API. The browser calls the ALB directly, so the API allows only the S3 website origin through CORS (`CORS_ORIGIN`, set by Terraform).
+- **Frontend in its own private S3 bucket behind CloudFront:** it releases independently of the API. CloudFront serves the site and routes `/tasks*` and `/health` to the ALB, so the browser sees one HTTPS origin and needs no CORS. `@fastify/cors` stays for local use and direct API calls, allowing only `CORS_ORIGIN` (the CloudFront URL, set by Terraform).
 - **Validation split:** the route schema checks the type (`title` is a string); the service trims and checks the length, so a title of 200 characters plus surrounding spaces is valid and 201 after trimming is a `400`. Every error, including unknown routes and malformed JSON, is `{ "error": "<message>" }`.
 - **Tests in three layers:** service unit tests with a mocked store, HTTP tests through `app.inject()` against the real in-memory store, and the shared store contract test. Coverage is enforced at 80% in the Jest config.
 

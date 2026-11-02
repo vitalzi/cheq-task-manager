@@ -1,5 +1,5 @@
 output "alb_url" {
-  description = "API base URL; use as VITE_API_URL"
+  description = "Direct API address; no longer the entry point, use cloudfront_url"
   value       = "http://${aws_lb.api.dns_name}"
 }
 

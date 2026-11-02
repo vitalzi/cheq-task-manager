@@ -32,15 +32,15 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      # A lint error or build failure stops the run here, before anything reaches AWS
+      # A lint error or build failure stops the run here, before anything reaches AWS.
+      # VITE_API_URL stays unset: the app calls its own origin, and CloudFront routes
+      # /tasks and /health to the API.
       - name: Install, lint and build
         working-directory: frontend
         run: |
           npm ci
           npm run lint
           npm run build
-        env:
-          VITE_API_URL: ${{ vars.API_URL }}
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -58,3 +58,10 @@ jobs:
             --cache-control "no-cache" --content-type "text/html"
         env:
           BUCKET: ${{ vars.FRONTEND_BUCKET_NAME }}
+
+      # CloudFront keeps its own copy of index.html; hashed assets have new names
+      # on every build, so this is the only path that can go stale.
+      - name: Invalidate index.html
+        run: aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths /index.html
+        env:
+          DISTRIBUTION_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
