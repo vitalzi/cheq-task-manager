@@ -313,3 +313,9 @@ Small decisions the agent made while building, one entry per decision with the t
 - **Unused tokens:** the toast tokens are gone from the handoff, so the copy no longer carries them.
 - **Verified:** 79 tests; 6 mutations of the new logic (focus on Cancel, the priority filter, the previous-row fallback, the no-match condition, Esc, Clear filters) all caught after one test was added for the priority-only no-match case; checked in a browser at desktop width and in a 375 px iframe with no horizontal scroll.
 
+
+## Review fixes (tracker setup)
+
+- **Brief's task numbers kept (31-42), worked out of order:** the commits then match the review's fix brief one to one; the tracker row order is the order of work.
+- **Skipped tasks recorded in the phase file, and their gaps in the README (Task 32):** a reader sees what was weighed and left, not just what was done.
+- **29b set to `[x]`:** it was committed in `7f62224`; the brief's Task 42 would have done this, and 42 is not taken.

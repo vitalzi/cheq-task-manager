@@ -34,9 +34,17 @@ Phase 2 is the owner's own extras on top of the finished PDF MVP (`docs/tasks/ph
 | 27 | Frontend: priority on create, edit a task, mark done | Frontend | [x] |
 | 28 | Frontend: delete a task | Frontend | [x] |
 | 29 | Styling from the owner's mocks | Frontend | [x] |
-| 29b | Design update (layout D) | Frontend | [~] |
+| 29b | Design update (layout D) | Frontend | [x] |
 | 29c | Design update (layout D v2) | Frontend | [x] |
-| 30 | README update and clean-clone re-check | Docs | [ ] |
+| | **Review fixes** (in this order) | | |
+| 31 | Health badge shows "down" when the API fails mid-session | Frontend | [ ] |
+| 32 | README: correctness, scope, structure, AI example | Docs | [ ] |
+| 41 | Data model reasoning made honest | Backend, docs | [ ] |
+| 35 | CI triggers: `workflow_dispatch` and `.nvmrc` | CI | [ ] |
+| 34 | Small fixes (uptime test, ESLint ignore, validation message, stale comment) | Backend, frontend | [ ] |
+| 38 | ALB accepts traffic only from CloudFront (Terraform) | Infra | [ ] |
+| 37 | DynamoDB integration test in CI | CI | [ ] |
+| 30 | README update and clean-clone re-check (runs last) | Docs | [ ] |
 
 ## HTTPS (CloudFront)
 
@@ -162,6 +170,57 @@ The owner's last design update (`docs/design/`, `States.dc.html` replaces `Edito
 - **What:** update the README for everything Phase 2 changed (HTTPS address, private bucket, DynamoDB, the task fields, new endpoints, edit, done, priority and delete in the UI, the scalability section, which can now say a second task is possible once the store is DynamoDB); then re-run the clean-clone check on the final commit, by a subagent with no context, following the README literally
 - **Done when:** the README matches the live deployment; the clean-clone report passes every runnable step, with anything it could not run listed as not verified
 
+## Review fixes
+
+From an independent review at commit `fb11022`. Task numbers follow the review's fix brief, so they run out of order; the tracker order is the order of work. Task 30 above runs after them.
+
+- **Not taken (owner's choice):** 33 (graceful shutdown: ECS drains the target for 30 s before SIGTERM, so little is lost), 36 (PR workflow and SHA-pinned actions: no PRs are opened), 39-40 (automatic rollback: two applies and a risky CI change), 42 (`decisions.md` phase 2 entries). Task 32 lists the gaps they leave under the README's "Unfinished and known limits"
+- **Owner actions:** every Terraform task ends with `terraform fmt -check` and `terraform validate` only; the owner runs `apply`. CI changes are verified on GitHub only after the owner pushes
+
+### 31. Health badge shows "down" when the API fails mid-session
+
+- **Problem:** `HealthBadge.tsx` checks `data` before `isError`. TanStack Query keeps the last good `data` after a failed refetch, so once the API has been up the badge never shows "API down"
+- **What:** a test where `/health` answers 200 and then a network error; after the 5 s refetch the badge reads "API down". Then check `isError` first and show the uptime only when the state is up
+- **Done when:** the new test fails before the fix and passes after; `npm test` and `npm run lint` are green in `frontend/`
+
+### 32. README: correctness, scope, structure, AI example
+
+- **Stale lines:** the intro's "create and list tasks"; "the container gets only `PORT`"; "plain HTTP on the AWS-generated hostnames"; Storage gains why DynamoDB (the brief names MongoDB, PostgreSQL or in-memory; RDS Postgres was the alternative)
+- **Scalability:** rewritten from the current design (stateless tasks, `desired_count >= 2` and autoscaling, the full `Scan` as the first hot spot, WAF, load test first, CloudFront already in front)
+- **Structure:** a "Beyond the brief" block after "Live deployment"; a `## System Architecture` section with a short ASCII diagram, holding Scalability, Observability and AI use
+- **AI example:** pushbacks #11 and #9 replace the two process examples; the overclaim contradicted by pushback #7 is removed
+- **Trim:** the frontend UX paragraphs to 2-3 lines; the old `API_URL` sentence; the docs list completed
+- **Unfinished:** lists what the review raised and was not taken (no graceful shutdown handler, actions pinned by tag, no automatic rollback with deploys on mutable `:latest`)
+- **Done when:** every path, command and URL in the changed lines exists or responds; no sentence says HTTP-only, in-memory deployed or "only PORT"; `grep -n "Beyond the brief\|System Architecture" README.md` finds both
+
+### 41. Data model reasoning made honest
+
+- **What:** the comment in `taskStore.ts` and the Task model constraint above stop claiming a DynamoDB index. True reason: numbers sort high first, and could become a GSI key if listing moves off `Scan`; neither is needed at this size, so there is no index. No API change
+- **Done when:** no comment or doc claims an index exists; tests unchanged and green
+
+### 35. CI triggers: `workflow_dispatch` and `.nvmrc`
+
+- **What:** both workflows add `.nvmrc` to their `paths` and gain `workflow_dispatch:`. README: one Assumptions line (each pipeline runs only when its code, its workflow or `.nvmrc` changes; manual runs exist), and the manual run in CI/CD and "First apply"
+- **Done when:** both YAML files parse and the README lines are updated
+
+### 34. Small fixes
+
+- **Uptime test:** mock `process.uptime` (e.g. `12.7`) and assert `12`
+- **Frontend ESLint:** ignore `coverage/`, as the backend does
+- **Validation message:** `PATCH {}` returns `body must include at least one of title, done, priority`, with a route test for the exact text; other Ajv messages unchanged; no new dependency
+- **Stale comment:** `api.ts` no longer says the deployed build uses the ALB URL
+- **Done when:** backend and frontend `npm test && npm run lint` are green, in that order
+
+### 38. ALB accepts traffic only from CloudFront (Terraform)
+
+- **What:** the ALB security group's port 80 rule uses the managed prefix list `com.amazonaws.global.cloudfront.origin-facing` instead of `0.0.0.0/0`. `alb_url` output kept with a description saying it is not reachable from the internet, or removed if unused. README: the ALB is reachable only through CloudFront; "plain HTTP between CloudFront and the ALB" stays under Unfinished
+- **Done when:** `terraform fmt -check` and `validate` pass; **`apply` is run by the owner**, then `curl https://<cloudfront>/health` returns 200 and `curl http://<alb>/health` times out
+
+### 37. DynamoDB integration test in CI
+
+- **What:** `backend.yml` runs `npm run test:integration` against an `amazon/dynamodb-local` service container on port 8000, before any AWS step, so a failure stops the deploy. README: the Integration test paragraph and the CI/CD steps
+- **Done when:** the YAML parses; locally DynamoDB Local plus `npm run test:integration` passes; the CI run is verified after the owner pushes
+
 ## Open questions (to settle when the task comes up)
 
 - **Task 21, new dependencies:** the AWS SDK for DynamoDB (`@aws-sdk/client-dynamodb` and `@aws-sdk/lib-dynamodb`) is needed for the store; the alternative is none (the REST API by hand), which is worse. DynamoDB Local runs as a Docker image, so it adds no npm dependency. Needs the owner's approval
@@ -169,4 +228,4 @@ The owner's last design update (`docs/design/`, `States.dc.html` replaces `Edito
 - **Task 26, `PATCH` or `PUT` (decided):** `PATCH`, a partial update of `title`, `done` and `priority`, at the owner's request. `PUT` would replace the whole task
 - **Task 22, more than one task:** once the store is DynamoDB, `desired_count` could go above 1 and auto scaling could be added. Not in this phase unless the owner asks
 - **Unknown paths and the 404 fallback (Task 19 / Task 20):** the distribution has no `custom_error_response`, so a missing file on the site (for example `/foo`) shows S3's raw error page. The bucket is private with an OAC policy that grants only `s3:GetObject`, so a missing key returns `403`, not `404`. No fallback is needed today: the site has one page and no client-side router, so every real URL is a real file or an API path. If a router is added, map both `403` and `404` to `/index.html` with status `200` in `cloudfront.tf`. Open choice if no router comes: leave S3's error page, or map `403`/`404` to a small custom `404.html` served with a `404` status. Proposed: leave as is
-- **Optional hardening, not scheduled:** limit the ALB's security group to CloudFront's address range so the plain-HTTP ALB address stops answering directly
+- **Optional hardening, scheduled as Task 38:** limit the ALB's security group to CloudFront's address range so the plain-HTTP ALB address stops answering directly
