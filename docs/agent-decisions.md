@@ -331,3 +331,9 @@ Small decisions the agent made while building, one entry per decision with the t
 - **WAF moved from the ALB to CloudFront in Scalability:** CloudFront is the entry point, and Task 38 closes the ALB to everything else, so a rule on the ALB would see only CloudFront's addresses.
 - **Line 11's "the ALB's plain-HTTP address still answers" left as is:** it is true until Task 38 is applied, which rewrites it.
 - **Frontend tests paragraph under Unfinished not trimmed:** the review asked to shorten only the two UX paragraphs; that one is the record of what the tests cover.
+
+## Task 35
+
+- **README says to run the manual workflows on `main`:** the CI role trusts only `refs/heads/main`, so a manual run from another branch would fail at the AWS login.
+- **YAML checked with Ruby's parser:** PyYAML is not installed, and `npx yaml-lint` would download a package. Ruby ships with macOS.
+- **Verified:** both files parse; each has the three `paths`, the `main` branch filter and `workflow_dispatch`. The first real manual run is checked on GitHub after the owner pushes.

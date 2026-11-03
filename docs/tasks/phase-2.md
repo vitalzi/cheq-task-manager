@@ -40,7 +40,7 @@ Phase 2 is the owner's own extras on top of the finished PDF MVP (`docs/tasks/ph
 | 31 | Health badge shows "down" when the API fails mid-session | Frontend | [x] |
 | 32 | README: correctness, scope, structure, AI example | Docs | [x] |
 | 41 | Data model reasoning made honest | Backend, docs | [x] |
-| 35 | CI triggers: `workflow_dispatch` and `.nvmrc` | CI | [ ] |
+| 35 | CI triggers: `workflow_dispatch` and `.nvmrc` | CI | [x] |
 | 34 | Small fixes (uptime test, ESLint ignore, validation message, stale comment) | Backend, frontend | [ ] |
 | 38 | ALB accepts traffic only from CloudFront (Terraform) | Infra | [ ] |
 | 37 | DynamoDB integration test in CI | CI | [ ] |

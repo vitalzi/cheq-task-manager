@@ -6,6 +6,9 @@ on:
     paths:
       - "backend/**"
       - ".github/workflows/backend.yml"
+      - ".nvmrc"
+  # Manual run, for a fresh environment that needs a first deploy without a commit
+  workflow_dispatch:
 
 # Needed to request the OIDC token that AWS exchanges for role credentials
 permissions:

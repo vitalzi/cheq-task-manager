@@ -103,7 +103,7 @@ terraform output  # alb_url, cloudfront_url, ecr_repository_url, ...
 - **Why the bucket is private:** Block Public Access is on, website hosting is off, and the bucket policy lets only this one distribution read objects (Origin Access Control). Nobody can reach the files except through CloudFront, so there is one front door that serves HTTPS.
 - **Storage:** one DynamoDB table (`task-manager-tasks`, on demand, `id` as the key). The container runs with its own IAM task role that may only `Scan`, `PutItem`, `UpdateItem` and `DeleteItem` on that table, the four calls the store makes (update and delete carry a condition that the item exists, so an unknown id is "not found", not a new item). Terraform passes the table name as `TABLE_NAME` and the region as `AWS_REGION`. Data survives deploys and restarts. The service stays at one task (see Scalability).
 - **Wiring:** the frontend build sets no `VITE_API_URL`, so the browser calls its own origin and the API needs no CORS. The container gets `PORT`, `TABLE_NAME` and `AWS_REGION`.
-- **First apply:** the ECS service is created before any image exists in ECR, so its task cannot start until the first image is pushed (the first push to `main` does this).
+- **First apply:** the ECS service is created before any image exists in ECR, so its task cannot start until the first image is pushed (the first push to `main` does this, or run the Backend and Frontend workflows by hand from the Actions tab, on `main`, so a fresh environment needs no dummy commit).
 - **CI access:** GitHub Actions authenticates with OpenID Connect (OIDC), so no AWS access keys are stored anywhere. Terraform creates the GitHub OIDC provider and one IAM role, `task-manager-ci`, that only workflow runs on `main` of this repository can assume. The trust rule matches the `sub` claim GitHub issues for the repo, which includes the owner and repo IDs (`github_sub_prefix`), so a deleted and re-created repo with the same name cannot reuse the role. Its policy allows only ECR push on the API repository, `ecs:UpdateService` and `ecs:DescribeServices` on the API service (the workflow waits for the rollout to become stable), S3 list/write/delete on the frontend bucket, and `cloudfront:CreateInvalidation` on the one distribution. The PDF asks for credentials as CI secrets; here the only thing stored in GitHub is the role ARN (a repository variable, not a secret), and access keys in secrets were the considered alternative.
 - **GitHub variables:** after `apply`, the workflows read six repository variables (Settings → Secrets and variables → Actions → Variables), each set from a Terraform output with `gh variable set`: `CI_ROLE_ARN` (`ci_role_arn`), `ECR_REPOSITORY_URL` (`ecr_repository_url`), `ECS_CLUSTER_NAME` (`ecs_cluster_name`), `ECS_SERVICE_NAME` (`ecs_service_name`), `FRONTEND_BUCKET_NAME` (`frontend_bucket_name`) and `CLOUDFRONT_DISTRIBUTION_ID` (`cloudfront_distribution_id`). None is a secret.
 - **Region:** `eu-central-1`; change with `-var aws_region=...`.
@@ -111,7 +111,7 @@ terraform output  # alb_url, cloudfront_url, ecr_repository_url, ...
 
 ## CI/CD
 
-Two GitHub Actions workflows run on push to `main`, each only when its own folder changes. They assume the AWS role from the CI access section above, using the repository variables.
+Two GitHub Actions workflows run on push to `main`, each only when its own folder, its own workflow file or `.nvmrc` changes (both read the Node version from it). They can also be run by hand from the Actions tab; the AWS role trusts only `main`, so run them on `main`. They assume the AWS role from the CI access section above, using the repository variables.
 
 - **Backend (`.github/workflows/backend.yml`, on `backend/**`):**
   - **Steps:** `npm ci`, `npm run lint`, `npm test` (fails below 80% coverage), build the image, push it to ECR as `latest` and as the commit SHA, then force a new ECS deployment.
@@ -135,6 +135,7 @@ Two GitHub Actions workflows run on push to `main`, each only when its own folde
 
 Where the assignment was unclear, these are the readings used:
 
+- **"Every push to main" deploys:** each pipeline runs only when its own code, its workflow file or `.nvmrc` changes, so a docs-only push deploys nothing. Manual runs are available.
 - **Storage:** the assignment names MongoDB or PostgreSQL, or in-memory / a JSON file with async access. The first version was in-memory. The deployed API now uses DynamoDB so data survives a deploy: it fits the same async `TaskStore` interface, is serverless with no connection pool to manage, and is billed per request, which suits a small app. RDS Postgres was the alternative considered; it would need a running instance, a connection pool and a migration tool for one table.
 - **Title:** a string, trimmed, 1-200 characters. The rules are in the route's JSON Schema; the trim is the `transform` keyword from `ajv-keywords`. Whitespace-only is a `400`. Unknown body fields are ignored.
 - **Fields:** `id` is a UUID from `crypto.randomUUID()`; `createdAt` is an ISO 8601 UTC string; `GET /tasks` returns oldest first.
