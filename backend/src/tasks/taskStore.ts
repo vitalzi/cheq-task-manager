@@ -1,4 +1,5 @@
-// Numbers, not names: they sort high first and, unlike a boolean, can be a DynamoDB index key.
+// Numbers, not names: they sort high first. DynamoDB keys cannot be booleans, so numbers could
+// become an index key if listing ever moves off Scan. At this size it has not, so there is no index.
 export enum Priority {
   High = 0,
   Medium = 1,

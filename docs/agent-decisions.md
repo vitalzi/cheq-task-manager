@@ -208,7 +208,7 @@ Small decisions the agent made while building, one entry per decision with the t
 
 ## Task 23 planning: `done` and `priority` (owner's decisions)
 
-- **`priority` is a numeric enum, `High = 0`, `Medium = 1`, `Low = 2`; `done` is a numeric enum too, `0` open and `1` done:** the owner's choice (the owner's words on `done` were short, so this is my reading: an enum like `priority`, not a bare number). Numbers sort high first without a mapping, and unlike a boolean they can be a DynamoDB index key.
+- **`priority` is a numeric enum, `High = 0`, `Medium = 1`, `Low = 2`; `done` is a numeric enum too, `0` open and `1` done:** the owner's choice (the owner's words on `done` were short, so this is my reading: an enum like `priority`, not a bare number). Numbers sort high first without a mapping, and could become a DynamoDB index key if listing moves off `Scan` (a boolean cannot). There is no index today; the list is a full `Scan`, which is fine at this size.
 - **`priority` is optional on create and defaults to Medium (the owner changed this from required):** the server fills it in, so a client that sends only `title` keeps working. A present but invalid value is still a `400`, including `null`.
 - **`done` is not accepted on create (my call):** a new task is never done, so the service sets `0`, like `id` and `createdAt`. A `done` in the body is ignored, as other unknown fields are.
 - **No frontend work in Task 23:** with the server default, the live form keeps working unchanged. The priority select on the create form moves into Task 27 with the list display and the done toggle. This also removes the deploy-order care the required `priority` had.

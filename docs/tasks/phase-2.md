@@ -39,7 +39,7 @@ Phase 2 is the owner's own extras on top of the finished PDF MVP (`docs/tasks/ph
 | | **Review fixes** (in this order) | | |
 | 31 | Health badge shows "down" when the API fails mid-session | Frontend | [x] |
 | 32 | README: correctness, scope, structure, AI example | Docs | [x] |
-| 41 | Data model reasoning made honest | Backend, docs | [ ] |
+| 41 | Data model reasoning made honest | Backend, docs | [x] |
 | 35 | CI triggers: `workflow_dispatch` and `.nvmrc` | CI | [ ] |
 | 34 | Small fixes (uptime test, ESLint ignore, validation message, stale comment) | Backend, frontend | [ ] |
 | 38 | ALB accepts traffic only from CloudFront (Terraform) | Infra | [ ] |
@@ -94,7 +94,7 @@ The goal is HTTPS for the user without buying a domain: CloudFront's free `https
 ### 23. Task model: `done` and `priority`
 
 - **What:**
-  - **Model:** `Task` becomes `{ id, title, createdAt, done, priority }`. Both new fields are numeric enums: `done` is `0` (open) or `1` (done), and `priority` is `Priority { High = 0, Medium = 1, Low = 2 }`. The enum names are picked in the task. Numbers on the wire and in DynamoDB: they sort in the right order (high first), and unlike a boolean they can be an index key later
+  - **Model:** `Task` becomes `{ id, title, createdAt, done, priority }`. Both new fields are numeric enums: `done` is `0` (open) or `1` (done), and `priority` is `Priority { High = 0, Medium = 1, Low = 2 }`. The enum names are picked in the task. Numbers on the wire and in DynamoDB: they sort in the right order (high first), and numbers could become an index key if listing moves off `Scan` (a boolean cannot). There is no index today: the list is a full `Scan`, which is fine at this size
   - **Create:** `POST /tasks` takes `{ title, priority? }`. `priority` is optional: when it is missing the service sets Medium (`1`). When it is present it must be `0`, `1` or `2`; a non-integer, out-of-range, wrong-typed or `null` value is a `400` in the usual `{ error }` shape. `done` is not taken from the client: the service sets it to `0`, like `id` and `createdAt`
   - **Stores:** only the types and the test fixtures change. `DynamoTaskStore` already writes the whole item, so there is no table, IAM or Terraform change
   - **Frontend:** untouched. The live form sends only `title`, and the backend fills in the defaults. The select and the toggle come in Task 27
