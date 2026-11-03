@@ -31,7 +31,7 @@ What the app has on top of the assignment's MVP (the task list for it is `docs/t
 
 ## Backend
 
-Requires Node 24 (see `.nvmrc`) and npm.
+Requires Node 24 (see `.nvmrc`; `nvm use` or `fnm use` selects it) and npm.
 
 ```bash
 cd backend
@@ -71,7 +71,7 @@ npm run build    # type-check, then build to frontend/dist
 
 - **Design:** follows the handoff in `docs/design/`; every colour, font and spacing is a CSS variable in `src/tokens.css`, used by the `*.module.css` files, with no styling library. Filters, search and the By day view run on the client. Works from about 360 px up.
 - **Delete asks first:** an inline confirmation in the row (Cancel is focused, Esc backs out), no browser dialog; a failed delete keeps the row and shows the error.
-- **`VITE_API_URL`:** the API base URL baked into the build. Leave it unset locally: the app calls its own origin and the Vite dev server proxies `/health` and `/tasks` to `http://localhost:3000`. The deployed build leaves it unset too, because CloudFront serves the site and the API from one origin. The API sends no CORS headers, so a build pointed at a different API origin would be blocked by the browser.
+- **`VITE_API_URL`:** the API base URL baked into the build. Leave it unset locally: the app calls its own origin and the Vite dev server proxies `/health` and `/tasks` to `http://localhost:3000` (fixed, so run the backend on its default port). The deployed build leaves it unset too, because CloudFront serves the site and the API from one origin. The API sends no CORS headers, so a build pointed at a different API origin would be blocked by the browser.
 
 ## Docker
 
