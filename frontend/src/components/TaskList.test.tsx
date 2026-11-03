@@ -8,9 +8,9 @@ import { renderWithClient } from '../test/render';
 import { server } from '../test/server';
 import { TaskList } from './TaskList';
 
-const ALL: Filters = { query: '', status: 'all' };
-const renderList = (filters: Filters = ALL, byDay = true) =>
-  renderWithClient(<TaskList filters={filters} byDay={byDay} onClearSearch={() => {}} />);
+const ALL: Filters = { query: '', status: 'all', priority: 'any' };
+const renderList = (filters: Filters = ALL, byDay = true, onEmptied = () => {}) =>
+  renderWithClient(<TaskList filters={filters} byDay={byDay} onClearFilters={() => {}} onEmptied={onEmptied} />);
 
 describe('TaskList', () => {
   let api: FakeApi;
@@ -251,68 +251,162 @@ describe('TaskList', () => {
 
   describe('deleting', () => {
     const deleteButton = () => screen.findByRole('button', { name: /^Delete / });
+    const confirmGroup = () => screen.getByRole('group', { name: 'Confirm deleting Write the report' });
+    const confirmDelete = () => within(confirmGroup()).getByRole('button', { name: /^Delet/ });
 
-    it('asks first and sends nothing until Yes', async () => {
+    it('asks first, with focus on Cancel, and sends nothing until Delete', async () => {
       const user = userEvent.setup();
       renderList();
 
       await user.click(await deleteButton());
 
-      expect(screen.getByText('Delete?')).toBeInTheDocument();
-      expect(screen.getByText('Write the report')).toBeInTheDocument();
+      expect(confirmGroup()).toHaveTextContent('Delete Write the report?');
+      expect(within(confirmGroup()).getByRole('button', { name: 'Cancel' })).toHaveFocus();
       expect(api.writes).toEqual([]);
     });
 
-    it('sends DELETE on Yes and removes the task', async () => {
+    it('does not delete when Enter is pressed straight after opening the confirmation', async () => {
       const user = userEvent.setup();
       renderList();
 
       await user.click(await deleteButton());
-      await user.click(screen.getByRole('button', { name: 'Yes' }));
+      await user.keyboard('{Enter}');
+
+      expect(await deleteButton()).toBeInTheDocument();
+      expect(api.writes).toEqual([]);
+    });
+
+    it('sends DELETE on Delete and removes the task', async () => {
+      const user = userEvent.setup();
+      renderList();
+
+      await user.click(await deleteButton());
+      await user.click(confirmDelete());
 
       expect(await screen.findByText('No tasks yet — add your first one above.')).toBeInTheDocument();
       expect(api.writes).toEqual([{ method: 'DELETE', path: '/tasks/id-0', body: undefined }]);
     });
 
-    it('goes back to the Delete button on No and sends nothing', async () => {
+    it('goes back to the Delete button on Cancel and sends nothing', async () => {
       const user = userEvent.setup();
       renderList();
 
       await user.click(await deleteButton());
-      await user.click(screen.getByRole('button', { name: 'No' }));
+      await user.click(screen.getByRole('button', { name: 'Cancel' }));
 
       expect(await deleteButton()).toBeInTheDocument();
-      expect(screen.queryByText('Delete?')).not.toBeInTheDocument();
+      expect(screen.queryByRole('group')).not.toBeInTheDocument();
       expect(api.writes).toEqual([]);
     });
 
-    it('keeps the task and shows an alert when the delete fails', async () => {
+    it('goes back on Escape and sends nothing', async () => {
+      const user = userEvent.setup();
+      renderList();
+
+      await user.click(await deleteButton());
+      await user.keyboard('{Escape}');
+
+      expect(await deleteButton()).toBeInTheDocument();
+      expect(api.writes).toEqual([]);
+    });
+
+    it('stays in the confirmation and shows the server message when the delete fails', async () => {
       const user = userEvent.setup();
       api.failNextWrite(500);
       renderList();
 
       await user.click(await deleteButton());
-      await user.click(screen.getByRole('button', { name: 'Yes' }));
+      await user.click(confirmDelete());
 
-      expect(await screen.findByRole('alert')).toHaveTextContent('Could not delete task: Something went wrong');
+      expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong');
+      expect(confirmGroup()).toBeInTheDocument();
       expect(screen.getByText('Write the report')).toBeInTheDocument();
-      expect(screen.queryByText('Delete?')).not.toBeInTheDocument(); // back to the Delete button
-      expect(screen.getByRole('button', { name: /^Delete / })).toBeInTheDocument();
+      expect(within(confirmGroup()).getByRole('button', { name: 'Delete' })).toBeEnabled();
     });
 
-    it('disables the row controls while the delete is pending', async () => {
+    it('shows Deleting… and disables both buttons while the delete is pending', async () => {
       const user = userEvent.setup();
       const release = api.holdWrites();
       renderList();
 
       await user.click(await deleteButton());
-      await user.click(screen.getByRole('button', { name: 'Yes' }));
+      await user.click(confirmDelete());
 
-      await waitFor(() => expect(screen.getByRole('checkbox')).toBeDisabled());
-      expect(screen.getByRole('button', { name: 'No' })).toBeDisabled();
+      expect(await within(confirmGroup()).findByRole('button', { name: 'Deleting…' })).toBeDisabled();
+      expect(within(confirmGroup()).getByRole('button', { name: 'Cancel' })).toBeDisabled();
+      expect(confirmGroup()).toHaveAttribute('aria-busy', 'true');
 
       release();
       await waitFor(() => expect(screen.queryByText('Write the report')).not.toBeInTheDocument());
+    });
+
+    describe('with several rows', () => {
+      beforeEach(() => {
+        api.tasks = [
+          sampleTask({ id: 'a', title: 'First', createdAt: '2026-11-03T12:00:00.000Z' }),
+          sampleTask({ id: 'b', title: 'Second', createdAt: '2026-11-03T11:00:00.000Z' }),
+          sampleTask({ id: 'c', title: 'Third', createdAt: '2026-11-03T10:00:00.000Z' }),
+        ];
+      });
+      const confirmFor = async (user: ReturnType<typeof userEvent.setup>, title: string) => {
+        await user.click(await screen.findByRole('button', { name: `Delete ${title}` }));
+        await user.click(within(screen.getByRole('group')).getByRole('button', { name: 'Delete' }));
+      };
+
+      it('moves focus to the next row\'s checkbox after a delete', async () => {
+        const user = userEvent.setup();
+        renderList();
+
+        await confirmFor(user, 'Second');
+
+        await waitFor(() => expect(screen.getByRole('checkbox', { name: 'Mark as done: Third' })).toHaveFocus());
+      });
+
+      it('moves focus to the previous row when the last row was deleted', async () => {
+        const user = userEvent.setup();
+        renderList();
+
+        await confirmFor(user, 'Third');
+
+        await waitFor(() => expect(screen.getByRole('checkbox', { name: 'Mark as done: Second' })).toHaveFocus());
+      });
+
+      it('asks the page to focus the composer when the list is empty afterwards', async () => {
+        const user = userEvent.setup();
+        let emptied = 0;
+        api.tasks = [sampleTask()];
+        renderList(ALL, true, () => emptied++);
+
+        await confirmFor(user, 'Write the report');
+
+        await waitFor(() => expect(emptied).toBe(1));
+      });
+
+      it('has only one row in confirm mode at a time', async () => {
+        const user = userEvent.setup();
+        renderList();
+
+        await user.click(await screen.findByRole('button', { name: 'Delete First' }));
+        await user.click(screen.getByRole('button', { name: 'Delete Second' }));
+
+        expect(screen.getAllByRole('group')).toHaveLength(1);
+        expect(screen.getByRole('group')).toHaveAccessibleName('Confirm deleting Second');
+        expect(screen.getByRole('button', { name: 'Delete First' })).toBeInTheDocument();
+      });
+
+      it('closes a confirmation when another row goes into edit mode, and the other way round', async () => {
+        const user = userEvent.setup();
+        renderList();
+
+        await user.click(await screen.findByRole('button', { name: 'Delete First' }));
+        await user.click(screen.getByRole('button', { name: 'Edit Second' }));
+        expect(screen.queryByRole('group')).not.toBeInTheDocument();
+        expect(screen.getByRole('textbox', { name: 'Edit task title' })).toHaveValue('Second');
+
+        await user.click(screen.getByRole('button', { name: 'Delete Third' }));
+        expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+        expect(screen.getByRole('group')).toHaveAccessibleName('Confirm deleting Third');
+      });
     });
   });
 

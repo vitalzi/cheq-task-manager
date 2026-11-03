@@ -1,24 +1,27 @@
-import type { Task } from './api';
+import type { Priority, Task } from './api';
 
 export type Status = 'open' | 'done' | 'all';
 
 export interface Filters {
   query: string;
   status: Status;
+  priority: Priority | 'any';
 }
 
-export const DEFAULT_FILTERS: Filters = { query: '', status: 'open' };
+export const DEFAULT_FILTERS: Filters = { query: '', status: 'open', priority: 'any' };
 
-export function applyFilters(tasks: Task[], { query, status }: Filters): Task[] {
+// The three filters combine (AND).
+export function applyFilters(tasks: Task[], { query, status, priority }: Filters): Task[] {
   const needle = query.trim().toLowerCase();
   return tasks.filter((task) => {
     if (status === 'open' && task.done === 1) return false;
     if (status === 'done' && task.done === 0) return false;
+    if (priority !== 'any' && task.priority !== priority) return false;
     return needle === '' || task.title.toLowerCase().includes(needle);
   });
 }
 
-// Totals per tab; the search does not change them.
+// Totals per status; the search and the priority filter do not change them.
 export function statusCounts(tasks: Task[]): Record<Status, number> {
   const done = tasks.filter((task) => task.done === 1).length;
   return { open: tasks.length - done, done, all: tasks.length };

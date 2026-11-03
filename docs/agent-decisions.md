@@ -300,3 +300,16 @@ Small decisions the agent made while building, one entry per decision with the t
 - **Copy not in the handoff:** "Nothing done yet." for an empty Done tab. Kept from the app: "Title must not be empty." (the handoff's "Title is required" is not what we show today).
 - **Test edits caused by changed things:** the options order (`Low, Medium, High`), the priority select moving into edit mode, the new composer button/label names (`Add task` is back), "Esc to cancel", the empty-state wording, and the old count-heading and segmented-control tests (replaced by tabs tests).
 - **Verified:** 65 tests after the queue was removed; mutations of the new logic and of the restored delete path all caught; checked in the browser at desktop width and in a 375 px iframe with no horizontal scroll.
+
+## Task 29c
+
+- **Layout D v2 (updated `docs/design/`).** `src/tokens.css` is re-copied. Removed: the status tabs (`nav` and count pills) and the Yes/No delete. New: a Status and a Priority dropdown in `Toolbar`, the confirm-delete row, `Filters.priority`.
+- **Priority filter value is `Priority | 'any'`** (0/1/2 on the wire, as everywhere else), not the handoff's strings. The select's options are Any, High, Medium, Low.
+- **The two filter selects have `aria-label`s** ("Status", "Priority filter") instead of relying on the wrapping label, because the composer's select is already named "Priority" and a label that wraps a select can pick up its value in the name.
+- **Which row is in edit or confirm mode lives in `TaskList`** (`active = {id, mode}`), so opening one closes the other. A row leaves it only if it is still the active one, so a late save on one row cannot close another row's confirmation.
+- **Focus after a delete** is moved by `TaskList` in the delete's `onSuccess`, before the refetch removes the row, so focus never drops to the page. It looks the neighbour up with a `data-task-id` attribute. The composer is focused through an `inputRef` prop on `TaskForm`.
+- **Cancel gets focus with `autoFocus`,** the same way the edit input does.
+- **Copy kept from the app:** "Title must not be empty." (the handoff's "Title is required" is not what the API says). "Nothing done yet." for an empty Done view.
+- **Unused tokens:** the toast tokens are gone from the handoff, so the copy no longer carries them.
+- **Verified:** 79 tests; 6 mutations of the new logic (focus on Cancel, the priority filter, the previous-row fallback, the no-match condition, Esc, Clear filters) all caught after one test was added for the priority-only no-match case; checked in a browser at desktop width and in a 375 px iframe with no horizontal scroll.
+

@@ -35,6 +35,7 @@ Phase 2 is the owner's own extras on top of the finished PDF MVP (`docs/tasks/ph
 | 28 | Frontend: delete a task | Frontend | [x] |
 | 29 | Styling from the owner's mocks | Frontend | [x] |
 | 29b | Design update (layout D) | Frontend | [~] |
+| 29c | Design update (layout D v2) | Frontend | [x] |
 | 30 | README update and clean-clone re-check | Docs | [ ] |
 
 ## HTTPS (CloudFront)
@@ -140,6 +141,16 @@ The goal is HTTPS for the user without buying a domain: CloudFront's free `https
 - **What:** the owner brings mocks from Claude Design. Restyle the existing components in their `.module.css` files (no styling library): colors and spacing as CSS variables in one place, typography, button and input states (hover, focus, disabled), clearer loading, empty and error states, and the controls from Tasks 27-28 (edit, done, priority, delete); works at about 375 px and at desktop width
 - **Before starting:** the agent reads the mocks and lists, in a few lines, what will change and what will not; the owner confirms
 - **Done when:** the screens match the mocks at both widths; keyboard focus is visible; no behavior changed (lint and build still pass)
+
+### 29c. Design update (layout D v2)
+
+The owner's last design update (`docs/design/`, `States.dc.html` replaces `EditorialStates.dc.html`). Frontend only, no backend change.
+
+- **Filters:** the Status tabs become a Status dropdown (`Open · 3`, counts only once loaded); a new Priority dropdown (Any / High / Medium / Low); a filter away from its default gets a dark border. Search is 44 px. All three combine.
+- **Delete:** the row turns red with `Delete <title>?`, Cancel (focused) and Delete; Esc and Cancel back out; `Deleting…` while in flight; a failure keeps the confirmation and shows the message. After a delete focus goes to the next row's checkbox, else the previous, else the composer.
+- **One row at a time** is in edit or confirm mode.
+- **Copy:** "No tasks match your filters." and "Clear filters" (clears search and priority, keeps the status).
+- **Done when:** the tests above pass, `tsc`, lint and build are clean, and it looks right in a browser at desktop width and 375 px.
 
 ### 29b. Design update (layout D)
 

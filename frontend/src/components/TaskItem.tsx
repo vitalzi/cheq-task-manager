@@ -8,32 +8,44 @@ import styles from './TaskItem.module.css';
 
 const PRIORITY_TEXT = ['high', 'medium', 'low'] as const;
 
-export function TaskItem({ task, byDay }: { task: Task; byDay: boolean }) {
+export type RowMode = 'view' | 'edit' | 'confirm';
+
+interface Props {
+  task: Task;
+  byDay: boolean;
+  mode: RowMode;
+  onModeChange: (mode: RowMode) => void;
+  onDeleted: () => void;
+}
+
+export function TaskItem({ task, byDay, mode, onModeChange, onDeleted }: Props) {
   const queryClient = useQueryClient();
   const errorId = useId();
-  const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(task.title);
   const [priority, setPriority] = useState<Priority>(task.priority);
   const [validationError, setValidationError] = useState<string | null>(null);
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const mutation = useMutation({
     mutationFn: updateTask,
     onSuccess: () => {
-      setEditing(false);
+      onModeChange('view');
       return queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
   });
 
   const removal = useMutation({
     mutationFn: deleteTask,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
-    onError: () => setConfirmingDelete(false),
+    onSuccess: () => {
+      onDeleted();
+      return queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    },
   });
 
   // While a change is pending every control in the row is disabled, so none can start another.
   const pending = mutation.isPending || removal.isPending;
   const change = (changes: TaskChanges) => mutation.mutate({ id: task.id, changes });
+  const editing = mode === 'edit';
+  const confirming = mode === 'confirm';
   const done = task.done === 1;
   const priorityLabel = PRIORITIES.find((p) => p.value === task.priority)!;
 
@@ -41,13 +53,17 @@ export function TaskItem({ task, byDay }: { task: Task; byDay: boolean }) {
     setTitle(task.title);
     setPriority(task.priority);
     setValidationError(null);
-    setConfirmingDelete(false);
     mutation.reset();
-    setEditing(true);
+    onModeChange('edit');
+  }
+
+  function startConfirming() {
+    removal.reset();
+    onModeChange('confirm');
   }
 
   function stopEditing() {
-    if (!pending) setEditing(false);
+    if (!pending) onModeChange('view');
   }
 
   function handleSave(event: FormEvent) {
@@ -61,7 +77,7 @@ export function TaskItem({ task, byDay }: { task: Task; byDay: boolean }) {
   }
 
   return (
-    <li className={`${styles.item} ${editing ? styles.editing : ''}`}>
+    <li className={`${styles.item} ${editing ? styles.editing : ''} ${confirming ? styles.confirming : ''}`} data-task-id={task.id}>
       {editing ? (
         <form
           className={styles.edit}
@@ -101,6 +117,26 @@ export function TaskItem({ task, byDay }: { task: Task; byDay: boolean }) {
             </div>
           </div>
         </form>
+      ) : confirming ? (
+        <div
+          className={styles.confirm}
+          role="group"
+          aria-label={`Confirm deleting ${task.title}`}
+          aria-busy={removal.isPending}
+          onKeyDown={(e) => e.key === 'Escape' && !pending && onModeChange('view')}
+        >
+          <span className={styles.confirmText}>
+            Delete <strong>{task.title}</strong>?
+          </span>
+          <div className={styles.confirmActions}>
+            <button className={styles.confirmCancel} type="button" onClick={() => onModeChange('view')} disabled={pending} autoFocus>
+              Cancel
+            </button>
+            <button className={styles.confirmDelete} type="button" onClick={() => removal.mutate(task.id)} disabled={pending}>
+              {removal.isPending ? 'Deleting…' : 'Delete'}
+            </button>
+          </div>
+        </div>
       ) : (
         <div className={styles.row}>
           <label className={styles.check}>
@@ -123,38 +159,24 @@ export function TaskItem({ task, byDay }: { task: Task; byDay: boolean }) {
               <time dateTime={task.createdAt}>{formatCreated(task.createdAt, byDay)}</time>
             </div>
           </div>
-          {confirmingDelete ? (
-            <span className={styles.confirm}>
-              Delete?
-              <button type="button" onClick={() => removal.mutate(task.id)} disabled={pending}>
-                Yes
-              </button>
-              <button type="button" onClick={() => setConfirmingDelete(false)} disabled={pending}>
-                No
-              </button>
-            </span>
-          ) : (
-            <>
-              <button
-                className={styles.icon}
-                type="button"
-                onClick={startEditing}
-                disabled={pending}
-                aria-label={`Edit ${task.title}`}
-              >
-                <PencilIcon />
-              </button>
-              <button
-                className={styles.icon}
-                type="button"
-                onClick={() => setConfirmingDelete(true)}
-                disabled={pending}
-                aria-label={`Delete ${task.title}`}
-              >
-                <TrashIcon />
-              </button>
-            </>
-          )}
+          <button
+            className={styles.icon}
+            type="button"
+            onClick={startEditing}
+            disabled={pending}
+            aria-label={`Edit ${task.title}`}
+          >
+            <PencilIcon />
+          </button>
+          <button
+            className={styles.icon}
+            type="button"
+            onClick={startConfirming}
+            disabled={pending}
+            aria-label={`Delete ${task.title}`}
+          >
+            <TrashIcon />
+          </button>
         </div>
       )}
       {removal.isError && (

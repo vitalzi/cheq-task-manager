@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -20,7 +20,9 @@ describe('App', () => {
     server.use(http.get(`${import.meta.env.VITE_API_URL}/health`, () => HttpResponse.json({ status: 'ok', uptime: 60 })));
   });
 
-  const tabs = () => within(screen.getByRole('navigation', { name: 'Status' }));
+  const status = () => screen.getByRole('combobox', { name: 'Status' });
+  const priority = () => screen.getByRole('combobox', { name: 'Priority filter' });
+  const option = (select: HTMLElement, name: string) => within(select).getByRole('option', { name });
   const search = () => screen.getByRole('searchbox', { name: 'Filter tasks by title' });
   const byDay = () => screen.getByRole('switch', { name: 'By day' });
 
@@ -30,67 +32,117 @@ describe('App', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Tasks' })).toBeInTheDocument();
   });
 
-  describe('status tabs', () => {
-    it('opens on the Open tab and shows only open tasks', async () => {
+  describe('status filter', () => {
+    it('opens on Open and shows only open tasks', async () => {
       renderWithClient(<App />);
 
       expect(await screen.findByText('Write the README')).toBeInTheDocument();
       expect(screen.getByText('Record a demo')).toBeInTheDocument();
       expect(screen.queryByText('Sketch the key design')).not.toBeInTheDocument();
-      expect(tabs().getByRole('button', { name: /^Open/ })).toHaveAttribute('aria-pressed', 'true');
+      expect(status()).toHaveValue('open');
     });
 
-    it('shows a count on each tab once the tasks have loaded', async () => {
+    it('shows a count in each option once the tasks have loaded', async () => {
       renderWithClient(<App />);
 
-      expect(tabs().getByRole('button', { name: 'Open' })).toBeInTheDocument(); // no counts while loading
-      expect(await tabs().findByRole('button', { name: 'Open 2' })).toBeInTheDocument();
-      expect(tabs().getByRole('button', { name: 'Done 1' })).toBeInTheDocument();
-      expect(tabs().getByRole('button', { name: 'All 3' })).toBeInTheDocument();
+      expect(option(status(), 'Open')).toBeInTheDocument(); // no counts while loading
+      expect(await within(status()).findByRole('option', { name: 'Open · 2' })).toBeInTheDocument();
+      expect(option(status(), 'Done · 1')).toBeInTheDocument();
+      expect(option(status(), 'All · 3')).toBeInTheDocument();
     });
 
-    it('switches to the Done and All tabs', async () => {
+    it('switches to Done and All', async () => {
       const user = userEvent.setup();
       renderWithClient(<App />);
       await screen.findByText('Write the README');
 
-      await user.click(tabs().getByRole('button', { name: /^Done/ }));
+      await user.selectOptions(status(), 'done');
       expect(screen.getByText('Sketch the key design')).toBeInTheDocument();
       expect(screen.queryByText('Write the README')).not.toBeInTheDocument();
-      expect(tabs().getByRole('button', { name: /^Done/ })).toHaveAttribute('aria-pressed', 'true');
-      expect(tabs().getByRole('button', { name: /^Open/ })).toHaveAttribute('aria-pressed', 'false');
 
-      await user.click(tabs().getByRole('button', { name: /^All/ }));
+      await user.selectOptions(status(), 'all');
       expect(screen.getAllByRole('listitem')).toHaveLength(3);
     });
 
-    it('lists the done task last on the All tab even though it is the newest', async () => {
+    it('lists the done task last on All even though it is the newest', async () => {
       const user = userEvent.setup();
       renderWithClient(<App />);
       await screen.findByText('Write the README');
 
-      await user.click(tabs().getByRole('button', { name: /^All/ }));
+      await user.selectOptions(status(), 'all');
 
       const rows = screen.getAllByRole('listitem').map((row) => row.textContent ?? '');
       expect(rows[2]).toContain('Sketch the key design');
     });
 
-    it('says everything is done when the Open tab is empty but tasks exist', async () => {
+    it('says everything is done when Open is empty but tasks exist', async () => {
       api.tasks = [sampleTask({ done: 1 })];
       renderWithClient(<App />);
 
       expect(await screen.findByText('Nothing open. Everything is done.')).toBeInTheDocument();
     });
 
-    it('says nothing is done yet when the Done tab is empty', async () => {
+    it('says nothing is done yet when Done is empty', async () => {
       const user = userEvent.setup();
       api.tasks = [sampleTask({ done: 0 })];
       renderWithClient(<App />);
       await screen.findByText('Write the report');
 
-      await user.click(tabs().getByRole('button', { name: /^Done/ }));
+      await user.selectOptions(status(), 'done');
 
       expect(screen.getByText('Nothing done yet.')).toBeInTheDocument();
+    });
+  });
+
+  describe('priority filter', () => {
+    beforeEach(() => {
+      api.tasks = [
+        sampleTask({ id: 'h', title: 'High one', priority: 0 }),
+        sampleTask({ id: 'm', title: 'Medium one', priority: 1 }),
+        sampleTask({ id: 'l', title: 'Low one', priority: 2 }),
+      ];
+    });
+
+    it('starts on Any, offering Any, High, Medium and Low', async () => {
+      renderWithClient(<App />);
+      await screen.findByText('High one');
+
+      expect(priority()).toHaveValue('any');
+      expect(within(priority()).getAllByRole('option').map((o) => o.textContent)).toEqual(['Any', 'High', 'Medium', 'Low']);
+    });
+
+    it('shows only the chosen priority, and leaves the status counts alone', async () => {
+      const user = userEvent.setup();
+      renderWithClient(<App />);
+      await screen.findByText('High one');
+
+      await user.selectOptions(priority(), 'High');
+
+      expect(screen.getByText('High one')).toBeInTheDocument();
+      expect(screen.queryByText('Medium one')).not.toBeInTheDocument();
+      expect(option(status(), 'Open · 3')).toBeInTheDocument();
+    });
+
+    it('says nothing matches when only the priority hides everything', async () => {
+      const user = userEvent.setup();
+      api.tasks = [sampleTask({ priority: 0 })];
+      renderWithClient(<App />);
+      await screen.findByText('Write the report');
+
+      await user.selectOptions(priority(), 'Low');
+
+      expect(screen.getByText('No tasks match your filters.')).toBeInTheDocument();
+    });
+
+    it('combines with the search', async () => {
+      const user = userEvent.setup();
+      renderWithClient(<App />);
+      await screen.findByText('High one');
+
+      await user.selectOptions(priority(), 'Medium');
+      await user.type(search(), 'high');
+
+      expect(screen.getByText('No tasks match your filters.')).toBeInTheDocument();
     });
   });
 
@@ -104,21 +156,23 @@ describe('App', () => {
 
       expect(screen.getByText('Write the README')).toBeInTheDocument();
       expect(screen.queryByText('Record a demo')).not.toBeInTheDocument();
-      expect(tabs().getByRole('button', { name: 'Open 2' })).toBeInTheDocument();
+      expect(option(status(), 'Open · 2')).toBeInTheDocument();
     });
 
-    it('says nothing matches and clears only the search, keeping the tab', async () => {
+    it('says nothing matches and Clear filters resets search and priority, keeping the status', async () => {
       const user = userEvent.setup();
       renderWithClient(<App />);
       await screen.findByText('Write the README');
-      await user.click(tabs().getByRole('button', { name: /^Done/ }));
+      await user.selectOptions(status(), 'done');
 
+      await user.selectOptions(priority(), 'High');
       await user.type(search(), 'zzz');
-      expect(screen.getByText('No tasks match your filter.')).toBeInTheDocument();
-      await user.click(screen.getByRole('button', { name: 'Clear search' }));
+      expect(screen.getByText('No tasks match your filters.')).toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'Clear filters' }));
 
       expect(search()).toHaveValue('');
-      expect(tabs().getByRole('button', { name: /^Done/ })).toHaveAttribute('aria-pressed', 'true');
+      expect(priority()).toHaveValue('any');
+      expect(status()).toHaveValue('done');
       expect(screen.getByText('Sketch the key design')).toBeInTheDocument();
     });
   });
@@ -152,13 +206,24 @@ describe('App', () => {
     it('updates the tab counts after a delete', async () => {
       const user = userEvent.setup();
       renderWithClient(<App />);
-      await tabs().findByRole('button', { name: 'Open 2' });
+      await within(status()).findByRole('option', { name: 'Open · 2' });
 
       await user.click(await screen.findByRole('button', { name: 'Delete Write the README' }));
-      await user.click(screen.getByRole('button', { name: 'Yes' }));
+      await user.click(within(screen.getByRole('group', { name: 'Confirm deleting Write the README' })).getByRole('button', { name: 'Delete' }));
 
-      expect(await tabs().findByRole('button', { name: 'Open 1' })).toBeInTheDocument();
-      expect(tabs().getByRole('button', { name: 'All 2' })).toBeInTheDocument();
+      expect(await within(status()).findByRole('option', { name: 'Open · 1' })).toBeInTheDocument();
+      expect(option(status(), 'All · 2')).toBeInTheDocument();
+    });
+
+    it('moves focus to the composer when the last task is deleted', async () => {
+      const user = userEvent.setup();
+      api.tasks = [sampleTask({ title: 'Only one' })];
+      renderWithClient(<App />);
+
+      await user.click(await screen.findByRole('button', { name: 'Delete Only one' }));
+      await user.click(within(screen.getByRole('group', { name: 'Confirm deleting Only one' })).getByRole('button', { name: 'Delete' }));
+
+      await waitFor(() => expect(screen.getByRole('textbox', { name: 'New task' })).toHaveFocus());
     });
   });
 });

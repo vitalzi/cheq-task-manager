@@ -104,38 +104,65 @@
   cursor: not-allowed;
 }
 
-.confirm {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  min-height: var(--control-md);
-  padding-left: 6px;
-  font-size: var(--text-small);
-  color: var(--color-danger-strong);
+.confirming {
+  background: var(--color-danger-bg);
+  box-shadow: var(--ring-danger);
 }
 
-.confirm button {
-  min-width: var(--control-md);
+.confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 56px;
+  padding: 6px 6px 6px 18px;
+}
+
+.confirmText {
+  font-size: var(--text-control);
+  color: var(--color-danger-text);
+  overflow-wrap: anywhere;
+}
+
+.confirmText strong {
+  font-weight: 600;
+}
+
+.confirmActions {
+  display: flex;
+  gap: 8px;
+}
+
+.confirmCancel,
+.confirmDelete {
   height: var(--control-md);
-  padding: 0 10px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-  color: var(--color-text);
+  padding: 0 16px;
+  border-radius: var(--radius-sm);
   font-size: var(--text-control);
   cursor: pointer;
 }
 
-.confirm button:first-of-type {
-  border-color: var(--color-danger-dot);
-  background: var(--color-danger-bg);
-  color: var(--color-danger-text);
+.confirmCancel {
+  border: 1px solid var(--color-danger-border-strong);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.confirmDelete {
+  border: 0;
+  background: var(--color-danger-solid);
+  color: var(--color-surface);
   font-weight: 600;
 }
 
-.confirm button:disabled {
-  opacity: 0.6;
+.confirmCancel:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.confirmDelete:disabled {
+  opacity: 0.7;
   cursor: not-allowed;
 }
 

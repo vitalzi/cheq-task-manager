@@ -1,10 +1,10 @@
-import { useId, useState, type FormEvent } from 'react';
+import { useId, useState, type FormEvent, type Ref } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createTask, type Priority } from '../api';
 import { PrioritySelect } from './PrioritySelect';
 import styles from './TaskForm.module.css';
 
-export function TaskForm() {
+export function TaskForm({ inputRef }: { inputRef?: Ref<HTMLInputElement> }) {
   const queryClient = useQueryClient();
   const inputId = useId();
   const errorId = useId();
@@ -41,6 +41,7 @@ export function TaskForm() {
         </label>
         <input
           id={inputId}
+          ref={inputRef}
           className={styles.input}
           value={title}
           onChange={(e) => {

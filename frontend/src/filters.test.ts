@@ -7,27 +7,38 @@ const at = (day: number, hour: number, month = 10) => new Date(2026, month, day,
 
 describe('DEFAULT_FILTERS', () => {
   it('starts on the Open tab with no search', () => {
-    expect(DEFAULT_FILTERS).toEqual({ query: '', status: 'open' });
+    expect(DEFAULT_FILTERS).toEqual({ query: '', status: 'open', priority: 'any' });
   });
 });
 
 describe('applyFilters', () => {
   const tasks = [
-    sampleTask({ id: 'a', title: 'Write the README', done: 0 }),
-    sampleTask({ id: 'b', title: 'Record a demo', done: 1 }),
+    sampleTask({ id: 'a', title: 'Write the README', done: 0, priority: 0 }),
+    sampleTask({ id: 'b', title: 'Record a demo', done: 1, priority: 1 }),
   ];
 
   it('keeps everything on the All tab with no search', () => {
-    expect(applyFilters(tasks, { query: '', status: 'all' })).toEqual(tasks);
+    expect(applyFilters(tasks, { query: '', status: 'all', priority: 'any' })).toEqual(tasks);
   });
 
   it('matches the title case-insensitively and ignores surrounding spaces in the query', () => {
-    expect(applyFilters(tasks, { query: '  readme ', status: 'all' }).map((t) => t.id)).toEqual(['a']);
+    expect(applyFilters(tasks, { query: '  readme ', status: 'all', priority: 'any' }).map((t) => t.id)).toEqual(['a']);
   });
 
   it('keeps only open or only done tasks', () => {
-    expect(applyFilters(tasks, { query: '', status: 'open' }).map((t) => t.id)).toEqual(['a']);
-    expect(applyFilters(tasks, { query: '', status: 'done' }).map((t) => t.id)).toEqual(['b']);
+    expect(applyFilters(tasks, { query: '', status: 'open', priority: 'any' }).map((t) => t.id)).toEqual(['a']);
+    expect(applyFilters(tasks, { query: '', status: 'done', priority: 'any' }).map((t) => t.id)).toEqual(['b']);
+  });
+
+  it('keeps only the chosen priority, and Any keeps all', () => {
+    expect(applyFilters(tasks, { query: '', status: 'all', priority: 0 }).map((t) => t.id)).toEqual(['a']);
+    expect(applyFilters(tasks, { query: '', status: 'all', priority: 1 }).map((t) => t.id)).toEqual(['b']);
+    expect(applyFilters(tasks, { query: '', status: 'all', priority: 2 })).toEqual([]);
+  });
+
+  it('combines status, priority and search', () => {
+    expect(applyFilters(tasks, { query: 'demo', status: 'open', priority: 1 })).toEqual([]);
+    expect(applyFilters(tasks, { query: 'demo', status: 'done', priority: 1 }).map((t) => t.id)).toEqual(['b']);
   });
 });
 

@@ -1,13 +1,16 @@
+import { PRIORITIES, type Priority } from '../api';
 import { statusCounts, type Filters, type Status } from '../filters';
 import { useTasks } from '../useTasks';
-import { SearchIcon } from './Icons';
+import { ChevronDownIcon, SearchIcon } from './Icons';
 import styles from './Toolbar.module.css';
 
-const TABS: { value: Status; label: string }[] = [
+const STATUSES: { value: Status; label: string }[] = [
   { value: 'open', label: 'Open' },
   { value: 'done', label: 'Done' },
   { value: 'all', label: 'All' },
 ];
+
+const PRIORITY_CLASS = ['high', 'medium', 'low'] as const;
 
 interface Props {
   filters: Filters;
@@ -22,24 +25,45 @@ export function Toolbar({ filters, onFiltersChange, byDay, onByDayChange }: Prop
 
   return (
     <div className={styles.toolbar}>
-      <nav className={styles.tabs} aria-label="Status">
-        {TABS.map(({ value, label }) => (
-          <button
-            key={value}
-            type="button"
-            aria-pressed={filters.status === value}
-            onClick={() => onFiltersChange({ ...filters, status: value })}
+      <div className={styles.filters} role="group" aria-label="Filters">
+        <label className={styles.filter}>
+          <span className={styles.filterLabel}>Status</span>
+          <select
+            className={`${styles.select} ${styles.statusSelect} ${filters.status !== 'open' ? styles.active : ''}`}
+            aria-label="Status"
+            value={filters.status}
+            onChange={(e) => onFiltersChange({ ...filters, status: e.target.value as Status })}
           >
-            {label}
-            {counts && (
-              <>
-                {' '}
-                <span className={styles.count}>{counts[value]}</span>
-              </>
-            )}
-          </button>
-        ))}
-      </nav>
+            {STATUSES.map(({ value, label }) => (
+              <option key={value} value={value}>
+                {counts ? `${label} · ${counts[value]}` : label}
+              </option>
+            ))}
+          </select>
+          <ChevronDownIcon className={styles.chevron} />
+        </label>
+        <label className={styles.filter}>
+          <span className={styles.filterLabel}>Priority</span>
+          <select
+            className={`${styles.select} ${styles.prioritySelect} ${filters.priority !== 'any' ? styles.active : ''} ${
+              filters.priority === 'any' ? '' : styles[PRIORITY_CLASS[filters.priority]]
+            }`}
+            aria-label="Priority filter"
+            value={filters.priority}
+            onChange={(e) =>
+              onFiltersChange({ ...filters, priority: e.target.value === 'any' ? 'any' : (Number(e.target.value) as Priority) })
+            }
+          >
+            <option value="any">Any</option>
+            {[...PRIORITIES].reverse().map(({ value, label }) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+          <ChevronDownIcon className={styles.chevron} />
+        </label>
+      </div>
       <div className={styles.tools} role="search">
         <div className={styles.search}>
           <SearchIcon className={styles.icon} />
