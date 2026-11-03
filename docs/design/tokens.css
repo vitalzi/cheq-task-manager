@@ -1,0 +1,80 @@
+/*
+ * Design tokens for the task manager UI (direction C, "editorial light").
+ * Import once globally (e.g. in main.tsx). CSS Modules reference these
+ * variables only; no hard-coded colours, fonts or radii in module files.
+ *
+ * Fonts: add to index.html <head>:
+ * <link rel="preconnect" href="https://fonts.googleapis.com">
+ * <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+ * <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+ */
+
+:root {
+  /* Colour */
+  --color-bg: #f5f4f0;            /* page ground */
+  --color-surface: #ffffff;       /* cards, inputs, task rows */
+  --color-subtle: #eae7e0;        /* segmented control track */
+  --color-skeleton: #eceae4;      /* loading bars */
+  --color-border: #dedbd3;        /* inputs, badge, secondary buttons */
+  --color-border-row: #e6e3dc;    /* task row border */
+  --color-border-dashed: #d3cfc6; /* empty / no-match cards */
+  --color-text: #17181b;          /* primary text, row border while editing, Save button */
+  --color-muted: #5e636b;         /* labels, timestamps, icons, done titles (4.5:1+ on bg and surface) */
+  --color-placeholder: #7a7f87;
+  --color-accent: #f5a524;        /* primary "Add" button background */
+  --color-on-accent: #1a1300;     /* text on accent */
+
+  --color-success: #17663a;       /* "API up" text */
+  --color-success-dot: #23a55a;
+  --color-pending-dot: #a3a8af;   /* "Checking API…" */
+  --color-danger: #b42318;        /* inline validation text */
+  --color-danger-strong: #a6261b; /* "API down" text */
+  --color-danger-dot: #d92d20;    /* "API down" dot, invalid input border */
+  --color-danger-bg: #fef3f2;     /* error alert background */
+  --color-danger-border: #f1c9c4;
+  --color-danger-text: #8f1f15;   /* error alert text */
+
+  --color-toast-bg: #17181b;
+  --color-toast-text: #f5f4f0;
+  --color-toast-action: #f5a524;
+
+  /* Type */
+  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --text-display: 44px;   /* h1 count heading, weight 600, letter-spacing -0.02em, line-height 1.1 */
+  --text-body: 16px;      /* task titles, inputs */
+  --text-control: 15px;   /* filter input, secondary buttons */
+  --text-small: 13px;     /* timestamps, segmented labels, inline errors */
+  --text-label: 12px;     /* mono uppercase labels, letter-spacing 0.08em */
+
+  /* Shape and spacing */
+  --radius-lg: 12px;      /* rows, primary inputs, toast, cards */
+  --radius-md: 10px;      /* filter input, icon buttons, secondary buttons */
+  --radius-sm: 8px;       /* badge, inline-edit controls */
+  --radius-xs: 7px;       /* segmented buttons */
+
+  --space-section: 32px;  /* gap between page sections */
+  --space-group: 28px;    /* gap between day groups */
+  --space-row: 8px;       /* gap between task rows */
+
+  --content-max: 720px;
+  --control-lg: 52px;     /* new-task input and Add button height */
+  --control-md: 44px;     /* every other control, also the minimum touch target */
+
+  --shadow-pressed: 0 1px 2px rgba(23, 24, 27, 0.12);
+  --shadow-toast: 0 8px 24px rgba(23, 24, 27, 0.18);
+  --focus-ring: 2px solid var(--color-text);
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+}
+
+:where(button, input):focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}

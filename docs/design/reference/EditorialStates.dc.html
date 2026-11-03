@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tasks, editorial states</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#17181B}a:hover{color:#5E636B}
+</style>
+</helmet>
+<div style="width: 1280px; height: 1000px; box-sizing: border-box; padding: 64px; background: #F5F4F0; color: #17181B; font-family: 'IBM Plex Sans', system-ui, sans-serif; display: flex; flex-direction: column; gap: 32px">
+<h2 style="margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.01em">States</h2>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px 32px">
+
+<div style="display: flex; flex-direction: column; gap: 12px">
+<p style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #5E636B">Loading</p>
+<div role="status" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; background: #FFFFFF; border: 1px solid #DEDBD3; border-radius: 8px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #5E636B">
+<span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; background: #A3A8AF"></span>
+Checking API…
+</div>
+<div aria-busy="true" style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; justify-content: space-between; gap: 16px; padding: 20px 18px; background: #FFFFFF; border: 1px solid #E6E3DC; border-radius: 12px"><div style="width: 55%; height: 12px; border-radius: 6px; background: #ECEAE4"></div><div style="width: 48px; height: 12px; border-radius: 6px; background: #ECEAE4"></div></div>
+<div style="display: flex; justify-content: space-between; gap: 16px; padding: 20px 18px; background: #FFFFFF; border: 1px solid #E6E3DC; border-radius: 12px"><div style="width: 40%; height: 12px; border-radius: 6px; background: #ECEAE4"></div><div style="width: 48px; height: 12px; border-radius: 6px; background: #ECEAE4"></div></div>
+<div style="display: flex; justify-content: space-between; gap: 16px; padding: 20px 18px; background: #FFFFFF; border: 1px solid #E6E3DC; border-radius: 12px"><div style="width: 65%; height: 12px; border-radius: 6px; background: #ECEAE4"></div><div style="width: 48px; height: 12px; border-radius: 6px; background: #ECEAE4"></div></div>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 12px">
+<p style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #5E636B">API down</p>
+<div role="status" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; background: #FFFFFF; border: 1px solid #F1C9C4; border-radius: 8px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #A6261B">
+<span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; background: #D92D20"></span>
+API down
+</div>
+<div role="alert" style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 14px 14px 14px 18px; background: #FEF3F2; border: 1px solid #F1C9C4; border-radius: 12px; color: #8F1F15">
+<div style="display: flex; flex-direction: column; gap: 2px">
+<span style="font-size: 15px; font-weight: 600">Couldn’t load tasks</span>
+<span style="font-size: 14px">Cannot reach the API</span>
+</div>
+<button type="button" style="height: 44px; padding: 0 16px; border: 1px solid #E3B5AF; border-radius: 10px; background: #FFFFFF; color: #17181B; font-family: inherit; font-size: 15px; cursor: pointer">Retry</button>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 12px">
+<p style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #5E636B">Editing, invalid</p>
+<div style="background: #FFFFFF; border: 1px solid #17181B; border-radius: 12px; padding: 8px; display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; gap: 8px; flex-wrap: wrap">
+<input type="text" aria-label="Edit task title" aria-invalid="true" style="flex: 1 1 200px; min-width: 0; height: 44px; padding: 0 12px; border: 1px solid #D92D20; border-radius: 8px; background: #FFFFFF; font-family: inherit; font-size: 16px; box-sizing: border-box">
+<button type="button" style="height: 44px; padding: 0 16px; border: 0; border-radius: 8px; background: #17181B; color: #FFFFFF; font-family: inherit; font-size: 15px; font-weight: 600">Save</button>
+<button type="button" style="height: 44px; padding: 0 14px; border: 1px solid #DEDBD3; border-radius: 8px; background: transparent; color: #17181B; font-family: inherit; font-size: 15px">Cancel</button>
+</div>
+<p style="margin: 0 4px; font-size: 13px; color: #B42318">Title is required</p>
+<p style="margin: 0 4px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #5E636B">Enter to save · Esc to cancel</p>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 12px">
+<p style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #5E636B">No matches</p>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 32px 24px; border: 1px dashed #D3CFC6; border-radius: 12px; text-align: center">
+<p style="margin: 0; font-size: 16px">No tasks match your filter.</p>
+<button type="button" style="height: 44px; padding: 0 16px; border: 1px solid #DEDBD3; border-radius: 10px; background: #FFFFFF; color: #17181B; font-family: inherit; font-size: 15px">Clear filters</button>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 12px">
+<p style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #5E636B">Deleted, with undo</p>
+<div role="status" style="align-self: flex-start; display: flex; align-items: center; gap: 16px; padding: 6px 6px 6px 18px; background: #17181B; color: #F5F4F0; border-radius: 12px; font-size: 14px">
+<span>Task deleted</span>
+<button type="button" style="height: 44px; padding: 0 14px; border: 0; border-radius: 8px; background: transparent; color: #F5A524; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; font-weight: 500">Undo</button>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 12px">
+<p style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #5E636B">Empty</p>
+<div style="padding: 32px 24px; border: 1px dashed #D3CFC6; border-radius: 12px; text-align: center; font-size: 16px; color: #5E636B">No tasks yet — add your first one above.</div>
+</div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1000}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>
