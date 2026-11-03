@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { applyFilters, DEFAULT_FILTERS, groupByDay, sortTasks, statusCounts } from './filters';
-import { sampleTask } from './test/fakeApi';
+import { sampleTask } from '../test/fakeApi';
 
 const now = new Date(2026, 10, 3, 12, 0); // 3 Nov 2026, local noon
 const at = (day: number, hour: number, month = 10) => new Date(2026, month, day, hour).toISOString();

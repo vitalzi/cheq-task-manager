@@ -1,7 +1,7 @@
-import { PRIORITIES, type Priority } from '../api';
-import { statusCounts, type Filters, type Status } from '../filters';
-import { useTasks } from '../useTasks';
-import { ChevronDownIcon, SearchIcon } from './Icons';
+import { PRIORITIES, type Priority } from '../../api/api';
+import { statusCounts, type Filters, type Status } from '../../lib/filters';
+import { useTasks } from '../../api/useTasks';
+import { ChevronDownIcon, SearchIcon } from '../Icons/Icons';
 import styles from './Toolbar.module.css';
 
 const STATUSES: { value: Status; label: string }[] = [

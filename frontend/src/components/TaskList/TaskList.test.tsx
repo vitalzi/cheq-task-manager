@@ -2,10 +2,10 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { Filters } from '../filters';
-import { FakeApi, sampleTask } from '../test/fakeApi';
-import { renderWithClient } from '../test/render';
-import { server } from '../test/server';
+import type { Filters } from '../../lib/filters';
+import { FakeApi, sampleTask } from '../../test/fakeApi';
+import { renderWithClient } from '../../test/render';
+import { server } from '../../test/server';
 import { TaskList } from './TaskList';
 
 const ALL: Filters = { query: '', status: 'all', priority: 'any' };

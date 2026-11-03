@@ -1,9 +1,9 @@
 import { useId, useState, type FormEvent } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { PRIORITIES, deleteTask, updateTask, type Priority, type Task, type TaskChanges } from '../api';
-import { formatCreated } from '../time';
-import { PencilIcon, PriorityIcon, TrashIcon } from './Icons';
-import { PrioritySelect } from './PrioritySelect';
+import { PRIORITIES, deleteTask, updateTask, type Priority, type Task, type TaskChanges } from '../../api/api';
+import { formatCreated } from '../../lib/time';
+import { PencilIcon, PriorityIcon, TrashIcon } from '../Icons/Icons';
+import { PrioritySelect } from '../PrioritySelect/PrioritySelect';
 import styles from './TaskItem.module.css';
 
 const PRIORITY_TEXT = ['high', 'medium', 'low'] as const;

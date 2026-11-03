@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
-import { applyFilters, groupByDay, sortTasks, type Filters } from '../filters';
-import { useTasks } from '../useTasks';
-import { TaskItem, type RowMode } from './TaskItem';
+import { applyFilters, groupByDay, sortTasks, type Filters } from '../../lib/filters';
+import { useTasks } from '../../api/useTasks';
+import { TaskItem, type RowMode } from '../TaskItem/TaskItem';
 import styles from './TaskList.module.css';
 
 interface Props {

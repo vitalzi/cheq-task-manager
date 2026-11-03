@@ -1,7 +1,7 @@
 import { useId, useState, type FormEvent, type Ref } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createTask, type Priority } from '../api';
-import { PrioritySelect } from './PrioritySelect';
+import { createTask, type Priority } from '../../api/api';
+import { PrioritySelect } from '../PrioritySelect/PrioritySelect';
 import styles from './TaskForm.module.css';
 
 export function TaskForm({ inputRef }: { inputRef?: Ref<HTMLInputElement> }) {

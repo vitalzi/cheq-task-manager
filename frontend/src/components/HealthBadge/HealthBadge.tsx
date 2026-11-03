@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getHealth } from '../api';
+import { getHealth } from '../../api/api';
 import styles from './HealthBadge.module.css';
 
 // 4320 seconds -> "1h 12m"; under an hour -> "5m".

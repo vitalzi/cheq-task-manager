@@ -1,4 +1,4 @@
-import type { Priority, Task } from './api';
+import type { Priority, Task } from '../api/api';
 
 export type Status = 'open' | 'done' | 'all';
 

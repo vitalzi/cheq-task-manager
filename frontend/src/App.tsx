@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react';
-import { DEFAULT_FILTERS, type Filters } from './filters';
-import { HealthBadge } from './components/HealthBadge';
-import { TaskForm } from './components/TaskForm';
-import { TaskList } from './components/TaskList';
-import { Toolbar } from './components/Toolbar';
+import { DEFAULT_FILTERS, type Filters } from './lib/filters';
+import { HealthBadge } from './components/HealthBadge/HealthBadge';
+import { TaskForm } from './components/TaskForm/TaskForm';
+import { TaskList } from './components/TaskList/TaskList';
+import { Toolbar } from './components/Toolbar/Toolbar';
 import styles from './App.module.css';
 
 export function App() {

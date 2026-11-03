@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import type { Priority } from '../api';
+import type { Priority } from '../../api/api';
 import { PriorityIcon } from './Icons';
 
 const filledBars = (container: HTMLElement) =>

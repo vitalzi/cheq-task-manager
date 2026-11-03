@@ -1,5 +1,5 @@
-import { PRIORITIES, type Priority } from '../api';
-import { ChevronDownIcon, PriorityIcon } from './Icons';
+import { PRIORITIES, type Priority } from '../../api/api';
+import { ChevronDownIcon, PriorityIcon } from '../Icons/Icons';
 import styles from './PrioritySelect.module.css';
 
 interface Props {

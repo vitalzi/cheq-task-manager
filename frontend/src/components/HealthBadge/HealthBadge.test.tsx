@@ -1,8 +1,8 @@
 import { screen } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
-import { renderWithClient } from '../test/render';
-import { server } from '../test/server';
+import { renderWithClient } from '../../test/render';
+import { server } from '../../test/server';
 import { HealthBadge } from './HealthBadge';
 
 const health = (respond: () => Response) => server.use(http.get(`${import.meta.env.VITE_API_URL}/health`, respond));

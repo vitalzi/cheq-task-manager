@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import type { Task } from '../api';
+import type { Task } from '../api/api';
 import { server } from './server';
 
 export interface Write {

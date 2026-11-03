@@ -24,7 +24,7 @@ What the app has on top of the assignment's MVP (the task list for it is `docs/t
 ## Folder map
 
 - **`backend/`:** Fastify API in TypeScript. `src/app.ts` builds the app, `src/tasks/` holds the routes and the service, and `src/tasks/store/` holds the `TaskStore` interface, its two implementations and the shared contract test
-- **`frontend/`:** React app (Vite, TypeScript)
+- **`frontend/`:** React app (Vite, TypeScript). In `src/`, `api/` talks to the backend, `lib/` holds the pure filter, sort and time functions, `components/` has one folder per component (its code, styles and test), and `test/` has the shared test setup
 - **`infra/`:** Terraform for the AWS resources
 - **`.github/workflows/`:** CI/CD pipelines, one per deployable
 - **`docs/`:** `requirements.md` (checklist from the PDF), `decisions.md` (approved decisions), `agent-decisions.md` (small implementation decisions), `pushbacks.md` (every correction of the AI agent), `plan.md`, `tasks/` (per phase) and `design/` (the UI handoff)

@@ -385,3 +385,13 @@ Small decisions the agent made while building, one entry per decision with the t
 - **Moves done with `git mv`** so file history follows. Only import paths changed: 15 lines in 10 files, no logic.
 - **Old paths in earlier docs left alone:** `agent-decisions.md` and `pushbacks.md` mention files by their old location as a record of what was decided at the time. The README and code use the new paths.
 - **Verified:** `tsc` failed on 15 imports right after the move and was clean after the fix. Lint, 119 unit tests (95.2% coverage, same as before), 13 integration tests, `npm run build` (the test and contract files are still left out of `dist/`), and a `docker build` with a `/health` check on the running container.
+
+## Task 45
+
+- **`api/` holds `api.ts` and `useTasks.ts`:** the two files that talk to the backend. Imports read `../../api/api`; the owner approved that layout.
+- **`lib/` holds `filters` and `time` with their tests:** pure functions, no React.
+- **One folder per component, no `index.ts` barrel files:** a barrel would shorten imports but adds a file per component. Each folder holds the `.tsx`, the `.module.css` and the test; CSS imports (`./X.module.css`) did not change.
+- **`App`, `main.tsx`, `index.css`, `tokens.css` and `test/` stay in `src/`:** `vite.config.ts` and `index.html` name `src/test/setup.ts` and `src/main.tsx`, so nothing outside `src/` needed an edit.
+- **Moves done with `git mv`:** Git reports all 24 as renames. Only import paths changed.
+- **A shell glob error stopped the first import-rewrite script half way** (zsh aborts on a pattern with no match; the component folders have no plain `.ts` files). It was rerun with the `.tsx` glob only; the type-check afterwards is what confirmed every import.
+- **Verified:** `tsc` failed on 45 imports right after the move and was clean after the fix. 80 tests, lint and build pass, and the build's file sizes and content hashes are identical to the build before the move.

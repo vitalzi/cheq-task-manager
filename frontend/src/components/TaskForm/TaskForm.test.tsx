@@ -1,8 +1,8 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { FakeApi } from '../test/fakeApi';
-import { renderWithClient } from '../test/render';
+import { FakeApi } from '../../test/fakeApi';
+import { renderWithClient } from '../../test/render';
 import { TaskForm } from './TaskForm';
 
 describe('TaskForm', () => {

@@ -1,4 +1,4 @@
-import type { Priority } from '../api';
+import type { Priority } from '../../api/api';
 import styles from './Icons.module.css';
 
 // Small inline icons, drawn on a 24px grid; they take their colour from the text (currentColor).
