@@ -32,6 +32,12 @@ export class FakeApi {
         const body = (await request.clone().json()) as Partial<Task>;
         return (await this.beforeWrite(request, body)) ?? this.update(String(params.id), body);
       }),
+      http.delete(url('/tasks/:id'), async ({ request, params }) => {
+        const early = await this.beforeWrite(request, undefined);
+        if (early) return early;
+        this.tasks = this.tasks.filter((task) => task.id !== params.id);
+        return new HttpResponse(null, { status: 204 });
+      }),
     );
   }
 

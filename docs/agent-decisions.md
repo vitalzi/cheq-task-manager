@@ -268,3 +268,10 @@ Small decisions the agent made while building, one entry per decision with the t
 - **Controlled checkbox and select:** both show the server's value, so after a failed change the control stays as it was and the alert explains why. No optimistic update (the row waits for the refetch).
 - **Priority select on the create form keeps its value after adding a task:** only the title is cleared, which suits adding several tasks of the same priority in a row. The select starts on Medium.
 - **No sorting by priority:** the list stays oldest first, as the API returns it. Sorting or filtering by priority is not in the task.
+
+## Task 28
+
+- **Delete is a second mutation inside `TaskItem`, with a local `confirmingDelete` flag:** Delete swaps to "Delete? Yes / No". Yes sends the request, No goes back, nothing is sent before Yes. The row's controls are disabled while either mutation is pending.
+- **`request()` returns `undefined` for a `204`:** the API's `DELETE` has no body, and `res.json()` would throw on it and turn a success into an error alert.
+- **After a failed delete the row returns to the Delete button, with the alert above:** the user can start again; the task stays listed because nothing refetched it away.
+- **The fake's `DELETE` removes the task from its list and answers `204`:** same level of detail as its `PATCH`; the `404` for an unknown id is the backend's test.

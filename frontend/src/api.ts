@@ -32,6 +32,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     const body = await res.json().catch(() => null);
     throw new Error(body?.error ?? `Request failed (${res.status})`);
   }
+  if (res.status === 204) return undefined as T; // DELETE answers with no body
   return res.json();
 }
 
@@ -50,3 +51,5 @@ export const createTask = (input: { title: string; priority: Priority }) =>
 
 export const updateTask = ({ id, changes }: { id: string; changes: TaskChanges }) =>
   request<Task>(`/tasks/${id}`, jsonRequest('PATCH', changes));
+
+export const deleteTask = (id: string) => request<void>(`/tasks/${id}`, { method: 'DELETE' });

@@ -197,6 +197,70 @@ describe('TaskList', () => {
     });
   });
 
+  describe('deleting', () => {
+    const deleteButton = () => screen.findByRole('button', { name: 'Delete' });
+
+    it('asks first and sends nothing until Yes', async () => {
+      const user = userEvent.setup();
+      renderWithClient(<TaskList />);
+
+      await user.click(await deleteButton());
+
+      expect(screen.getByText('Delete?')).toBeInTheDocument();
+      expect(api.writes).toEqual([]);
+    });
+
+    it('sends DELETE on Yes and removes the task', async () => {
+      const user = userEvent.setup();
+      renderWithClient(<TaskList />);
+
+      await user.click(await deleteButton());
+      await user.click(screen.getByRole('button', { name: 'Yes' }));
+
+      expect(await screen.findByText('No tasks yet.')).toBeInTheDocument();
+      expect(api.writes).toEqual([{ method: 'DELETE', path: '/tasks/id-0', body: undefined }]);
+    });
+
+    it('goes back to the Delete button on No and sends nothing', async () => {
+      const user = userEvent.setup();
+      renderWithClient(<TaskList />);
+
+      await user.click(await deleteButton());
+      await user.click(screen.getByRole('button', { name: 'No' }));
+
+      expect(await deleteButton()).toBeInTheDocument();
+      expect(screen.queryByText('Delete?')).not.toBeInTheDocument();
+      expect(api.writes).toEqual([]);
+    });
+
+    it('keeps the task and shows an alert when the delete fails', async () => {
+      const user = userEvent.setup();
+      api.failNextWrite(500);
+      renderWithClient(<TaskList />);
+
+      await user.click(await deleteButton());
+      await user.click(screen.getByRole('button', { name: 'Yes' }));
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('Could not delete task: Something went wrong');
+      expect(screen.getByText('Write the report')).toBeInTheDocument();
+    });
+
+    it('disables the row controls while the delete is pending', async () => {
+      const user = userEvent.setup();
+      const release = api.holdWrites();
+      renderWithClient(<TaskList />);
+
+      await user.click(await deleteButton());
+      await user.click(screen.getByRole('button', { name: 'Yes' }));
+
+      await waitFor(() => expect(screen.getByRole('checkbox')).toBeDisabled());
+      expect(screen.getByRole('button', { name: 'No' })).toBeDisabled();
+
+      release();
+      await waitFor(() => expect(screen.queryByText('Write the report')).not.toBeInTheDocument());
+    });
+  });
+
   describe('when the API fails', () => {
     it('shows an alert and leaves the task as it was', async () => {
       const user = userEvent.setup();

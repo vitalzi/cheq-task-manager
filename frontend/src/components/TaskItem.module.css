@@ -53,3 +53,11 @@
   background: #fdecea;
   color: #8e1a1a;
 }
+
+.row > .confirm {
+  flex: none;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
