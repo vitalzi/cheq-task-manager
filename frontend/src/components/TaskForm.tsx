@@ -1,11 +1,13 @@
 import { useState, type FormEvent } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createTask } from '../api';
+import { createTask, type Priority } from '../api';
+import { PrioritySelect } from './PrioritySelect';
 import styles from './TaskForm.module.css';
 
 export function TaskForm() {
   const queryClient = useQueryClient();
   const [title, setTitle] = useState('');
+  const [priority, setPriority] = useState<Priority>(1);
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const mutation = useMutation({
@@ -25,7 +27,7 @@ export function TaskForm() {
       return;
     }
     setValidationError(null);
-    mutation.mutate(title);
+    mutation.mutate({ title, priority });
   }
 
   return (
@@ -40,6 +42,7 @@ export function TaskForm() {
           placeholder="New task title"
           aria-label="Task title"
         />
+        <PrioritySelect value={priority} onChange={setPriority} disabled={mutation.isPending} label="Priority" />
         <button type="submit" disabled={mutation.isPending}>
           {mutation.isPending ? 'Adding…' : 'Add task'}
         </button>

@@ -54,6 +54,7 @@ cd frontend
 npm install
 npm run dev      # app on http://localhost:5173
 npm run lint     # ESLint (typescript-eslint and React hooks rules)
+npm test         # Vitest + Testing Library, in jsdom; no API or browser needed
 npm run build    # type-check, then build to frontend/dist
 ```
 
@@ -105,8 +106,8 @@ Two GitHub Actions workflows run on push to `main`, each only when its own folde
   - **Rollout:** the run waits for the service to become stable, so a new task that never turns healthy fails the run instead of going green. The old task keeps serving until then.
   - **Overlap:** runs queue and never cancel each other mid-rollout.
 - **Frontend (`.github/workflows/frontend.yml`, on `frontend/**`):**
-  - **Steps:** `npm ci`, `npm run lint`, `npm run build` (type-check, then Vite build) with no `VITE_API_URL` (same-origin), then `aws s3 sync` to the bucket and a CloudFront invalidation of `/index.html`.
-  - **Gate:** a lint or type error stops the run before anything reaches AWS. The frontend has no tests (optional in the assignment).
+  - **Steps:** `npm ci`, `npm run lint`, `npm test`, `npm run build` (type-check, then Vite build) with no `VITE_API_URL` (same-origin), then `aws s3 sync` to the bucket and a CloudFront invalidation of `/index.html`.
+  - **Gate:** a lint error, a failing test or a type error stops the run before anything reaches AWS.
   - **Caching:** hashed files under `assets/` are uploaded first with a one-year `immutable` cache and `--delete`; `index.html` goes last with `no-cache`, so a visitor never gets a page that points at files not yet uploaded. The invalidation makes CloudFront drop its copy of `index.html`, so a new build shows on the next load.
 
 ## Design choices
@@ -114,7 +115,7 @@ Two GitHub Actions workflows run on push to `main`, each only when its own folde
 - **ECS Fargate behind an ALB instead of the assignment's default EC2:** the ALB gives a real health check on `/health`, a stable DNS name and rolling deploys that keep the old task serving until the new one is healthy; deploying needs no SSH keys. Cost: about $25-30 a month, mostly the ALB.
 - **Async `TaskStore` interface with two implementations:** in-memory (the assignment allows it, and it is what runs locally) and DynamoDB (deployed). `buildApp(store)` takes the store as an argument, so switching needed no change to the routes or the service, and the same contract test runs against both.
 - **Frontend in its own private S3 bucket behind CloudFront:** it releases independently of the API. CloudFront serves the site and routes `/tasks*` and `/health` to the ALB, so the browser sees one HTTPS origin and needs no CORS. The API has no CORS plugin; locally the Vite dev proxy gives the same single origin.
-- **Validation split:** the route schema checks the type (`title` is a string); the service trims and checks the length, so a title of 200 characters plus surrounding spaces is valid and 201 after trimming is a `400`. Every error, including unknown routes and malformed JSON, is `{ "error": "<message>" }`.
+- **Validation:** the route's JSON Schema holds the rules (the title is trimmed first by the `transform` keyword from `ajv-keywords`, then `minLength`/`maxLength` apply, so a title of 200 characters plus surrounding spaces is valid and 201 after trimming is a `400`). The service gets already-validated input. Every error, including unknown routes and malformed JSON, is `{ "error": "<message>" }`.
 - **Tests in three layers:** service unit tests with a mocked store, HTTP tests through `app.inject()` against the real in-memory store, and the shared store contract test. Coverage is enforced at 80% in the Jest config.
 
 ## Assumptions
@@ -152,7 +153,7 @@ Each item says how it would be completed.
 - **Plain HTTP between CloudFront and the ALB:** users get HTTPS, but the last hop inside AWS is HTTP because the ALB has no certificate. With a domain, add an ACM certificate and an HTTPS listener on the ALB and switch the origin to `https-only`.
 - **Terraform state on a laptop:** move it to an S3 backend with locking before a second person applies.
 - **No authentication, no rate limiting, unbounded list:** `GET /tasks` returns everything and any client can post. Add pagination (`limit` and a cursor) and an AWS WAF rate rule, and authentication if tasks become per-user.
-- **No frontend tests:** optional in the assignment. Component tests with Vitest or Jest and Testing Library would cover the form validation, double-submit and the three list states.
+- **Frontend tests cover behavior, not looks:** Vitest and Testing Library run the real components and `api.ts`; MSW (Mock Service Worker) answers the network calls in-process, with small handlers in `src/test/fakeApi.ts` (the `PATCH` is kept in memory so the refetch shows it; the backend's rules are not copied, they are tested in the backend). The tests assert on the request the UI sent. A request with no handler fails the test. They cover the create form, the done toggle, the priority select, editing (blank title, cancel, Enter), the pending state and the error alerts. Not covered: styling, the health badge, and the real network path (checked by hand in a browser).
 - **No alarms or error tracking yet:** see Observability.
 
 ## Scalability: 10x traffic tomorrow

@@ -120,3 +120,17 @@ Every time the owner corrected the agent or scrutinized its output and asked for
 - **Pushback:** the owner said the service held validation that should be separate; that a "validator" which trims and casts is not a validator; that Fastify's built-in validation should be used where it gives simple options; and that the hook looked ugly and would need copying into `PATCH`. The owner pointed to `ajv-keywords` as the declarative option.
 - **Outcome:** the rules are in the route's JSON Schema in one place, the trim is the `transform` keyword (`ajv-keywords`, approved), the service takes typed input, and `TaskValidator` and `ValidationError` are gone. The hook was built and removed within the same task.
 - **Lesson:** when the framework has a declarative mechanism, show that option first, with its real cost, instead of leading with a hand-rolled layer. Judge a design by what the next task will have to copy (the hook would have been duplicated in `PATCH`), and name classes for what they do (a class that normalises input is a parser, not a validator).
+
+### 13. Frontend tests skipped, then added; Task 27 redone test first (Task 27)
+
+- **What the agent did:** built Task 27 (priority, edit, done toggle) and checked it only by hand in a browser, citing the Phase 1 decision that frontend tests were skipped, and flagged "no red/green" as a conflict instead of proposing tests as the way to meet the agreement.
+- **Pushback:** the owner asked for frontend tests, approved all the dependencies, and asked to redo the task with TDD properly.
+- **Outcome:** the implementation was deleted, Vitest and Testing Library were added, 24 tests were written and watched fail (18 red for the right reasons), then the components were rebuilt from them. Five mutation checks showed two guards were dead code (a disabled submit button already blocks Enter), so they were removed. CI now runs the tests before deploying the frontend.
+- **Lesson:** when a rule the owner set ("test first for application code") collides with an earlier "skip it" decision, the later and stricter rule wins; raise the missing tooling as a proposal up front instead of working around it. And a passing test proves little until a mutation shows it can fail.
+
+### 14. A hand-rolled fake API for the frontend tests (Task 27)
+
+- **What the agent did:** wrote `FakeApi`, an in-memory class that stubbed `fetch` and reimplemented part of the API's contract, without saying that the common practice is to mock the network with MSW.
+- **Pushback:** the owner asked whether a whole fake API was needed, whether it is common practice, and whether there is a better approach.
+- **Outcome:** switched to MSW (the owner chose it over keeping the class or slimming it). The handlers and state stay in `FakeApi`, the interception is MSW's, and the 24 tests did not change. Along the way `tsc` showed that MSW 3 renamed the unhandled-request option, so the first setting was silently ignored; fixed and proven with a wrong-URL mutation.
+- **Lesson:** when building test infrastructure by hand, say what the standard tool is and why you did not use it before writing it. A renamed option can fail silently: run the type-checker over the test setup, and check that a "fail on unexpected request" setting really fails.

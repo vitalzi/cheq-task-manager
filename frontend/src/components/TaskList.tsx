@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { getTasks } from '../api';
+import { TaskItem } from './TaskItem';
 import styles from './TaskList.module.css';
 
 export function TaskList() {
@@ -28,10 +29,7 @@ export function TaskList() {
   return (
     <ul className={styles.list}>
       {data.map((task) => (
-        <li key={task.id} className={styles.item}>
-          <span>{task.title}</span>
-          <time dateTime={task.createdAt}>{new Date(task.createdAt).toLocaleString()}</time>
-        </li>
+        <TaskItem key={task.id} task={task} />
       ))}
     </ul>
   );

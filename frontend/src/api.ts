@@ -1,8 +1,21 @@
+// Plain numbers on the wire, same as the API: 0 high, 1 medium, 2 low.
+export type Priority = 0 | 1 | 2;
+
+export const PRIORITIES: { value: Priority; label: string }[] = [
+  { value: 0, label: 'High' },
+  { value: 1, label: 'Medium' },
+  { value: 2, label: 'Low' },
+];
+
 export interface Task {
   id: string;
   title: string;
   createdAt: string;
+  done: 0 | 1; // 0 open, 1 done
+  priority: Priority;
 }
+
+export type TaskChanges = Partial<Pick<Task, 'title' | 'done' | 'priority'>>;
 
 export interface Health {
   status: string;
@@ -26,9 +39,14 @@ export const getHealth = () => request<Health>('/health');
 
 export const getTasks = () => request<Task[]>('/tasks');
 
-export const createTask = (title: string) =>
-  request<Task>('/tasks', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ title }),
-  });
+const jsonRequest = (method: string, body: unknown): RequestInit => ({
+  method,
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(body),
+});
+
+export const createTask = (input: { title: string; priority: Priority }) =>
+  request<Task>('/tasks', jsonRequest('POST', input));
+
+export const updateTask = ({ id, changes }: { id: string; changes: TaskChanges }) =>
+  request<Task>(`/tasks/${id}`, jsonRequest('PATCH', changes));

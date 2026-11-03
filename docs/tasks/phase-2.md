@@ -31,7 +31,7 @@ Phase 2 is the owner's own extras on top of the finished PDF MVP (`docs/tasks/ph
 | 24 | Store `update` and `delete`: interface, in-memory, contract test | Backend | [x] |
 | 25 | `update` and `delete` in `DynamoTaskStore`, and their IAM permissions | Backend, infra | [x] |
 | 26 | Update and delete: service and routes | Backend | [~] |
-| 27 | Frontend: priority on create, edit a task, mark done | Frontend | [ ] |
+| 27 | Frontend: priority on create, edit a task, mark done | Frontend | [~] |
 | 28 | Frontend: delete a task | Frontend | [ ] |
 | 29 | Styling from the owner's mocks | Frontend | [ ] |
 | 30 | README update and clean-clone re-check | Docs | [ ] |
@@ -124,7 +124,8 @@ The goal is HTTPS for the user without buying a domain: CloudFront's free `https
 ### 27. Frontend: priority on create, edit a task, mark done
 
 - **What:** `api.ts` gets the new `Task` fields and `updateTask(id, changes)`; `createTask` takes an optional priority. The create form gets a priority select that starts on Medium. Each list row shows its priority and done state, and gets: an edit action (the title becomes an input with save and cancel; the same client-side rule as the create form blocks an empty or whitespace-only title), a done toggle, and a priority select. Each change uses a mutation (disabled while pending, the list refreshes on success, an error alert on failure)
-- **Done when:** invalid input sends no request; a double-click on save sends one request; an edited title, a toggled done state and a changed priority show after the change and after a reload; stopping the API shows the alert
+- **Test first:** component tests (Vitest and Testing Library, `FakeApi` for `fetch`) for the form, the done toggle, the priority select and the edit flow
+- **Done when:** the tests pass; invalid input sends no request; a double-click on save sends one request; an edited title, a toggled done state and a changed priority show after the change and after a reload; stopping the API shows the alert
 
 ### 28. Frontend: delete a task
 
