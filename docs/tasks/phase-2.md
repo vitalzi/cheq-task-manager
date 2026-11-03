@@ -30,9 +30,9 @@ Phase 2 is the owner's own extras on top of the finished PDF MVP (`docs/tasks/ph
 | 23 | Task model: `done` and `priority` | Backend | [x] |
 | 24 | Store `update` and `delete`: interface, in-memory, contract test | Backend | [x] |
 | 25 | `update` and `delete` in `DynamoTaskStore`, and their IAM permissions | Backend, infra | [x] |
-| 26 | Update and delete: service and routes | Backend | [~] |
-| 27 | Frontend: priority on create, edit a task, mark done | Frontend | [~] |
-| 28 | Frontend: delete a task | Frontend | [~] |
+| 26 | Update and delete: service and routes | Backend | [x] |
+| 27 | Frontend: priority on create, edit a task, mark done | Frontend | [x] |
+| 28 | Frontend: delete a task | Frontend | [x] |
 | 29 | Styling from the owner's mocks | Frontend | [ ] |
 | 30 | README update and clean-clone re-check | Docs | [ ] |
 
