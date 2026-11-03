@@ -26,8 +26,8 @@ Phase 2 is the owner's own extras on top of the finished PDF MVP (`docs/tasks/ph
 | 19 | CloudFront: private bucket and distribution (Terraform) | Infra | [x] |
 | 20 | CloudFront: switch the pipeline and live check | CI, frontend | [x] |
 | 21 | `DynamoTaskStore` and integration test | Backend | [x] |
-| 22 | DynamoDB table, IAM and wiring (Terraform) | Infra, backend | [~] |
-| 23 | Task model: `done` and `priority` | Backend | [~] |
+| 22 | DynamoDB table, IAM and wiring (Terraform) | Infra, backend | [x] |
+| 23 | Task model: `done` and `priority` | Backend | [x] |
 | 24 | Store `update` and `delete`: interface, in-memory, contract test | Backend | [ ] |
 | 25 | `update` and `delete` in `DynamoTaskStore`, and their IAM permissions | Backend, infra | [ ] |
 | 26 | Update and delete: service and routes | Backend | [ ] |
