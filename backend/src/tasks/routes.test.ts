@@ -15,6 +15,13 @@ describe('task routes', () => {
   const post = (payload: string | object | undefined, headers: Record<string, string> = json) =>
     app.inject({ method: 'POST', url: '/tasks', headers, payload });
 
+  const patch = (id: string, payload: string | object | undefined, headers: Record<string, string> = json) =>
+    app.inject({ method: 'PATCH', url: `/tasks/${id}`, headers, payload });
+
+  const remove = (id: string) => app.inject({ method: 'DELETE', url: `/tasks/${id}` });
+
+  const list = async (): Promise<Task[]> => (await app.inject({ method: 'GET', url: '/tasks' })).json();
+
   const expectErrorShape = (res: { json: () => unknown }) => {
     const body = res.json() as { error: unknown };
     expect(Object.keys(body)).toEqual(['error']);
@@ -158,6 +165,145 @@ describe('task routes', () => {
     });
   });
 
+  describe('PATCH /tasks/:id', () => {
+    let created: Task;
+
+    beforeEach(async () => {
+      created = (await post({ title: 'original', priority: 0 })).json();
+    });
+
+    it('returns 200 and the updated task, changing only the given field', async () => {
+      const res = await patch(created.id, { done: 1 });
+
+      expect(res.statusCode).toBe(200);
+      expect(res.json()).toEqual({ ...created, done: 1 });
+      expect(await list()).toEqual([{ ...created, done: 1 }]);
+    });
+
+    it('keeps the priority when the body does not mention it (no default is applied)', async () => {
+      const res = await patch(created.id, { title: 'renamed' });
+
+      expect(res.json().priority).toBe(0);
+    });
+
+    it('changes the priority', async () => {
+      const res = await patch(created.id, { priority: 2 });
+
+      expect(res.json()).toEqual({ ...created, priority: 2 });
+    });
+
+    it('changes several fields at once', async () => {
+      const res = await patch(created.id, { title: 'new', done: 1, priority: 2 });
+
+      expect(res.json()).toEqual({ ...created, title: 'new', done: 1, priority: 2 });
+    });
+
+    it('trims the title and accepts 200 characters plus surrounding spaces', async () => {
+      const title = 'a'.repeat(200);
+
+      const res = await patch(created.id, { title: `  ${title}  ` });
+
+      expect(res.statusCode).toBe(200);
+      expect(res.json().title).toBe(title);
+    });
+
+    it('never changes id or createdAt, and ignores other unknown fields', async () => {
+      const res = await patch(created.id, { done: 1, id: 'other', createdAt: 'yesterday', extra: true });
+
+      expect(res.statusCode).toBe(200);
+      expect(res.json()).toEqual({ ...created, done: 1 });
+      expect(await list()).toEqual([{ ...created, done: 1 }]);
+    });
+
+    it('returns 404 for an unknown id and creates nothing', async () => {
+      const res = await patch('missing', { done: 1 });
+
+      expect(res.statusCode).toBe(404);
+      expectErrorShape(res);
+      expect(await list()).toEqual([created]);
+    });
+
+    it.each([
+      ['an empty title', { title: '' }],
+      ['a whitespace-only title', { title: '   ' }],
+      ['a number title', { title: 42 }],
+      ['a null title', { title: null }],
+      ['a title of 201 characters after trimming', { title: ` ${'a'.repeat(201)} ` }],
+      ['a done of 2', { done: 2 }],
+      ['a done of -1', { done: -1 }],
+      ['a done of true', { done: true }],
+      ['a done of "1"', { done: '1' }],
+      ['a null done', { done: null }],
+      ['a priority of 3', { priority: 3 }],
+      ['a priority of 1.5', { priority: 1.5 }],
+      ['a priority of "1"', { priority: '1' }],
+      ['a null priority', { priority: null }],
+      ['an empty object', {}],
+      ['only unknown fields', { extra: 1 }],
+      ['only id and createdAt', { id: 'other', createdAt: 'yesterday' }],
+    ])('returns 400 for %s and changes nothing', async (_name, payload) => {
+      const res = await patch(created.id, payload);
+
+      expect(res.statusCode).toBe(400);
+      expectErrorShape(res);
+      expect(await list()).toEqual([created]);
+    });
+
+    it.each([
+      ['malformed JSON', '{"done": '],
+      ['an empty body', ''],
+      ['a null body', 'null'],
+      ['an array body', '[]'],
+      ['a string body', '"just a string"'],
+    ])('returns 400 for %s', async (_name, payload) => {
+      const res = await patch(created.id, payload);
+
+      expect(res.statusCode).toBe(400);
+      expectErrorShape(res);
+    });
+
+    it('returns 400 for a text/plain body', async () => {
+      const res = await patch(created.id, 'done=1', { 'content-type': 'text/plain' });
+
+      expect(res.statusCode).toBe(400);
+      expectErrorShape(res);
+    });
+
+    it('returns 415 for a content type Fastify has no parser for', async () => {
+      const res = await patch(created.id, '<done>1</done>', { 'content-type': 'application/xml' });
+
+      expect(res.statusCode).toBe(415);
+      expectErrorShape(res);
+    });
+  });
+
+  describe('DELETE /tasks/:id', () => {
+    it('returns 204 with no body and removes only that task', async () => {
+      const a: Task = (await post({ title: 'a' })).json();
+      const b: Task = (await post({ title: 'b' })).json();
+
+      const res = await remove(a.id);
+
+      expect(res.statusCode).toBe(204);
+      expect(res.body).toBe('');
+      expect(await list()).toEqual([b]);
+    });
+
+    it('returns 404 for an unknown id', async () => {
+      const res = await remove('missing');
+
+      expect(res.statusCode).toBe(404);
+      expectErrorShape(res);
+    });
+
+    it('returns 404 the second time', async () => {
+      const a: Task = (await post({ title: 'a' })).json();
+      await remove(a.id);
+
+      expect((await remove(a.id)).statusCode).toBe(404);
+    });
+  });
+
   describe('unknown routes and methods', () => {
     it('returns 404 in the error shape for an unknown route', async () => {
       const res = await app.inject({ method: 'GET', url: '/nope' });
@@ -192,7 +338,7 @@ describe('task routes', () => {
       };
       const failingApp = buildApp(failing);
 
-      const list = await failingApp.inject({ method: 'GET', url: '/tasks' });
+      const listed = await failingApp.inject({ method: 'GET', url: '/tasks' });
       const create = await failingApp.inject({
         method: 'POST',
         url: '/tasks',
@@ -200,7 +346,15 @@ describe('task routes', () => {
         payload: { title: 'x' },
       });
 
-      for (const res of [list, create]) {
+      const update = await failingApp.inject({
+        method: 'PATCH',
+        url: '/tasks/id-1',
+        headers: json,
+        payload: { done: 1 },
+      });
+      const del = await failingApp.inject({ method: 'DELETE', url: '/tasks/id-1' });
+
+      for (const res of [listed, create, update, del]) {
         expect(res.statusCode).toBe(500);
         expectErrorShape(res);
         expect(res.body).not.toContain('secret');

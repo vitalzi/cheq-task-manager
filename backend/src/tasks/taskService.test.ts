@@ -1,4 +1,4 @@
-import { TaskService } from './taskService';
+import { NotFoundError, TaskService } from './taskService';
 import { Priority } from './taskStore';
 import type { Task, TaskStore } from './taskStore';
 
@@ -79,6 +79,58 @@ describe('taskService', () => {
       store.create.mockRejectedValue(new Error('db down'));
 
       await expect(service.create(input)).rejects.toThrow('db down');
+    });
+  });
+
+  describe('update', () => {
+    const stored: Task = {
+      id: 'id-1',
+      title: 'Renamed',
+      createdAt: '2026-11-02T09:30:00.000Z',
+      done: 1,
+      priority: Priority.High,
+    };
+
+    it('passes the id and the changes to the store and returns the updated task', async () => {
+      store.update.mockResolvedValue(stored);
+
+      const result = await service.update('id-1', { done: 1 });
+
+      expect(store.update).toHaveBeenCalledWith('id-1', { done: 1 });
+      expect(result).toBe(stored);
+    });
+
+    it('throws NotFoundError when the store has no such task', async () => {
+      store.update.mockResolvedValue(undefined);
+
+      await expect(service.update('missing', { done: 1 })).rejects.toThrow(NotFoundError);
+    });
+
+    it('propagates store errors', async () => {
+      store.update.mockRejectedValue(new Error('db down'));
+
+      await expect(service.update('id-1', { done: 1 })).rejects.toThrow('db down');
+    });
+  });
+
+  describe('delete', () => {
+    it('deletes through the store', async () => {
+      store.delete.mockResolvedValue(true);
+
+      await expect(service.delete('id-1')).resolves.toBeUndefined();
+      expect(store.delete).toHaveBeenCalledWith('id-1');
+    });
+
+    it('throws NotFoundError when the store has no such task', async () => {
+      store.delete.mockResolvedValue(false);
+
+      await expect(service.delete('missing')).rejects.toThrow(NotFoundError);
+    });
+
+    it('propagates store errors', async () => {
+      store.delete.mockRejectedValue(new Error('db down'));
+
+      await expect(service.delete('id-1')).rejects.toThrow('db down');
     });
   });
 

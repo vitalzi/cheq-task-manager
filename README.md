@@ -5,7 +5,7 @@ A small task manager: a REST API (create and list tasks) with a React frontend, 
 ## Live deployment
 
 - **Frontend:** https://d1vsq2jivxqe81.cloudfront.net
-- **API:** the same address (`GET /health`, `GET /tasks`, `POST /tasks`); CloudFront sends `/tasks*` and `/health` to the API
+- **API:** the same address (`GET /health`, `GET /tasks`, `POST /tasks`, `PATCH /tasks/:id`, `DELETE /tasks/:id`); CloudFront sends `/tasks*` and `/health` to the API
 - **Repository:** https://github.com/vitalzi/cheq-task-manager
 
 The site and the API share one HTTPS address with a valid certificate. The old S3 website URL no longer exists, and the ALB's plain-HTTP address still answers but is not the entry point (see Unfinished and known limits). Tasks are stored in DynamoDB, so they survive deploys and restarts.
@@ -130,6 +130,15 @@ Where the assignment was unclear, these are the readings used:
   # {"id":"...","title":"Ship it","createdAt":"...","done":0,"priority":1}
   curl -X POST localhost:3000/tasks -H 'content-type: application/json' -d '{"title":"Urgent","priority":0}'
   # {"id":"...","title":"Urgent","createdAt":"...","done":0,"priority":0}
+  ```
+- **Update and delete:**
+  - `PATCH /tasks/:id` takes any of `title`, `done` and `priority` and changes only those. `id` and `createdAt` never change; other fields are ignored. A body with none of the three fields is a `400`. It returns `200` with the task.
+  - `DELETE /tasks/:id` returns `204` with no body.
+  - An unknown id is a `404` `{ "error": "Task not found" }` for both.
+  ```bash
+  curl -X PATCH localhost:3000/tasks/<id> -H 'content-type: application/json' -d '{"done":1}'
+  curl -X PATCH localhost:3000/tasks/<id> -H 'content-type: application/json' -d '{"title":"New title","priority":2}'
+  curl -X DELETE localhost:3000/tasks/<id>
   ```
 - **Health:** liveness only (it does not check DynamoDB). `uptime` is whole seconds since the process started.
 - **HTTPS and domain:** not required, so the API and the website use plain HTTP on the AWS-generated hostnames. This also avoids browser mixed-content blocking.

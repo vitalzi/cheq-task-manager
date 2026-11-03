@@ -243,3 +243,11 @@ Small decisions the agent made while building, one entry per decision with the t
 - **The update expression is built from the fields given, with `#name` / `:name` placeholders for every field:** a placeholder for every name avoids reserved-word surprises, and unlisted fields (and `id`, `createdAt`) are never written. `ReturnValues: 'ALL_NEW'` returns the updated item in the same call, so no extra read and no `GetItem` permission.
 - **An empty `changes` is not handled in the store:** it would build an invalid expression and fail as a `500`. The route rejects a body with nothing to change (Task 26), so the store is never called that way.
 - **IAM: `UpdateItem` and `DeleteItem` added, nothing else:** `terraform plan` shows only the policy change. The owner applies it before the new code deploys; Task 26 is the first task with a route that calls them, so a push of this task alone cannot hit a missing permission.
+
+## Task 26: update and delete, service and routes
+
+- **`NotFoundError` with `statusCode = 404`, thrown by the service:** the existing 4xx branch of the error handler in `app.ts` already answers with `{ error }`, so the handler did not change. The service, not the route, decides that "no such task" is an error, which keeps the routes thin.
+- **`PATCH` priority has no `default`:** sharing `POST`'s priority definition would make Ajv fill in `1` for an omitted priority and silently reset it. A test pins it (adding the default fails 3 tests). The title definition is shared with `POST`, so the trim and the length rule are the same.
+- **`additionalProperties: false` on the `PATCH` body:** Fastify's Ajv removes unknown fields instead of rejecting them, so `id` and `createdAt` cannot reach the store (which would write any field it is handed). Without it, a test fails: the body `{ "id": "other" }` changed the id.
+- **`anyOf` of three `required`, not `minProperties: 1`:** `minProperties` counts unknown fields before they are removed, so `{ "extra": 1 }` passed and became an empty change (two tests caught it). The cost is the wording of the 400 for an empty body: Ajv lists all four failed checks (`body must have required property 'title', ...`).
+- **`DELETE` returns `204` with no body; the id parameter is any string:** ids are UUIDs but the route does not enforce a format; an unknown or malformed id is simply a `404`.
