@@ -6,6 +6,8 @@ function mockStore(): jest.Mocked<TaskStore> {
   return {
     list: jest.fn().mockResolvedValue([]),
     create: jest.fn(async (task: Task) => task),
+    update: jest.fn(),
+    delete: jest.fn(),
   };
 }
 

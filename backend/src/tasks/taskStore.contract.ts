@@ -57,5 +57,76 @@ export function describeTaskStore(createStore: () => TaskStore | Promise<TaskSto
 
       expect(await store.list()).toEqual([task(1)]);
     });
+
+    describe('update', () => {
+      it('changes only the given fields and keeps the others, id and createdAt', async () => {
+        await store.create(task(1));
+
+        const updated = await store.update('id-1', { done: 1 });
+
+        expect(updated).toEqual({ ...task(1), done: 1 });
+        expect(await store.update('id-1', { title: 'Renamed' })).toEqual({ ...task(1), done: 1, title: 'Renamed' });
+        expect(await store.update('id-1', { priority: Priority.High })).toEqual({
+          ...task(1),
+          done: 1,
+          title: 'Renamed',
+          priority: Priority.High,
+        });
+      });
+
+      it('changes several fields at once', async () => {
+        await store.create(task(1));
+
+        const updated = await store.update('id-1', { title: 'New', done: 1, priority: Priority.Low });
+
+        expect(updated).toEqual({ ...task(1), title: 'New', done: 1, priority: Priority.Low });
+      });
+
+      it('is visible in list() and does not change the order', async () => {
+        for (const n of [1, 2, 3]) await store.create(task(n));
+
+        await store.update('id-2', { done: 1 });
+
+        expect(await store.list()).toEqual([task(1), { ...task(2), done: 1 }, task(3)]);
+      });
+
+      it('returns undefined and creates nothing for an unknown id', async () => {
+        expect(await store.update('missing', { done: 1 })).toBeUndefined();
+        expect(await store.list()).toEqual([]);
+      });
+
+      it('leaves a task obtained earlier from list() unchanged', async () => {
+        await store.create(task(1));
+        const [before] = await store.list();
+
+        await store.update('id-1', { title: 'Renamed', done: 1 });
+
+        expect(before).toEqual(task(1));
+      });
+    });
+
+    describe('delete', () => {
+      it('removes the task from list() and returns true', async () => {
+        for (const n of [1, 2, 3]) await store.create(task(n));
+
+        expect(await store.delete('id-2')).toBe(true);
+
+        expect(await store.list()).toEqual([task(1), task(3)]);
+      });
+
+      it('returns false for an unknown id and leaves the others', async () => {
+        await store.create(task(1));
+
+        expect(await store.delete('missing')).toBe(false);
+        expect(await store.list()).toEqual([task(1)]);
+      });
+
+      it('returns false the second time', async () => {
+        await store.create(task(1));
+        await store.delete('id-1');
+
+        expect(await store.delete('id-1')).toBe(false);
+      });
+    });
   });
 }

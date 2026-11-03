@@ -13,8 +13,15 @@ export interface Task {
   priority: Priority;
 }
 
+// What an update may change. id and createdAt never change.
+export type TaskChanges = Partial<Pick<Task, 'title' | 'done' | 'priority'>>;
+
 // Async on purpose: a real database driver (e.g. DynamoDB) is async too.
 export interface TaskStore {
   list(): Promise<Task[]>;
   create(task: Task): Promise<Task>;
+  // The updated task, or undefined when there is no task with that id.
+  update(id: string, changes: TaskChanges): Promise<Task | undefined>;
+  // True when a task was deleted, false when there was none with that id.
+  delete(id: string): Promise<boolean>;
 }

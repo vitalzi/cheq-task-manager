@@ -183,6 +183,12 @@ describe('task routes', () => {
         create: async () => {
           throw new Error('secret connection string');
         },
+        update: async () => {
+          throw new Error('secret connection string');
+        },
+        delete: async () => {
+          throw new Error('secret connection string');
+        },
       };
       const failingApp = buildApp(failing);
 

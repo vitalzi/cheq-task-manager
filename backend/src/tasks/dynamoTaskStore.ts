@@ -29,4 +29,13 @@ export class DynamoTaskStore implements TaskStore {
     await this.client.send(new PutCommand({ TableName: this.tableName, Item: task }));
     return task;
   }
+
+  // Implemented in Task 25; until then the shared contract fails against this store.
+  async update(): Promise<Task | undefined> {
+    throw new Error('not implemented');
+  }
+
+  async delete(): Promise<boolean> {
+    throw new Error('not implemented');
+  }
 }

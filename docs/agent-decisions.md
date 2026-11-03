@@ -229,3 +229,10 @@ Small decisions the agent made while building, one entry per decision with the t
   - Cost: Ajv's wording is the error text (for example `body/title must NOT have fewer than 1 characters`); the `{ error }` shape is unchanged. Mutation checks (no transform, a wider enum, no default) each fail tests.
 - **`app.ts` split into `registerRequestLogging`, `registerHealthRoute`, `registerNotFoundHandler` and `registerErrorHandler` (owner's request):** same file, `buildApp` is a list of steps. No behavior change.
 - **`ValidationError` removed:** nothing throws it any more; Fastify's own 400 goes through the existing 4xx branch of the error handler.
+
+## Task 24: store `update` and `delete`
+
+- **`update` returns `Task | undefined`, `delete` returns `boolean`:** `undefined` and `false` mean "no task with that id". No exceptions for not-found: it is an expected outcome, and the service turns it into a `404` in Task 26. `Task | undefined` is also what the route needs to send the updated task back.
+- **`TaskChanges = Partial<Pick<Task, 'title' | 'done' | 'priority'>>`, in `taskStore.ts`:** one type for what an update may change; `id` and `createdAt` cannot be passed.
+- **`InMemoryTaskStore.update` replaces the object (`{ ...old, ...changes }`) instead of editing it:** a first, editing version failed the contract test "a task obtained earlier from `list()` stays unchanged", which is the reason for replacing.
+- **`DynamoTaskStore.update` and `delete` throw `not implemented` for now:** the class must still implement the interface so the code compiles. The shared contract fails against it in `npm run test:integration` (8 of 13) until Task 25. `npm test` does not touch DynamoDB, and the deployed API has no route that calls them yet.
