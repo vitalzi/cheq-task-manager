@@ -1,5 +1,9 @@
-import { PutCommand, ScanCommand, type DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
-import type { Task, TaskStore } from './taskStore';
+import { ConditionalCheckFailedException } from '@aws-sdk/client-dynamodb';
+import { DeleteCommand, PutCommand, ScanCommand, UpdateCommand, type DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
+import type { Task, TaskChanges, TaskStore } from './taskStore';
+
+// Both writes below carry this condition, so an unknown id fails instead of creating an item.
+const ITEM_EXISTS = 'attribute_exists(id)';
 
 // The table has `id` as its only key (see infra/dynamodb.tf).
 export class DynamoTaskStore implements TaskStore {
@@ -30,12 +34,38 @@ export class DynamoTaskStore implements TaskStore {
     return task;
   }
 
-  // Implemented in Task 25; until then the shared contract fails against this store.
-  async update(): Promise<Task | undefined> {
-    throw new Error('not implemented');
+  async update(id: string, changes: TaskChanges): Promise<Task | undefined> {
+    // Only the fields that were given, so the others (and id, createdAt) are left alone.
+    // `changes` is never empty here: the route rejects a body with nothing to change.
+    const fields = Object.entries(changes).filter(([, value]) => value !== undefined);
+    try {
+      const result = await this.client.send(
+        new UpdateCommand({
+          TableName: this.tableName,
+          Key: { id },
+          UpdateExpression: `SET ${fields.map(([name]) => `#${name} = :${name}`).join(', ')}`,
+          ExpressionAttributeNames: Object.fromEntries(fields.map(([name]) => [`#${name}`, name])),
+          ExpressionAttributeValues: Object.fromEntries(fields.map(([name, value]) => [`:${name}`, value])),
+          ConditionExpression: ITEM_EXISTS,
+          ReturnValues: 'ALL_NEW',
+        }),
+      );
+      return result.Attributes as Task;
+    } catch (error) {
+      if (error instanceof ConditionalCheckFailedException) return undefined;
+      throw error;
+    }
   }
 
-  async delete(): Promise<boolean> {
-    throw new Error('not implemented');
+  async delete(id: string): Promise<boolean> {
+    try {
+      await this.client.send(
+        new DeleteCommand({ TableName: this.tableName, Key: { id }, ConditionExpression: ITEM_EXISTS }),
+      );
+      return true;
+    } catch (error) {
+      if (error instanceof ConditionalCheckFailedException) return false;
+      throw error;
+    }
   }
 }

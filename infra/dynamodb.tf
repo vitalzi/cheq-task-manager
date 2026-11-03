@@ -10,8 +10,8 @@ resource "aws_dynamodb_table" "tasks" {
   }
 }
 
-# Only the table, only what DynamoTaskStore calls: a scan to list, a put to create.
-# Update and delete are added to this list with the code that uses them.
+# Only the table, only what DynamoTaskStore calls: a scan to list, a put to create,
+# an update and a delete by id.
 resource "aws_iam_role_policy" "task_dynamodb" {
   name = "tasks-table"
   role = aws_iam_role.task.id
@@ -20,7 +20,7 @@ resource "aws_iam_role_policy" "task_dynamodb" {
     Version = "2012-10-17"
     Statement = [{
       Effect   = "Allow"
-      Action   = ["dynamodb:Scan", "dynamodb:PutItem"]
+      Action   = ["dynamodb:Scan", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem"]
       Resource = aws_dynamodb_table.tasks.arn
     }]
   })

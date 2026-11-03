@@ -1,3 +1,4 @@
+import { ConditionalCheckFailedException } from '@aws-sdk/client-dynamodb';
 import type { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 import { DynamoTaskStore } from './dynamoTaskStore';
 import type { Task } from './taskStore';
@@ -48,5 +49,63 @@ describe('DynamoTaskStore', () => {
 
     expect(created).toEqual(task(1));
     expect(send.mock.calls[0][0].input).toEqual({ TableName: 'tasks', Item: task(1) });
+  });
+
+  const conditionFailed = () => new ConditionalCheckFailedException({ message: 'The conditional request failed', $metadata: {} });
+
+  describe('update', () => {
+    it('sets only the given fields, only on an existing item, and returns the new item', async () => {
+      const send = jest.fn().mockResolvedValueOnce({ Attributes: { ...task(1), done: 1 } });
+
+      const updated = await storeWith(send).update('id-1', { done: 1, priority: 0 });
+
+      expect(updated).toEqual({ ...task(1), done: 1 });
+      expect(send.mock.calls[0][0].input).toEqual({
+        TableName: 'tasks',
+        Key: { id: 'id-1' },
+        UpdateExpression: 'SET #done = :done, #priority = :priority',
+        ExpressionAttributeNames: { '#done': 'done', '#priority': 'priority' },
+        ExpressionAttributeValues: { ':done': 1, ':priority': 0 },
+        ConditionExpression: 'attribute_exists(id)',
+        ReturnValues: 'ALL_NEW',
+      });
+    });
+
+    it('returns undefined when the item does not exist', async () => {
+      const send = jest.fn().mockRejectedValueOnce(conditionFailed());
+
+      expect(await storeWith(send).update('missing', { done: 1 })).toBeUndefined();
+    });
+
+    it('rethrows any other error', async () => {
+      const send = jest.fn().mockRejectedValueOnce(new Error('throttled'));
+
+      await expect(storeWith(send).update('id-1', { done: 1 })).rejects.toThrow('throttled');
+    });
+  });
+
+  describe('delete', () => {
+    it('deletes only an existing item and returns true', async () => {
+      const send = jest.fn().mockResolvedValueOnce({});
+
+      expect(await storeWith(send).delete('id-1')).toBe(true);
+      expect(send.mock.calls[0][0].input).toEqual({
+        TableName: 'tasks',
+        Key: { id: 'id-1' },
+        ConditionExpression: 'attribute_exists(id)',
+      });
+    });
+
+    it('returns false when the item does not exist', async () => {
+      const send = jest.fn().mockRejectedValueOnce(conditionFailed());
+
+      expect(await storeWith(send).delete('missing')).toBe(false);
+    });
+
+    it('rethrows any other error', async () => {
+      const send = jest.fn().mockRejectedValueOnce(new Error('throttled'));
+
+      await expect(storeWith(send).delete('id-1')).rejects.toThrow('throttled');
+    });
   });
 });

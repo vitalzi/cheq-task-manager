@@ -236,3 +236,10 @@ Small decisions the agent made while building, one entry per decision with the t
 - **`TaskChanges = Partial<Pick<Task, 'title' | 'done' | 'priority'>>`, in `taskStore.ts`:** one type for what an update may change; `id` and `createdAt` cannot be passed.
 - **`InMemoryTaskStore.update` replaces the object (`{ ...old, ...changes }`) instead of editing it:** a first, editing version failed the contract test "a task obtained earlier from `list()` stays unchanged", which is the reason for replacing.
 - **`DynamoTaskStore.update` and `delete` throw `not implemented` for now:** the class must still implement the interface so the code compiles. The shared contract fails against it in `npm run test:integration` (8 of 13) until Task 25. `npm test` does not touch DynamoDB, and the deployed API has no route that calls them yet.
+
+## Task 25: `update` and `delete` in `DynamoTaskStore`
+
+- **`ConditionExpression: attribute_exists(id)` on both writes, `ConditionalCheckFailedException` mapped to `undefined` / `false`:** without it `UpdateItem` creates a new item for an unknown id. A mutation check (the condition removed) fails one integration test and one unit test. Any other error is rethrown and becomes a `500`.
+- **The update expression is built from the fields given, with `#name` / `:name` placeholders for every field:** a placeholder for every name avoids reserved-word surprises, and unlisted fields (and `id`, `createdAt`) are never written. `ReturnValues: 'ALL_NEW'` returns the updated item in the same call, so no extra read and no `GetItem` permission.
+- **An empty `changes` is not handled in the store:** it would build an invalid expression and fail as a `500`. The route rejects a body with nothing to change (Task 26), so the store is never called that way.
+- **IAM: `UpdateItem` and `DeleteItem` added, nothing else:** `terraform plan` shows only the policy change. The owner applies it before the new code deploys; Task 26 is the first task with a route that calls them, so a push of this task alone cannot hit a missing permission.
