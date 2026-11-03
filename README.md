@@ -122,8 +122,15 @@ Two GitHub Actions workflows run on push to `main`, each only when its own folde
 Where the assignment was unclear, these are the readings used:
 
 - **Storage:** the assignment accepts in-memory. The first version used it; the deployed API now uses DynamoDB so data survives a deploy.
-- **Title:** a string, trimmed, 1-200 characters. Whitespace-only is a `400`. Unknown body fields are ignored.
+- **Title:** a string, trimmed, 1-200 characters. The rules are in the route's JSON Schema; the trim is the `transform` keyword from `ajv-keywords`. Whitespace-only is a `400`. Unknown body fields are ignored.
 - **Fields:** `id` is a UUID from `crypto.randomUUID()`; `createdAt` is an ISO 8601 UTC string; `GET /tasks` returns oldest first.
+- **`done` and `priority`:** both are plain numbers. `done` is `0` (open) or `1` (done); the server sets `0` on create and ignores a `done` in the body. `priority` is `0` (high), `1` (medium) or `2` (low); it is optional on `POST /tasks` and defaults to `1`, and any other value (`3`, `1.5`, `"1"`, `null`) is a `400`.
+  ```bash
+  curl -X POST localhost:3000/tasks -H 'content-type: application/json' -d '{"title":"Ship it"}'
+  # {"id":"...","title":"Ship it","createdAt":"...","done":0,"priority":1}
+  curl -X POST localhost:3000/tasks -H 'content-type: application/json' -d '{"title":"Urgent","priority":0}'
+  # {"id":"...","title":"Urgent","createdAt":"...","done":0,"priority":0}
+  ```
 - **Health:** liveness only (it does not check DynamoDB). `uptime` is whole seconds since the process started.
 - **HTTPS and domain:** not required, so the API and the website use plain HTTP on the AWS-generated hostnames. This also avoids browser mixed-content blocking.
 - **EC2, SSH and CI secrets:** the assignment's default is EC2 with SSH keys in CI secrets. With ECS there is no SSH. CI logs in with GitHub OIDC and assumes an IAM role, so no AWS keys are stored; the only thing in GitHub is the role ARN, as a repository variable.

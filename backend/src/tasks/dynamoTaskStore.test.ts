@@ -7,7 +7,7 @@ import type { Task } from './taskStore';
 // table name wiring. The shared contract test runs against the real thing in
 // dynamoTaskStore.integration.test.ts.
 describe('DynamoTaskStore', () => {
-  const task = (n: number): Task => ({ id: `id-${n}`, title: `Task ${n}`, createdAt: `2026-11-02T09:30:0${n}Z` });
+  const task = (n: number): Task => ({ id: `id-${n}`, title: `Task ${n}`, createdAt: `2026-11-02T09:30:0${n}Z`, done: 0, priority: 1 });
 
   const storeWith = (send: jest.Mock) => new DynamoTaskStore('tasks', { send } as unknown as DynamoDBDocumentClient);
 

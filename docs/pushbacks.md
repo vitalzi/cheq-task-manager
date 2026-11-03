@@ -113,3 +113,10 @@ Every time the owner corrected the agent or scrutinized its output and asked for
   - The owner's new fields (`done`, `priority`) were designed in at the same time, as a new Task 23, before any data exists
 - **Lesson:** a key choice cannot be changed later, so write the access patterns and the trade-offs down before building the store, even when the task text already names the key. A local emulator behaves differently from the real service (consistency here), so list the differences instead of trusting a green integration test.
 
+
+### 12. Validation structure in Task 23 (three attempts)
+
+- **What the agent did:** put the title and priority rules inside `TaskService.create`, then, when asked to separate them, moved them into a `TaskValidator` class that also trimmed and cast the value, and then proposed (and built, after the owner chose it) a `preValidation` hook to trim, because a JSON Schema cannot clean a value. Along the way the agent called the Zod question a dependency matter and defended the split of loose schema plus strict service.
+- **Pushback:** the owner said the service held validation that should be separate; that a "validator" which trims and casts is not a validator; that Fastify's built-in validation should be used where it gives simple options; and that the hook looked ugly and would need copying into `PATCH`. The owner pointed to `ajv-keywords` as the declarative option.
+- **Outcome:** the rules are in the route's JSON Schema in one place, the trim is the `transform` keyword (`ajv-keywords`, approved), the service takes typed input, and `TaskValidator` and `ValidationError` are gone. The hook was built and removed within the same task.
+- **Lesson:** when the framework has a declarative mechanism, show that option first, with its real cost, instead of leading with a hand-rolled layer. Judge a design by what the next task will have to copy (the hook would have been duplicated in `PATCH`), and name classes for what they do (a class that normalises input is a parser, not a validator).

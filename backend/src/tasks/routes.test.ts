@@ -40,7 +40,31 @@ describe('task routes', () => {
         id: expect.any(String),
         title: 'Write the README',
         createdAt: expect.any(String),
+        done: 0,
+        priority: 1,
       });
+    });
+
+    it.each([0, 1, 2])('keeps an explicit priority of %i', async (priority) => {
+      const res = await post({ title: 'x', priority });
+
+      expect(res.statusCode).toBe(201);
+      expect(res.json().priority).toBe(priority);
+    });
+
+    it.each([
+      ['3', 3],
+      ['-1', -1],
+      ['1.5', 1.5],
+      ['"1"', '1'],
+      ['null', null],
+      ['true', true],
+    ])('returns 400 for priority %s', async (_name, priority) => {
+      const res = await post({ title: 'x', priority });
+
+      expect(res.statusCode).toBe(400);
+      expectErrorShape(res);
+      expect((await app.inject({ method: 'GET', url: '/tasks' })).json()).toEqual([]);
     });
 
     it('trims the title', async () => {
@@ -62,7 +86,13 @@ describe('task routes', () => {
       const res = await post({ title: 'x', id: 'mine', done: true });
 
       expect(res.statusCode).toBe(201);
-      expect(res.json()).toEqual({ id: expect.not.stringMatching(/^mine$/), title: 'x', createdAt: expect.any(String) });
+      expect(res.json()).toEqual({
+        id: expect.not.stringMatching(/^mine$/),
+        title: 'x',
+        createdAt: expect.any(String),
+        done: 0,
+        priority: 1,
+      });
     });
 
     it('lists the task after it is created, oldest first', async () => {

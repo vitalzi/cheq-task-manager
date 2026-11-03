@@ -215,3 +215,17 @@ Small decisions the agent made while building, one entry per decision with the t
 - **Plan renumbered:** new Task 23, the old 23-29 are now 24-30. Task 25 also carries the IAM change for `UpdateItem` and `DeleteItem`, which the policy comment already promised.
 - **Partial `PATCH`:** a body with none of `title`, `done` and `priority` is a `400`, because there is nothing to update.
 
+
+## Task 23: `done` and `priority`
+
+- **`done` is typed `0 | 1`, `priority` is an `enum Priority`:** `Priority` has three named values used in code and tests; `done` has two and a name for each would add nothing. Both are plain numbers on the wire.
+- **Validation lives in the route's JSON Schema, with the title trimmed by `ajv-keywords` (owner's direction, after other shapes):**
+  - The path: rules in `create`, then a `TaskValidator` class (the owner pointed out it also trimmed and cast, so it was not only a validator), then a `preValidation` hook (the owner found it ugly: it would be copied for `PATCH`). The final shape is declarative, in one place.
+  - `title: { type: 'string', transform: ['trim'], minLength: 1, maxLength: 200 }`: the trim runs before `minLength`/`maxLength`, so whitespace-only titles are rejected and a padded 200-character title is accepted. `priority: { enum: [0, 1, 2], default: 1 }`: a missing one becomes Medium; `null`, `1.5`, `"1"` and `3` are rejected.
+  - **New dependency, approved by the owner:** `ajv-keywords@^5.1.0` (peer `ajv ^8.8.2`, which Fastify 5 already uses), registered in `buildApp` through Fastify's `ajv.plugins`. The plugin is passed as an inline arrow in `app.ts` because Fastify types plugins as `Plugin<unknown>` and `ajv-keywords` as `Plugin<string | string[]>`, so the direct `[plugin, options]` form does not compile.
+  - **`ajv@^8.20.0` is listed too (owner approved):** `ajv-keywords` needs it as a peer and `app.ts` imports its type, so the project should declare it rather than lean on Fastify's copy. The range matches Fastify's, and `npm ls ajv` still shows one installed copy (the others are deduped), which matters because the keyword must be added to the same Ajv that validates requests.
+  - `TaskService.create` takes typed `NewTask` and adds only `id`, `createdAt` and `done: 0`; a `done` in the body is dropped because the service copies only `title` and `priority`. Task 26's `PATCH` reuses the same property definitions.
+  - Rejected: Zod (a second validation system for two fields) and the `preValidation` hook.
+  - Cost: Ajv's wording is the error text (for example `body/title must NOT have fewer than 1 characters`); the `{ error }` shape is unchanged. Mutation checks (no transform, a wider enum, no default) each fail tests.
+- **`app.ts` split into `registerRequestLogging`, `registerHealthRoute`, `registerNotFoundHandler` and `registerErrorHandler` (owner's request):** same file, `buildApp` is a list of steps. No behavior change.
+- **`ValidationError` removed:** nothing throws it any more; Fastify's own 400 goes through the existing 4xx branch of the error handler.

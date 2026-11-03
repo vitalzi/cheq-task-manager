@@ -27,7 +27,7 @@ Phase 2 is the owner's own extras on top of the finished PDF MVP (`docs/tasks/ph
 | 20 | CloudFront: switch the pipeline and live check | CI, frontend | [x] |
 | 21 | `DynamoTaskStore` and integration test | Backend | [x] |
 | 22 | DynamoDB table, IAM and wiring (Terraform) | Infra, backend | [~] |
-| 23 | Task model: `done` and `priority` | Backend | [ ] |
+| 23 | Task model: `done` and `priority` | Backend | [~] |
 | 24 | Store `update` and `delete`: interface, in-memory, contract test | Backend | [ ] |
 | 25 | `update` and `delete` in `DynamoTaskStore`, and their IAM permissions | Backend, infra | [ ] |
 | 26 | Update and delete: service and routes | Backend | [ ] |
@@ -88,7 +88,7 @@ The goal is HTTPS for the user without buying a domain: CloudFront's free `https
   - **Create:** `POST /tasks` takes `{ title, priority? }`. `priority` is optional: when it is missing the service sets Medium (`1`). When it is present it must be `0`, `1` or `2`; a non-integer, out-of-range, wrong-typed or `null` value is a `400` in the usual `{ error }` shape. `done` is not taken from the client: the service sets it to `0`, like `id` and `createdAt`
   - **Stores:** only the types and the test fixtures change. `DynamoTaskStore` already writes the whole item, so there is no table, IAM or Terraform change
   - **Frontend:** untouched. The live form sends only `title`, and the backend fills in the defaults. The select and the toggle come in Task 27
-- **Test first:** service unit tests (a missing `priority` becomes Medium; each rejected value; `done` starts at `0`; a `done` sent by the client is ignored); HTTP tests for each rejected `priority` (`3`, `-1`, `1.5`, `"1"`, `null`) and for the defaults on a title-only `POST`; the contract test fixtures carry both fields and run against both stores
+- **Test first:** service unit tests (`done` starts at `0`; the given title and priority are kept); HTTP tests (the rules live in the route schema, with the title trimmed by `ajv-keywords`, so they are tested here) for each rejected `priority` (`3`, `-1`, `1.5`, `"1"`, `null`) and for the defaults on a title-only `POST`; the contract test fixtures carry both fields and run against both stores
 - **Care:** the table holds only test tasks. Delete them rather than add read-time defaults for items written before this task
 - **README:** the task fields and what the numbers mean; the `POST` example with and without `priority`
 - **Done when:** all tests pass with coverage ≥ 80%; `npm run test:integration` passes; lint and build are clean; locally a title-only `POST` returns `done: 0` and `priority: 1`, and each explicit priority is kept; on the live API after the backend workflow the same holds
@@ -113,7 +113,7 @@ The goal is HTTPS for the user without buying a domain: CloudFront's free `https
 
 - **What:**
   - **Routes:** `PATCH /tasks/:id` with a partial body `{ title?, done?, priority? }`, and `DELETE /tasks/:id`; JSON Schema checks the body types and the id parameter. A body with none of the three fields is a `400`
-  - **Service:** `TaskService.update(id, changes)` reuses the existing title rule (trim, 1-200 characters) and the `done` and `priority` rules from Task 23; `delete(id)`
+  - **Service:** `TaskService.update(id, changes)` takes already-validated input; the `PATCH` route reuses the schema property definitions from `POST` (Task 23, including the trim), with no `required`; `delete(id)`
   - **Status codes:** `200` with the task on update; `204` on delete; `404` `{ error }` for an unknown id; `400` for an invalid field or body, as for `POST`
 - **Test first:** service unit tests with a mocked store (trimming and rejections as for create, partial changes, not-found handling); HTTP tests through `app.inject()` for each status and for odd bodies (`null`, array, empty, only unknown fields, wrong content type)
 - **README:** the two new endpoints with example `curl` calls

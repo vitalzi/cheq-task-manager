@@ -1,3 +1,4 @@
+import { Priority } from './taskStore';
 import type { Task, TaskStore } from './taskStore';
 
 // Shared behaviour every TaskStore implementation must satisfy.
@@ -8,6 +9,8 @@ export function describeTaskStore(createStore: () => TaskStore | Promise<TaskSto
     id: `id-${n}`,
     title: `Task ${n}`,
     createdAt: `2026-11-02T09:30:${String(n).padStart(2, '0')}Z`,
+    done: 0,
+    priority: Priority.Medium,
   });
 
   describe('TaskStore contract', () => {
@@ -26,6 +29,14 @@ export function describeTaskStore(createStore: () => TaskStore | Promise<TaskSto
 
       expect(created).toEqual(task(1));
       expect(await store.list()).toEqual([task(1)]);
+    });
+
+    it('stores done and priority as given', async () => {
+      const created = { ...task(1), done: 1 as const, priority: Priority.Low };
+
+      await store.create(created);
+
+      expect(await store.list()).toEqual([created]);
     });
 
     it('lists tasks in creation order, oldest first', async () => {
