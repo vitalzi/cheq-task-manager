@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tasks, alternative layout</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#17181B}a:hover{color:#5E636B}
+input::placeholder{color:#7A7F87}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #17181B;outline-offset:2px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+</style>
+</helmet>
+<div style="min-height: 1000px; background: #F5F4F0; color: #17181B; font-family: 'IBM Plex Sans', system-ui, sans-serif; box-sizing: border-box; padding: 48px 20px 112px">
+<div style="max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px">
+
+<header style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap">
+<h1 style="margin: 0; font-size: 36px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1">Tasks</h1>
+<div role="status" style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; background: #FFFFFF; border: 1px solid #DEDBD3; border-radius: 8px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #17663A">
+<span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; background: #23A55A"></span>
+API up · uptime 1h 12m
+</div>
+</header>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<form onSubmit="{{onCreate}}" noValidate="noValidate" style="display: flex; flex-direction: column; background: #FFFFFF; border: 1px solid #DEDBD3; border-radius: 14px">
+<label for="d-new" class="sr-only">New task</label>
+<input id="d-new" type="text" placeholder="Add a task…" value="{{draft}}" onChange="{{onDraftChange}}" aria-invalid="{{draftInvalid}}" aria-describedby="d-new-error" style="height: 56px; padding: 0 18px; border: 0; border-radius: 14px 14px 0 0; background: transparent; color: #17181B; font-family: inherit; font-size: 17px; box-sizing: border-box">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 8px 8px 8px 18px; border-top: 1px solid #EFEDE7">
+<label style="display: inline-flex; align-items: center; gap: 10px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #5E636B">
+Priority
+<span style="position: relative; display: inline-flex; align-items: center">
+<svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" style="position: absolute; left: 12px; pointer-events: none"><rect x="0" y="7" width="3" height="5" rx="1" fill="{{draftBar1}}"></rect><rect x="4.5" y="4" width="3" height="8" rx="1" fill="{{draftBar2}}"></rect><rect x="9" y="1" width="3" height="11" rx="1" fill="{{draftBar3}}"></rect></svg>
+<select value="{{draftPriority}}" onChange="{{onDraftPriority}}" style="height: 44px; padding: 0 34px 0 32px; appearance: none; -webkit-appearance: none; border: 1px solid #DEDBD3; border-radius: 10px; background: #FFFFFF; color: {{draftPrFg}}; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; letter-spacing: 0; text-transform: none; cursor: pointer">
+<option value="low">Low</option>
+<option value="medium">Medium</option>
+<option value="high">High</option>
+</select>
+<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#5E636B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; right: 12px; pointer-events: none"><path d="M6 9l6 6 6-6"></path></svg>
+</span>
+</label>
+<div style="display: inline-flex; align-items: center; gap: 12px">
+<span aria-hidden="true" style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #5E636B">Enter ↵</span>
+<button type="submit" style="height: 44px; padding: 0 20px; border: 0; border-radius: 10px; background: {{accent}}; color: #1A1300; font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer">Add task</button>
+</div>
+</div>
+</form>
+<sc-if value="{{hasDraftError}}" hint-placeholder-val="{{false}}">
+<p id="d-new-error" style="margin: 0 4px; font-size: 13px; color: #B42318">{{draftError}}</p>
+</sc-if>
+</div>
+
+<div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 12px 20px; flex-wrap: wrap; border-bottom: 1px solid #E4E1DA">
+<nav aria-label="Status" style="display: flex; gap: 20px">
+<sc-for list="{{tabs}}" as="tab" hint-placeholder-count="3">
+<button type="button" aria-pressed="{{tab.pressed}}" onClick="{{tab.pick}}" style="height: 44px; display: inline-flex; align-items: center; gap: 8px; padding: 0 2px; margin-bottom: -1px; border: 0; border-bottom: 2px solid {{tab.underline}}; background: transparent; color: {{tab.fg}}; font-family: inherit; font-size: 15px; font-weight: {{tab.weight}}; cursor: pointer">
+{{tab.label}}
+<span style="min-width: 20px; padding: 1px 6px; border-radius: 999px; background: #EAE7E0; color: #3D4148; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; font-weight: 500; text-align: center">{{tab.count}}</span>
+</button>
+</sc-for>
+</nav>
+<div role="search" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding-bottom: 8px">
+<div style="position: relative; width: 220px; max-width: 100%">
+<svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5E636B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 12px; top: 12px"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+<input type="search" aria-label="Filter tasks by title" placeholder="Search" value="{{query}}" onChange="{{onQueryChange}}" style="width: 100%; height: 40px; padding: 0 12px 0 34px; border: 1px solid #DEDBD3; border-radius: 10px; background: #FFFFFF; color: #17181B; font-family: inherit; font-size: 14px; box-sizing: border-box">
+</div>
+<button type="button" role="switch" aria-checked="{{groupChecked}}" onClick="{{toggleGroup}}" style="height: 44px; display: inline-flex; align-items: center; gap: 8px; padding: 0 2px; border: 0; background: transparent; color: #17181B; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; cursor: pointer">
+<span aria-hidden="true" style="position: relative; display: inline-block; width: 32px; height: 18px; border-radius: 999px; background: {{switchTrack}}; transition: background 0.15s"><span style="position: absolute; top: 2px; left: {{switchKnobLeft}}; width: 14px; height: 14px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 1px 2px rgba(23, 24, 27, 0.25); transition: left 0.15s"></span></span>
+By day
+</button>
+</div>
+</div>
+
+<sc-if value="{{hasResults}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; flex-direction: column; gap: 24px">
+<sc-for list="{{groups}}" as="group" hint-placeholder-count="2">
+<section style="display: flex; flex-direction: column; gap: 10px">
+<sc-if value="{{group.showLabel}}" hint-placeholder-val="{{true}}">
+<h2 style="margin: 0 4px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: #5E636B">{{group.label}}</h2>
+</sc-if>
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1px; background: #EFEDE7; border: 1px solid #E4E1DA; border-radius: 14px; overflow: hidden">
+<sc-for list="{{group.items}}" as="task" hint-placeholder-count="2">
+<li style="background: #FFFFFF; box-shadow: {{task.editRing}}">
+<sc-if value="{{task.isViewing}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; align-items: flex-start; gap: 4px; padding: 6px">
+<label style="flex: none; width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer">
+<input type="checkbox" checked="{{task.done}}" onChange="{{task.toggle}}" aria-label="{{task.checkLabel}}" style="width: 20px; height: 20px; margin: 0; accent-color: #17181B; cursor: pointer">
+</label>
+<div style="flex: 1 1 auto; min-width: 0; padding: 9px 0 6px">
+<span style="display: block; font-size: 16px; line-height: 1.4; overflow-wrap: anywhere; color: {{task.titleColor}}; text-decoration: {{task.titleDecoration}}">{{task.title}}</span>
+<span style="display: flex; align-items: center; gap: 8px; margin-top: 4px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #5E636B">
+<span style="display: inline-flex; align-items: center; gap: 5px; color: {{task.prFg}}">
+<svg role="img" aria-label="{{task.prName}}" width="12" height="12" viewBox="0 0 12 12"><rect x="0" y="7" width="3" height="5" rx="1" fill="{{task.bar1}}"></rect><rect x="4.5" y="4" width="3" height="8" rx="1" fill="{{task.bar2}}"></rect><rect x="9" y="1" width="3" height="11" rx="1" fill="{{task.bar3}}"></rect></svg>
+<span aria-hidden="true">{{task.prLabel}}</span>
+</span>
+<span aria-hidden="true">·</span>
+<time dateTime="{{task.iso}}">{{task.time}}</time>
+</span>
+</div>
+<button type="button" aria-label="{{task.editLabel}}" onClick="{{task.edit}}" style="flex: none; width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 10px; background: transparent; color: #5E636B; cursor: pointer">
+<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4z"></path><path d="M13.5 6.5l4 4"></path></svg>
+</button>
+<button type="button" aria-label="{{task.deleteLabel}}" onClick="{{task.remove}}" style="flex: none; width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 10px; background: transparent; color: #5E636B; cursor: pointer">
+<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"></path><path d="M9 7V4h6v3"></path><path d="M6 7l1 13h10l1-13"></path></svg>
+</button>
+</div>
+</sc-if>
+<sc-if value="{{task.isEditing}}" hint-placeholder-val="{{false}}">
+<form onSubmit="{{task.save}}" noValidate="noValidate" style="display: flex; flex-direction: column; gap: 8px; padding: 10px 10px 10px 14px">
+<input type="text" aria-label="Edit task title" value="{{task.editDraft}}" onChange="{{task.onEditChange}}" onKeyDown="{{task.onEditKeyDown}}" aria-invalid="{{task.editInvalid}}" style="width: 100%; height: 44px; padding: 0 12px; border: 1px solid #DEDBD3; border-radius: 8px; background: #FFFFFF; color: #17181B; font-family: inherit; font-size: 16px; box-sizing: border-box">
+<sc-if value="{{task.hasEditError}}" hint-placeholder-val="{{false}}">
+<p style="margin: 0 2px; font-size: 13px; color: #B42318">{{task.editError}}</p>
+</sc-if>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap">
+<label style="display: inline-flex; align-items: center; gap: 10px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #5E636B">
+Priority
+<span style="position: relative; display: inline-flex; align-items: center">
+<svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" style="position: absolute; left: 12px; pointer-events: none"><rect x="0" y="7" width="3" height="5" rx="1" fill="{{task.editBar1}}"></rect><rect x="4.5" y="4" width="3" height="8" rx="1" fill="{{task.editBar2}}"></rect><rect x="9" y="1" width="3" height="11" rx="1" fill="{{task.editBar3}}"></rect></svg>
+<select value="{{task.editPriority}}" onChange="{{task.onEditPriority}}" style="height: 44px; padding: 0 34px 0 32px; appearance: none; -webkit-appearance: none; border: 1px solid #DEDBD3; border-radius: 10px; background: #FFFFFF; color: {{task.editPrFg}}; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; letter-spacing: 0; text-transform: none; cursor: pointer">
+<option value="low">Low</option>
+<option value="medium">Medium</option>
+<option value="high">High</option>
+</select>
+<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#5E636B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; right: 12px; pointer-events: none"><path d="M6 9l6 6 6-6"></path></svg>
+</span>
+</label>
+<div style="display: inline-flex; align-items: center; gap: 8px">
+<span aria-hidden="true" style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #5E636B">Esc to cancel</span>
+<button type="button" onClick="{{task.cancel}}" style="height: 44px; padding: 0 14px; border: 1px solid #DEDBD3; border-radius: 8px; background: transparent; color: #17181B; font-family: inherit; font-size: 15px; cursor: pointer">Cancel</button>
+<button type="submit" style="height: 44px; padding: 0 16px; border: 0; border-radius: 8px; background: #17181B; color: #FFFFFF; font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer">Save</button>
+</div>
+</div>
+</form>
+</sc-if>
+</li>
+</sc-for>
+</ul>
+</section>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{allDone}}" hint-placeholder-val="{{false}}">
+<div style="padding: 40px 24px; border: 1px dashed #D3CFC6; border-radius: 14px; text-align: center; font-size: 16px; color: #5E636B">Nothing open. Everything is done.</div>
+</sc-if>
+
+<sc-if value="{{noResults}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 40px 24px; border: 1px dashed #D3CFC6; border-radius: 14px; text-align: center">
+<p style="margin: 0; font-size: 16px">No tasks match your filter.</p>
+<button type="button" onClick="{{clearFilters}}" style="height: 44px; padding: 0 16px; border: 1px solid #DEDBD3; border-radius: 10px; background: #FFFFFF; color: #17181B; font-family: inherit; font-size: 15px; cursor: pointer">Clear search</button>
+</div>
+</sc-if>
+
+<sc-if value="{{isEmpty}}" hint-placeholder-val="{{false}}">
+<div style="padding: 40px 24px; border: 1px dashed #D3CFC6; border-radius: 14px; text-align: center; font-size: 16px; color: #5E636B">No tasks yet — add your first one above.</div>
+</sc-if>
+
+</div>
+
+<sc-if value="{{showToast}}" hint-placeholder-val="{{false}}">
+<div role="status" style="position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); display: flex; align-items: center; gap: 16px; padding: 6px 6px 6px 18px; background: #17181B; color: #F5F4F0; border-radius: 12px; font-size: 14px; box-shadow: 0 8px 24px rgba(23, 24, 27, 0.18)">
+<span>Task deleted</span>
+<button type="button" onClick="{{undo}}" style="height: 44px; padding: 0 14px; border: 0; border-radius: 8px; background: transparent; color: #F5A524; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; font-weight: 500; cursor: pointer">Undo</button>
+</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#F5A524","options":["#F5A524","#5ED3B4","#A9B8FF"]},"$preview":{"width":1280,"height":1000}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.toastTimer = null;
+this.state = {
+draft: '',
+draftError: '',
+draftPriority: 'medium',
+query: '',
+status: 'open',
+groupByDay: true,
+editingId: null,
+editDraft: '',
+editError: '',
+editPriority: 'medium',
+deleted: null,
+tasks: [
+{ id: 't5', title: 'Write the README', bucket: 'today', time: '09:30', iso: '2026-11-02T09:30:00Z', done: false, priority: 'high' },
+{ id: 't4', title: 'Record a short demo of the deploy', bucket: 'today', time: '08:10', iso: '2026-11-02T08:10:00Z', done: false, priority: 'low' },
+{ id: 't3', title: 'Set up the GitHub Actions deploy role', bucket: 'yesterday', time: '18:05', iso: '2026-11-01T18:05:00Z', done: false, priority: 'medium' },
+{ id: 't2', title: 'Add request-logging middleware', bucket: 'yesterday', time: '11:42', iso: '2026-11-01T11:42:00Z', done: true, priority: 'high' },
+{ id: 't1', title: 'Sketch the DynamoDB key design', bucket: 'earlier', time: 'Oct 31', iso: '2026-10-31T16:20:00Z', done: true, priority: 'medium' }
+]
+};
+}
+
+componentWillUnmount() {
+clearTimeout(this.toastTimer);
+}
+
+validate(t) {
+if (!t) return 'Title is required';
+if (t.length > 200) return 'Title must be 200 characters or fewer';
+return '';
+}
+
+priorityMeta(p) {
+var m = {
+high: { label: 'High', name: 'High', fg: '#B42318', level: 3 },
+medium: { label: 'Med', name: 'Medium', fg: '#8A5A00', level: 2 },
+low: { label: 'Low', name: 'Low', fg: '#4A5361', level: 1 }
+};
+return m[p] || m.medium;
+}
+
+barsFor(level, on) {
+var off = '#D3CFC6';
+return { b1: level >= 1 ? on : off, b2: level >= 2 ? on : off, b3: level >= 3 ? on : off };
+}
+
+create(e) {
+e.preventDefault();
+var t = this.state.draft.trim();
+var err = this.validate(t);
+if (err) { this.setState({ draftError: err }); return; }
+var now = new Date();
+var time = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+var task = { id: 'n' + Date.now(), title: t, bucket: 'today', time: time, iso: now.toISOString(), done: false, priority: this.state.draftPriority };
+this.setState({ draft: '', draftError: '', draftPriority: 'medium', tasks: [task].concat(this.state.tasks) });
+}
+
+remove(id) {
+var idx = this.state.tasks.findIndex((t) => t.id === id);
+if (idx < 0) return;
+var next = this.state.tasks.slice();
+var task = next.splice(idx, 1)[0];
+clearTimeout(this.toastTimer);
+this.toastTimer = setTimeout(() => this.setState({ deleted: null }), 6000);
+this.setState({ tasks: next, deleted: { task: task, index: idx }, editingId: this.state.editingId === id ? null : this.state.editingId });
+}
+
+undo() {
+var d = this.state.deleted;
+if (!d) return;
+clearTimeout(this.toastTimer);
+var next = this.state.tasks.slice();
+next.splice(Math.min(d.index, next.length), 0, d.task);
+this.setState({ tasks: next, deleted: null });
+}
+
+toggle(id) {
+this.setState({
+tasks: this.state.tasks.map((x) => (x.id === id ? Object.assign({}, x, { done: !x.done }) : x))
+});
+}
+
+saveEdit(id) {
+var t = this.state.editDraft.trim();
+var err = this.validate(t);
+if (err) { this.setState({ editError: err }); return; }
+this.setState({
+tasks: this.state.tasks.map((x) => (x.id === id ? Object.assign({}, x, { title: t, priority: this.state.editPriority }) : x)),
+editingId: null,
+editError: ''
+});
+}
+
+renderVals() {
+var self = this;
+var s = this.state;
+var q = s.query.trim().toLowerCase();
+var labels = { today: 'Today', yesterday: 'Yesterday', earlier: 'Earlier' };
+var total = s.tasks.length;
+var doneCount = s.tasks.filter((t) => t.done).length;
+var openCount = total - doneCount;
+
+var matches = s.tasks.filter((t) => {
+if (s.status === 'open' && t.done) return false;
+if (s.status === 'done' && !t.done) return false;
+return !q || t.title.toLowerCase().indexOf(q) !== -1;
+}).slice().sort((a, b) => (a.done ? 1 : 0) - (b.done ? 1 : 0));
+
+var timeLabel = (t) => s.groupByDay ? t.time
+: t.bucket === 'today' ? 'Today, ' + t.time
+: t.bucket === 'yesterday' ? 'Yesterday, ' + t.time
+: t.time;
+
+var em = self.priorityMeta(s.editPriority);
+var eb = self.barsFor(em.level, em.fg);
+
+var decorate = (t) => {
+var editing = s.editingId === t.id;
+var m = self.priorityMeta(t.priority);
+var fg = t.done ? '#5E636B' : m.fg;
+var b = self.barsFor(m.level, fg);
+return {
+title: t.title,
+time: timeLabel(t),
+iso: t.iso,
+done: t.done,
+checkLabel: (t.done ? 'Mark as not done: ' : 'Mark as done: ') + t.title,
+titleColor: t.done ? '#5E636B' : '#17181B',
+titleDecoration: t.done ? 'line-through' : 'none',
+toggle: () => self.toggle(t.id),
+prLabel: m.label,
+prName: m.name + ' priority',
+prFg: fg,
+bar1: b.b1, bar2: b.b2, bar3: b.b3,
+isEditing: editing,
+isViewing: !editing,
+editRing: editing ? 'inset 0 0 0 1px #17181B' : 'none',
+editLabel: 'Edit ' + t.title,
+deleteLabel: 'Delete ' + t.title,
+editDraft: s.editDraft,
+editError: s.editError,
+hasEditError: editing && !!s.editError,
+editInvalid: editing && s.editError ? 'true' : 'false',
+editPriority: s.editPriority,
+editPrFg: em.fg,
+editBar1: eb.b1, editBar2: eb.b2, editBar3: eb.b3,
+onEditPriority: (e) => self.setState({ editPriority: e.target.value }),
+edit: () => self.setState({ editingId: t.id, editDraft: t.title, editError: '', editPriority: t.priority }),
+remove: () => self.remove(t.id),
+save: (e) => { e.preventDefault(); self.saveEdit(t.id); },
+cancel: () => self.setState({ editingId: null, editError: '' }),
+onEditChange: (e) => self.setState({ editDraft: e.target.value, editError: '' }),
+onEditKeyDown: (e) => { if (e.key === 'Escape') self.setState({ editingId: null, editError: '' }); }
+};
+};
+
+var groups = s.groupByDay
+? ['today', 'yesterday', 'earlier']
+.map((bk) => ({ label: labels[bk], showLabel: true, items: matches.filter((t) => t.bucket === bk).map(decorate) }))
+.filter((g) => g.items.length > 0)
+: (matches.length ? [{ label: '', showLabel: false, items: matches.map(decorate) }] : []);
+
+var tabs = [['open', 'Open', openCount], ['done', 'Done', doneCount], ['all', 'All', total]].map((x) => {
+var on = s.status === x[0];
+return {
+label: x[1],
+count: String(x[2]),
+pressed: on ? 'true' : 'false',
+fg: on ? '#17181B' : '#5E636B',
+underline: on ? '#17181B' : 'transparent',
+weight: on ? '600' : '400',
+pick: () => self.setState({ status: x[0] })
+};
+});
+
+var dm = self.priorityMeta(s.draftPriority);
+var db = self.barsFor(dm.level, dm.fg);
+var allDone = total > 0 && openCount === 0 && s.status === 'open' && !q;
+
+return {
+accent: this.props.accent ?? '#F5A524',
+draft: s.draft,
+draftError: s.draftError,
+hasDraftError: !!s.draftError,
+draftInvalid: s.draftError ? 'true' : 'false',
+onDraftChange: (e) => self.setState({ draft: e.target.value, draftError: '' }),
+onCreate: (e) => self.create(e),
+draftPriority: s.draftPriority,
+draftPrFg: dm.fg,
+draftBar1: db.b1, draftBar2: db.b2, draftBar3: db.b3,
+onDraftPriority: (e) => self.setState({ draftPriority: e.target.value }),
+tabs: tabs,
+query: s.query,
+onQueryChange: (e) => self.setState({ query: e.target.value }),
+groupChecked: s.groupByDay ? 'true' : 'false',
+switchTrack: s.groupByDay ? '#17181B' : '#7A7F87',
+switchKnobLeft: s.groupByDay ? '16px' : '2px',
+toggleGroup: () => self.setState({ groupByDay: !self.state.groupByDay }),
+groups: groups,
+hasResults: groups.length > 0,
+allDone: allDone,
+noResults: total > 0 && groups.length === 0 && !allDone,
+isEmpty: total === 0,
+clearFilters: () => self.setState({ query: '' }),
+showToast: !!s.deleted,
+undo: () => self.undo()
+};
+}
+}
+</script>
+</body>
+</html>
