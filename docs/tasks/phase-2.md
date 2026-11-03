@@ -33,7 +33,7 @@ Phase 2 is the owner's own extras on top of the finished PDF MVP (`docs/tasks/ph
 | 26 | Update and delete: service and routes | Backend | [x] |
 | 27 | Frontend: priority on create, edit a task, mark done | Frontend | [x] |
 | 28 | Frontend: delete a task | Frontend | [x] |
-| 29 | Styling from the owner's mocks | Frontend | [ ] |
+| 29 | Styling from the owner's mocks | Frontend | [~] |
 | 30 | README update and clean-clone re-check | Docs | [ ] |
 
 ## HTTPS (CloudFront)

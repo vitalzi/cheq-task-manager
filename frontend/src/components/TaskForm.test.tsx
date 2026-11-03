@@ -13,7 +13,7 @@ describe('TaskForm', () => {
     api.install();
   });
 
-  const titleInput = () => screen.getByRole('textbox', { name: 'Task title' });
+  const titleInput = () => screen.getByRole('textbox', { name: 'New task' });
   const prioritySelect = () => screen.getByRole('combobox', { name: 'Priority' });
 
   it('offers High, Medium and Low, starting on Medium', () => {
@@ -29,7 +29,7 @@ describe('TaskForm', () => {
     renderWithClient(<TaskForm />);
 
     await user.type(titleInput(), 'Write the report');
-    await user.click(screen.getByRole('button', { name: 'Add task' }));
+    await user.click(screen.getByRole('button', { name: 'Add' }));
 
     await waitFor(() => expect(api.writes).toEqual([{ method: 'POST', path: '/tasks', body: { title: 'Write the report', priority: 1 } }]));
   });
@@ -40,7 +40,7 @@ describe('TaskForm', () => {
 
     await user.type(titleInput(), 'Urgent');
     await user.selectOptions(prioritySelect(), 'High');
-    await user.click(screen.getByRole('button', { name: 'Add task' }));
+    await user.click(screen.getByRole('button', { name: 'Add' }));
 
     await waitFor(() => expect(api.writes[0].body).toEqual({ title: 'Urgent', priority: 0 }));
   });
@@ -51,7 +51,7 @@ describe('TaskForm', () => {
 
     await user.type(titleInput(), 'Later');
     await user.selectOptions(prioritySelect(), 'Low');
-    await user.click(screen.getByRole('button', { name: 'Add task' }));
+    await user.click(screen.getByRole('button', { name: 'Add' }));
 
     await waitFor(() => expect(titleInput()).toHaveValue(''));
     expect(prioritySelect()).toHaveValue('2');
@@ -62,7 +62,7 @@ describe('TaskForm', () => {
     renderWithClient(<TaskForm />);
 
     await user.type(titleInput(), '   ');
-    await user.click(screen.getByRole('button', { name: 'Add task' }));
+    await user.click(screen.getByRole('button', { name: 'Add' }));
 
     expect(screen.getByRole('alert')).toHaveTextContent('Title must not be empty.');
     expect(api.writes).toEqual([]);
@@ -74,7 +74,7 @@ describe('TaskForm', () => {
     renderWithClient(<TaskForm />);
 
     await user.type(titleInput(), 'Once');
-    await user.dblClick(screen.getByRole('button', { name: 'Add task' }));
+    await user.dblClick(screen.getByRole('button', { name: 'Add' }));
     release();
 
     await waitFor(() => expect(titleInput()).toHaveValue(''));
@@ -100,7 +100,7 @@ describe('TaskForm', () => {
     renderWithClient(<TaskForm />);
 
     await user.type(titleInput(), 'Keep me');
-    await user.click(screen.getByRole('button', { name: 'Add task' }));
+    await user.click(screen.getByRole('button', { name: 'Add' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not add task: Something went wrong');
     expect(titleInput()).toHaveValue('Keep me');

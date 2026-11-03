@@ -1,9 +1,14 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { NO_FILTERS } from '../filters';
 import { FakeApi, sampleTask } from '../test/fakeApi';
 import { renderWithClient } from '../test/render';
+import { server } from '../test/server';
 import { TaskList } from './TaskList';
+
+const renderList = () => renderWithClient(<TaskList filters={NO_FILTERS} onClearFilters={() => {}} />);
 
 describe('TaskList', () => {
   let api: FakeApi;
@@ -13,15 +18,15 @@ describe('TaskList', () => {
     api.install();
   });
 
-  const doneBox = () => screen.findByRole('checkbox', { name: /as done/ });
+  const doneBox = () => screen.findByRole('checkbox', { name: /Mark as (not )?done/ });
   const prioritySelect = () => screen.findByRole('combobox', { name: /Priority of/ });
 
   describe('showing tasks', () => {
     it('says so when there are no tasks', async () => {
       api.tasks = [];
-      renderWithClient(<TaskList />);
+      renderList();
 
-      expect(await screen.findByText('No tasks yet.')).toBeInTheDocument();
+      expect(await screen.findByText('No tasks yet — add your first one above.')).toBeInTheDocument();
     });
 
     it('shows each task with its title, done state and priority', async () => {
@@ -29,7 +34,7 @@ describe('TaskList', () => {
         sampleTask({ id: 'a', title: 'First', done: 0, priority: 0 }),
         sampleTask({ id: 'b', title: 'Second', done: 1, priority: 2 }),
       ];
-      renderWithClient(<TaskList />);
+      renderList();
 
       const [first, second] = await screen.findAllByRole('listitem');
       expect(within(first).getByText('First')).toBeInTheDocument();
@@ -44,7 +49,7 @@ describe('TaskList', () => {
   describe('marking done', () => {
     it('sends only done: 1 when an open task is ticked, then shows it ticked', async () => {
       const user = userEvent.setup();
-      renderWithClient(<TaskList />);
+      renderList();
 
       await user.click(await doneBox());
 
@@ -55,7 +60,7 @@ describe('TaskList', () => {
     it('sends done: 0 when a done task is unticked', async () => {
       const user = userEvent.setup();
       api.tasks = [sampleTask({ done: 1 })];
-      renderWithClient(<TaskList />);
+      renderList();
 
       await user.click(await doneBox());
 
@@ -66,7 +71,7 @@ describe('TaskList', () => {
   describe('changing priority', () => {
     it('sends only the new priority and shows it', async () => {
       const user = userEvent.setup();
-      renderWithClient(<TaskList />);
+      renderList();
 
       await user.selectOptions(await prioritySelect(), 'High');
 
@@ -77,20 +82,20 @@ describe('TaskList', () => {
 
   describe('editing the title', () => {
     const startEditing = async (user: ReturnType<typeof userEvent.setup>) => {
-      await user.click(await screen.findByRole('button', { name: 'Edit' }));
-      return screen.getByRole('textbox', { name: 'Task title' });
+      await user.click(await screen.findByRole('button', { name: /^Edit / }));
+      return screen.getByRole('textbox', { name: 'Edit task title' });
     };
 
     it('opens an input holding the current title', async () => {
       const user = userEvent.setup();
-      renderWithClient(<TaskList />);
+      renderList();
 
       expect(await startEditing(user)).toHaveValue('Write the report');
     });
 
     it('sends only the new title on Save, then shows it in place of the input', async () => {
       const user = userEvent.setup();
-      renderWithClient(<TaskList />);
+      renderList();
 
       const input = await startEditing(user);
       await user.clear(input);
@@ -104,7 +109,7 @@ describe('TaskList', () => {
 
     it('saves on Enter', async () => {
       const user = userEvent.setup();
-      renderWithClient(<TaskList />);
+      renderList();
 
       const input = await startEditing(user);
       await user.clear(input);
@@ -115,7 +120,7 @@ describe('TaskList', () => {
 
     it('discards the change on Cancel and sends nothing', async () => {
       const user = userEvent.setup();
-      renderWithClient(<TaskList />);
+      renderList();
 
       const input = await startEditing(user);
       await user.clear(input);
@@ -128,7 +133,7 @@ describe('TaskList', () => {
 
     it('starts from the saved title when edited again after a cancel', async () => {
       const user = userEvent.setup();
-      renderWithClient(<TaskList />);
+      renderList();
 
       const input = await startEditing(user);
       await user.type(input, ' extra');
@@ -139,7 +144,7 @@ describe('TaskList', () => {
 
     it('sends nothing for a whitespace-only title, says why, and stays in edit mode', async () => {
       const user = userEvent.setup();
-      renderWithClient(<TaskList />);
+      renderList();
 
       const input = await startEditing(user);
       await user.clear(input);
@@ -147,14 +152,14 @@ describe('TaskList', () => {
       await user.click(screen.getByRole('button', { name: 'Save' }));
 
       expect(screen.getByRole('alert')).toHaveTextContent('Title must not be empty.');
-      expect(screen.getByRole('textbox', { name: 'Task title' })).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: 'Edit task title' })).toBeInTheDocument();
       expect(api.writes).toEqual([]);
     });
 
     it('sends one request when Save is clicked twice while the first is pending', async () => {
       const user = userEvent.setup();
       const release = api.holdWrites();
-      renderWithClient(<TaskList />);
+      renderList();
 
       const input = await startEditing(user);
       await user.clear(input);
@@ -171,8 +176,8 @@ describe('TaskList', () => {
     it('sends one request when Enter is pressed twice in the title input while saving', async () => {
       const user = userEvent.setup();
       const release = api.holdWrites();
-      renderWithClient(<TaskList />);
-      await user.click(await screen.findByRole('button', { name: 'Edit' }));
+      renderList();
+      await user.click(await screen.findByRole('button', { name: /^Edit / }));
 
       await user.keyboard('{Enter}{Enter}');
       release();
@@ -184,13 +189,13 @@ describe('TaskList', () => {
     it('disables the row controls until the API answers', async () => {
       const user = userEvent.setup();
       const release = api.holdWrites();
-      renderWithClient(<TaskList />);
+      renderList();
 
       await user.click(await doneBox());
 
       await waitFor(() => expect(screen.getByRole('checkbox')).toBeDisabled());
       expect(screen.getByRole('combobox')).toBeDisabled();
-      expect(screen.getByRole('button', { name: 'Edit' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: /^Edit / })).toBeDisabled();
 
       release();
       await waitFor(() => expect(screen.getByRole('checkbox')).toBeEnabled());
@@ -198,11 +203,11 @@ describe('TaskList', () => {
   });
 
   describe('deleting', () => {
-    const deleteButton = () => screen.findByRole('button', { name: 'Delete' });
+    const deleteButton = () => screen.findByRole('button', { name: /^Delete / });
 
     it('asks first and sends nothing until Yes', async () => {
       const user = userEvent.setup();
-      renderWithClient(<TaskList />);
+      renderList();
 
       await user.click(await deleteButton());
 
@@ -212,18 +217,18 @@ describe('TaskList', () => {
 
     it('sends DELETE on Yes and removes the task', async () => {
       const user = userEvent.setup();
-      renderWithClient(<TaskList />);
+      renderList();
 
       await user.click(await deleteButton());
       await user.click(screen.getByRole('button', { name: 'Yes' }));
 
-      expect(await screen.findByText('No tasks yet.')).toBeInTheDocument();
+      expect(await screen.findByText('No tasks yet — add your first one above.')).toBeInTheDocument();
       expect(api.writes).toEqual([{ method: 'DELETE', path: '/tasks/id-0', body: undefined }]);
     });
 
     it('goes back to the Delete button on No and sends nothing', async () => {
       const user = userEvent.setup();
-      renderWithClient(<TaskList />);
+      renderList();
 
       await user.click(await deleteButton());
       await user.click(screen.getByRole('button', { name: 'No' }));
@@ -236,7 +241,7 @@ describe('TaskList', () => {
     it('keeps the task and shows an alert when the delete fails', async () => {
       const user = userEvent.setup();
       api.failNextWrite(500);
-      renderWithClient(<TaskList />);
+      renderList();
 
       await user.click(await deleteButton());
       await user.click(screen.getByRole('button', { name: 'Yes' }));
@@ -248,7 +253,7 @@ describe('TaskList', () => {
     it('disables the row controls while the delete is pending', async () => {
       const user = userEvent.setup();
       const release = api.holdWrites();
-      renderWithClient(<TaskList />);
+      renderList();
 
       await user.click(await deleteButton());
       await user.click(screen.getByRole('button', { name: 'Yes' }));
@@ -265,12 +270,76 @@ describe('TaskList', () => {
     it('shows an alert and leaves the task as it was', async () => {
       const user = userEvent.setup();
       api.failNextWrite(500);
-      renderWithClient(<TaskList />);
+      renderList();
 
       await user.click(await doneBox());
 
       expect(await screen.findByRole('alert')).toHaveTextContent('Could not update task: Something went wrong');
       expect(await doneBox()).not.toBeChecked();
+    });
+  });
+
+  describe('cancelling with Escape', () => {
+    it('discards the change and sends nothing', async () => {
+      const user = userEvent.setup();
+      renderList();
+
+      await user.click(await screen.findByRole('button', { name: /^Edit / }));
+      await user.type(screen.getByRole('textbox', { name: 'Edit task title' }), ' extra{Escape}');
+
+      expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+      expect(screen.getByText('Write the report')).toBeInTheDocument();
+      expect(api.writes).toEqual([]);
+    });
+
+    it('explains the keys while editing', async () => {
+      const user = userEvent.setup();
+      renderList();
+
+      await user.click(await screen.findByRole('button', { name: /^Edit / }));
+
+      expect(screen.getByText('Enter to save · Esc to cancel')).toBeInTheDocument();
+    });
+
+    it('marks the input invalid and ties it to the message when the title is blank', async () => {
+      const user = userEvent.setup();
+      renderList();
+
+      await user.click(await screen.findByRole('button', { name: /^Edit / }));
+      await user.clear(screen.getByRole('textbox', { name: 'Edit task title' }));
+      await user.keyboard('{Enter}');
+
+      const input = screen.getByRole('textbox', { name: 'Edit task title' });
+      expect(input).toBeInvalid();
+      expect(input).toHaveAccessibleDescription(expect.stringContaining('Title must not be empty.'));
+    });
+  });
+
+  describe('loading and failing to load', () => {
+    it('shows a busy skeleton while the tasks load', async () => {
+      renderList();
+
+      expect(screen.getByLabelText('Loading tasks')).toHaveAttribute('aria-busy', 'true');
+      // Let the request finish so it cannot leak into the next test.
+      await screen.findByText('Write the report');
+    });
+
+    it('shows the error with a Retry that loads again', async () => {
+      const user = userEvent.setup();
+      let calls = 0;
+      server.use(
+        http.get(`${import.meta.env.VITE_API_URL}/tasks`, () =>
+          ++calls === 1 ? HttpResponse.json({ error: 'Cannot reach the API' }, { status: 500 }) : HttpResponse.json([sampleTask()]),
+        ),
+      );
+      renderList();
+
+      const alert = await screen.findByRole('alert');
+      expect(alert).toHaveTextContent('Couldn’t load tasks');
+      expect(alert).toHaveTextContent('Cannot reach the API');
+      await user.click(screen.getByRole('button', { name: 'Retry' }));
+
+      expect(await screen.findByText('Write the report')).toBeInTheDocument();
     });
   });
 });

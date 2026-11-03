@@ -1,63 +1,199 @@
 .item {
-  padding: 0.5rem 0;
-  border-bottom: 1px solid #ddd;
-  overflow-wrap: anywhere;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-row);
+  border-radius: var(--radius-lg);
+}
+
+.editing {
+  border-color: var(--color-text);
 }
 
 .row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
+  gap: 4px;
+  padding: 6px;
 }
 
-.row > span,
-.edit {
-  flex: 1;
-  min-width: 8rem;
+.check {
+  flex: none;
+  width: var(--control-md);
+  height: var(--control-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
 }
 
-.edit {
-  display: flex;
-  gap: 0.5rem;
+.check input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--color-text);
+  cursor: pointer;
 }
 
-.edit input {
-  flex: 1;
+.check input:disabled {
+  cursor: not-allowed;
+}
+
+.title {
+  flex: 1 1 8rem;
   min-width: 0;
-  padding: 0.3rem 0.5rem;
+  font-size: var(--text-body);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .done {
-  color: #666;
+  color: var(--color-muted);
   text-decoration: line-through;
 }
 
-.row time {
-  flex-shrink: 0;
-  color: #666;
-  font-size: 0.85rem;
+.time {
+  flex: none;
+  margin: 0 6px 0 auto; /* when the row wraps on a narrow screen, time and icons sit on the right */
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+  color: var(--color-muted);
+}
+
+.icon {
+  flex: none;
+  width: var(--control-md);
+  height: var(--control-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+}
+
+.icon:hover:not(:disabled) {
+  background: var(--color-subtle);
+  color: var(--color-text);
+}
+
+.icon:disabled {
+  color: var(--color-pending-dot);
+  cursor: not-allowed;
+}
+
+.confirm {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding-left: 6px;
+  font-size: var(--text-small);
+  color: var(--color-danger-strong);
+}
+
+.confirm button {
+  min-width: var(--control-md);
+  height: var(--control-md);
+  padding: 0 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--text-control);
+  cursor: pointer;
+}
+
+.confirm button:first-of-type {
+  border-color: var(--color-danger-dot);
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
+  font-weight: 600;
+}
+
+.confirm button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.edit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+}
+
+.editRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.editRow input {
+  flex: 1 1 200px;
+  min-width: 0;
+  height: var(--control-md);
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--text-body);
+}
+
+.editRow input[aria-invalid='true'] {
+  border-color: var(--color-danger-dot);
+}
+
+.save,
+.cancel {
+  height: var(--control-md);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-control);
+  cursor: pointer;
+}
+
+.save {
+  padding: 0 16px;
+  border: 0;
+  background: var(--color-text);
+  color: var(--color-surface);
+  font-weight: 600;
+}
+
+.cancel {
+  padding: 0 14px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text);
+}
+
+.save:disabled,
+.cancel:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .validation {
-  margin: 0.4rem 0 0;
-  color: #8e1a1a;
-  font-size: 0.85rem;
+  margin: 0 4px;
+  font-size: var(--text-small);
+  color: var(--color-danger);
+}
+
+.hint {
+  margin: 0 4px;
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  color: var(--color-muted);
 }
 
 .alert {
-  margin-top: 0.5rem;
-  padding: 0.75rem 1rem;
-  border: 1px solid #c62828;
-  border-radius: 4px;
-  background: #fdecea;
-  color: #8e1a1a;
-}
-
-.row > .confirm {
-  flex: none;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
+  margin: 0 6px 6px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-danger-border);
+  border-radius: var(--radius-md);
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
+  font-size: var(--text-small);
 }

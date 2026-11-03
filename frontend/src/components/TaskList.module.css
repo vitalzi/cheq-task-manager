@@ -1,12 +1,128 @@
+.groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-group);
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.groupHeading {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
 .list {
   list-style: none;
+  margin: 0;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-row);
+}
+
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-row);
+}
+
+.skeletonRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 18px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-row);
+  border-radius: var(--radius-lg);
+}
+
+.bar {
+  height: 12px;
+  border-radius: 6px;
+  background: var(--color-skeleton);
+}
+
+.barShort {
+  width: 48px;
+}
+
+.empty {
+  margin: 0;
+  padding: 40px 24px;
+  border: 1px dashed var(--color-border-dashed);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  font-size: var(--text-body);
+  color: var(--color-muted);
+}
+
+.noMatch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  color: var(--color-text);
+}
+
+.noMatch p {
+  margin: 0;
+}
+
+.noMatch button,
+.alert button {
+  height: var(--control-md);
+  padding: 0 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--text-control);
+  cursor: pointer;
+}
+
+.noMatch button:hover,
+.alert button:hover:not(:disabled) {
+  background: var(--color-subtle);
 }
 
 .alert {
-  padding: 0.75rem 1rem;
-  border: 1px solid #c62828;
-  border-radius: 4px;
-  background: #fdecea;
-  color: #8e1a1a;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 14px 14px 18px;
+  border: 1px solid var(--color-danger-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
+}
+
+.alert button {
+  border-color: var(--color-danger-border);
+}
+
+.alert button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.alertText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
+}
+
+.alertText strong {
+  font-size: var(--text-control);
 }

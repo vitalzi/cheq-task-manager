@@ -58,6 +58,7 @@ npm test         # Vitest + Testing Library, in jsdom; no API or browser needed
 npm run build    # type-check, then build to frontend/dist
 ```
 
+- **Design:** the styling follows the mocks in `docs/design/` (editorial light). `src/tokens.css` holds every colour, font, radius and spacing as CSS variables; the `*.module.css` files use only those variables. There is no styling library. The task list is filterable by title and status (client-side), grouped by day, and the page works from about 360 px up.
 - **`VITE_API_URL`:** the API base URL baked into the build. Leave it unset locally: the app calls its own origin and the Vite dev server proxies `/health` and `/tasks` to `http://localhost:3000`. The deployed build leaves it unset too, because CloudFront serves the site and the API from one origin. The API sends no CORS headers, so a build pointed at a different API origin would be blocked by the browser.
 
 ## Docker
@@ -153,7 +154,7 @@ Each item says how it would be completed.
 - **Plain HTTP between CloudFront and the ALB:** users get HTTPS, but the last hop inside AWS is HTTP because the ALB has no certificate. With a domain, add an ACM certificate and an HTTPS listener on the ALB and switch the origin to `https-only`.
 - **Terraform state on a laptop:** move it to an S3 backend with locking before a second person applies.
 - **No authentication, no rate limiting, unbounded list:** `GET /tasks` returns everything and any client can post. Add pagination (`limit` and a cursor) and an AWS WAF rate rule, and authentication if tasks become per-user.
-- **Frontend tests cover behavior, not looks:** Vitest and Testing Library run the real components and `api.ts`; MSW (Mock Service Worker) answers the network calls in-process, with small handlers in `src/test/fakeApi.ts` (the `PATCH` is kept in memory so the refetch shows it; the backend's rules are not copied, they are tested in the backend). The tests assert on the request the UI sent. A request with no handler fails the test. They cover the create form, the done toggle, the priority select, editing (blank title, cancel, Enter), delete with its Yes/No step, the pending state and the error alerts. Not covered: styling, the health badge, and the real network path (checked by hand in a browser).
+- **Frontend tests cover behavior, not looks:** Vitest and Testing Library run the real components and `api.ts`; MSW (Mock Service Worker) answers the network calls in-process, with small handlers in `src/test/fakeApi.ts` (the `PATCH` is kept in memory so the refetch shows it; the backend's rules are not copied, they are tested in the backend). The tests assert on the request the UI sent. A request with no handler fails the test. They cover the create form, the done toggle, the priority select, editing (blank title, cancel, Enter), delete with its Yes/No step, the pending state and the error alerts. The pure filter, grouping and heading logic has its own unit tests, and the health badge and the loading and error states are tested too. Not covered: how it looks, and the real network path (checked by hand in a browser).
 - **No alarms or error tracking yet:** see Observability.
 
 ## Scalability: 10x traffic tomorrow

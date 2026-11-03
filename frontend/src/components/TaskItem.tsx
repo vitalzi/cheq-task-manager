@@ -1,11 +1,22 @@
-import { useState, type FormEvent } from 'react';
+import { useId, useState, type FormEvent } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { deleteTask, updateTask, type Task, type TaskChanges } from '../api';
+import { dayLabel } from '../filters';
+import { PencilIcon, TrashIcon } from './Icons';
 import { PrioritySelect } from './PrioritySelect';
 import styles from './TaskItem.module.css';
 
+// Today and Yesterday show the time of day, older tasks the date.
+function formatCreated(createdAt: string): string {
+  const date = new Date(createdAt);
+  return dayLabel(createdAt, new Date()) === 'Earlier'
+    ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    : date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+}
+
 export function TaskItem({ task }: { task: Task }) {
   const queryClient = useQueryClient();
+  const errorId = useId();
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(task.title);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -36,6 +47,10 @@ export function TaskItem({ task }: { task: Task }) {
     setEditing(true);
   }
 
+  function stopEditing() {
+    if (!pending) setEditing(false);
+  }
+
   function handleSave(event: FormEvent) {
     event.preventDefault();
     if (title.trim() === '') {
@@ -47,68 +62,88 @@ export function TaskItem({ task }: { task: Task }) {
   }
 
   return (
-    <li className={styles.item}>
-      <div className={styles.row}>
-        <input
-          type="checkbox"
-          checked={task.done === 1}
-          onChange={(e) => change({ done: e.target.checked ? 1 : 0 })}
-          disabled={pending}
-          aria-label={`Mark "${task.title}" as done`}
-        />
-        {editing ? (
-          <form className={styles.edit} onSubmit={handleSave} noValidate>
+    <li className={`${styles.item} ${editing ? styles.editing : ''}`}>
+      {editing ? (
+        <form className={styles.edit} onSubmit={handleSave} noValidate>
+          <div className={styles.editRow}>
             <input
               value={title}
               onChange={(e) => {
                 setTitle(e.target.value);
                 setValidationError(null);
               }}
-              aria-label="Task title"
+              onKeyDown={(e) => e.key === 'Escape' && stopEditing()}
+              aria-label="Edit task title"
+              aria-invalid={validationError !== null}
+              aria-describedby={validationError ? errorId : undefined}
               autoFocus
             />
-            <button type="submit" disabled={pending}>
+            <button className={styles.save} type="submit" disabled={pending}>
               {mutation.isPending ? 'Saving…' : 'Save'}
             </button>
-            <button type="button" onClick={() => setEditing(false)} disabled={pending}>
+            <button className={styles.cancel} type="button" onClick={stopEditing} disabled={pending}>
               Cancel
             </button>
-          </form>
-        ) : (
-          <>
-            <span className={task.done === 1 ? styles.done : undefined}>{task.title}</span>
-            <button type="button" onClick={startEditing} disabled={pending}>
-              Edit
-            </button>
-          </>
-        )}
-        {confirmingDelete ? (
-          <span className={styles.confirm}>
-            Delete?
-            <button type="button" onClick={() => removal.mutate(task.id)} disabled={pending}>
-              Yes
-            </button>
-            <button type="button" onClick={() => setConfirmingDelete(false)} disabled={pending}>
-              No
-            </button>
-          </span>
-        ) : (
-          <button type="button" onClick={() => setConfirmingDelete(true)} disabled={pending}>
-            Delete
+          </div>
+          {validationError && (
+            <p className={styles.validation} id={errorId} role="alert">
+              {validationError}
+            </p>
+          )}
+          <p className={styles.hint}>Enter to save · Esc to cancel</p>
+        </form>
+      ) : (
+        <div className={styles.row}>
+          <label className={styles.check}>
+            <input
+              type="checkbox"
+              checked={task.done === 1}
+              onChange={(e) => change({ done: e.target.checked ? 1 : 0 })}
+              disabled={pending}
+              aria-label={`${task.done === 1 ? 'Mark as not done' : 'Mark as done'}: ${task.title}`}
+            />
+          </label>
+          <span className={`${styles.title} ${task.done === 1 ? styles.done : ''}`}>{task.title}</span>
+          <PrioritySelect
+            value={task.priority}
+            onChange={(priority) => change({ priority })}
+            disabled={pending}
+            label={`Priority of "${task.title}"`}
+          />
+          <time className={styles.time} dateTime={task.createdAt}>
+            {formatCreated(task.createdAt)}
+          </time>
+          <button
+            className={styles.icon}
+            type="button"
+            onClick={startEditing}
+            disabled={pending}
+            aria-label={`Edit ${task.title}`}
+          >
+            <PencilIcon />
           </button>
-        )}
-        <PrioritySelect
-          value={task.priority}
-          onChange={(priority) => change({ priority })}
-          disabled={pending}
-          label={`Priority of "${task.title}"`}
-        />
-        <time dateTime={task.createdAt}>{new Date(task.createdAt).toLocaleString()}</time>
-      </div>
-      {validationError && (
-        <p className={styles.validation} role="alert">
-          {validationError}
-        </p>
+          {confirmingDelete ? (
+            <span className={styles.confirm}>
+              Delete?
+              <button type="button" onClick={() => removal.mutate(task.id)} disabled={pending}>
+                Yes
+              </button>
+              <button type="button" onClick={() => setConfirmingDelete(false)} disabled={pending}>
+                No
+              </button>
+            </span>
+          ) : (
+            <button
+              className={styles.icon}
+              type="button"
+              onClick={() => setConfirmingDelete(true)}
+              disabled={pending}
+              aria-label={`Delete ${task.title}`}
+            >
+              <TrashIcon />
+            </button>
+          )}
+        </div>
       )}
       {removal.isError && (
         <div className={styles.alert} role="alert">

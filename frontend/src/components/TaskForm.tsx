@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useId, useState, type FormEvent } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createTask, type Priority } from '../api';
 import { PrioritySelect } from './PrioritySelect';
@@ -6,6 +6,8 @@ import styles from './TaskForm.module.css';
 
 export function TaskForm() {
   const queryClient = useQueryClient();
+  const inputId = useId();
+  const errorId = useId();
   const [title, setTitle] = useState('');
   const [priority, setPriority] = useState<Priority>(1);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -32,23 +34,29 @@ export function TaskForm() {
 
   return (
     <form className={styles.form} onSubmit={handleSubmit} noValidate>
+      <label className={styles.label} htmlFor={inputId}>
+        New task
+      </label>
       <div className={styles.row}>
         <input
+          id={inputId}
+          className={styles.input}
           value={title}
           onChange={(e) => {
             setTitle(e.target.value);
             setValidationError(null);
           }}
-          placeholder="New task title"
-          aria-label="Task title"
+          placeholder="Type a task and press Enter"
+          aria-invalid={validationError !== null}
+          aria-describedby={validationError ? errorId : undefined}
         />
-        <PrioritySelect value={priority} onChange={setPriority} disabled={mutation.isPending} label="Priority" />
-        <button type="submit" disabled={mutation.isPending}>
-          {mutation.isPending ? 'Adding…' : 'Add task'}
+        <PrioritySelect value={priority} onChange={setPriority} disabled={mutation.isPending} label="Priority" large />
+        <button className={styles.submit} type="submit" disabled={mutation.isPending}>
+          {mutation.isPending ? 'Adding…' : 'Add'}
         </button>
       </div>
       {validationError && (
-        <p className={styles.validation} role="alert">
+        <p className={styles.validation} id={errorId} role="alert">
           {validationError}
         </p>
       )}
