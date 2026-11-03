@@ -11,16 +11,24 @@ data "aws_subnets" "default" {
   }
 }
 
+# CloudFront's origin-facing addresses, kept current by AWS. Only these may reach the ALB, so
+# the plain-HTTP ALB address is not a way around the HTTPS front door.
+data "aws_ec2_managed_prefix_list" "cloudfront" {
+  name = "com.amazonaws.global.cloudfront.origin-facing"
+}
+
 resource "aws_security_group" "alb" {
-  name        = "${var.project}-alb"
+  name = "${var.project}-alb"
+  # Changing a description replaces the group, which the ALB is attached to; the text is
+  # kept from before CloudFront (it now means HTTP from CloudFront).
   description = "Public HTTP to the load balancer"
   vpc_id      = data.aws_vpc.default.id
 
   ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    from_port       = 80
+    to_port         = 80
+    protocol        = "tcp"
+    prefix_list_ids = [data.aws_ec2_managed_prefix_list.cloudfront.id]
   }
 
   egress {

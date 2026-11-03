@@ -8,7 +8,7 @@ A small task manager: a REST API with a React frontend, deployed to AWS. Built a
 - **API:** the same address (`GET /health`, `GET /tasks`, `POST /tasks`, `PATCH /tasks/:id`, `DELETE /tasks/:id`); CloudFront sends `/tasks*` and `/health` to the API
 - **Repository:** https://github.com/vitalzi/cheq-task-manager
 
-The site and the API share one HTTPS address with a valid certificate. The old S3 website URL no longer exists, and the ALB's plain-HTTP address still answers but is not the entry point (see Unfinished and known limits). Tasks are stored in DynamoDB, so they survive deploys and restarts.
+The site and the API share one HTTPS address with a valid certificate. The old S3 website URL no longer exists, and the ALB accepts connections only from CloudFront, so its own plain-HTTP address does not answer. Tasks are stored in DynamoDB, so they survive deploys and restarts.
 
 ## Beyond the brief
 
@@ -98,7 +98,7 @@ terraform apply   # run once from a laptop
 terraform output  # alb_url, cloudfront_url, ecr_repository_url, ...
 ```
 
-- **API:** ECS Fargate (one task, 0.25 vCPU / 512 MB) behind an Application Load Balancer that checks `GET /health`. It runs in the default VPC's public subnets with no NAT gateway; the task's security group accepts port 3000 only from the load balancer.
+- **API:** ECS Fargate (one task, 0.25 vCPU / 512 MB) behind an Application Load Balancer that checks `GET /health`. The load balancer's security group accepts port 80 only from CloudFront's origin-facing address list (an AWS-managed prefix list), so the API cannot be reached over plain HTTP except through the distribution. The task runs in the default VPC's public subnets with no NAT gateway; its security group accepts port 3000 only from the load balancer.
 - **Frontend and HTTPS:** a CloudFront distribution is the entry point at `https://<id>.cloudfront.net` (`cloudfront_url`), which has a valid certificate without a domain. Its default behavior serves the site from a private S3 bucket; `/tasks*` and `/health` go to the ALB with caching off and all methods allowed. The hop from CloudFront to the ALB is plain HTTP inside AWS.
 - **Why the bucket is private:** Block Public Access is on, website hosting is off, and the bucket policy lets only this one distribution read objects (Origin Access Control). Nobody can reach the files except through CloudFront, so there is one front door that serves HTTPS.
 - **Storage:** one DynamoDB table (`task-manager-tasks`, on demand, `id` as the key). The container runs with its own IAM task role that may only `Scan`, `PutItem`, `UpdateItem` and `DeleteItem` on that table, the four calls the store makes (update and delete carry a condition that the item exists, so an unknown id is "not found", not a new item). Terraform passes the table name as `TABLE_NAME` and the region as `AWS_REGION`. Data survives deploys and restarts. The service stays at one task (see Scalability).
@@ -165,6 +165,7 @@ Where the assignment was unclear, these are the readings used:
 Each item says how it would be completed.
 
 - **Plain HTTP between CloudFront and the ALB:** users get HTTPS, but the last hop inside AWS is HTTP because the ALB has no certificate. With a domain, add an ACM certificate and an HTTPS listener on the ALB and switch the origin to `https-only`.
+- **Any CloudFront distribution can reach the ALB:** the address list is CloudFront's as a whole, not this distribution's. To close that, have CloudFront add a secret header to its requests to the ALB and have an ALB listener rule forward only requests that carry it.
 - **Terraform state on a laptop:** move it to an S3 backend with locking before a second person applies.
 - **No authentication, no rate limiting, unbounded list:** `GET /tasks` returns everything and any client can post. Add pagination (`limit` and a cursor) and an AWS WAF rate rule, and authentication if tasks become per-user.
 - **Frontend tests cover behavior, not looks:** Vitest and Testing Library run the real components and `api.ts`; MSW (Mock Service Worker) answers the network calls in-process, with small handlers in `src/test/fakeApi.ts` (the `PATCH` is kept in memory so the refetch shows it; the backend's rules are not copied, they are tested in the backend). The tests assert on the request the UI sent. A request with no handler fails the test. They cover the create form, the done toggle, editing (title and priority, blank title, cancel, Enter, Esc), delete with its confirmation, focus and failure, the Status and Priority filters and the counts, search, the By day switch, the pending state and the error alerts. The filter, sort, grouping and time logic has its own unit tests, and the health badge and the loading and error states are tested too. Not covered: how it looks, and the real network path (checked by hand in a browser).

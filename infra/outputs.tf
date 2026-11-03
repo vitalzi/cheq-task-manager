@@ -1,5 +1,5 @@
 output "alb_url" {
-  description = "Direct API address; no longer the entry point, use cloudfront_url"
+  description = "ALB address. Not reachable from the internet (only CloudFront may connect); use cloudfront_url. Kept to check that it times out"
   value       = "http://${aws_lb.api.dns_name}"
 }
 

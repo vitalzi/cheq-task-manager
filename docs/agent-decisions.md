@@ -344,3 +344,12 @@ Small decisions the agent made while building, one entry per decision with the t
 - **Frontend ESLint `coverage/` ignore not added:** the review said `npm run lint` fails after `npm test`. It does not: the frontend has no coverage provider installed and no coverage script, so no `coverage/` folder is created, and lint exits 0 after the tests. The ignore would guard against a case that cannot happen. Add it with the first coverage run.
 - **Uptime test now mocks `process.uptime` (12.7) and asserts `{ status: 'ok', uptime: 12 }`:** the old integer check passed for a hard-coded `0`.
 - **Verified by mutation:** `uptime: 0` and a missing `Math.floor` both fail the uptime test; always using Ajv's text, and using the new text for every validation error, both fail the route tests. The red run showed only the two message tests failing, before the fix.
+
+## Task 38
+
+- **ALB security group `description` left unchanged:** it still reads "Public HTTP to the load balancer". Changing a security group's description replaces the group in AWS, and the ALB and the task's group depend on it, so the apply could fail or cause an outage. A comment in `network.tf` says what the text now means.
+- **Prefix list rule quota:** the AWS-managed CloudFront list counts as one rule per entry (about 55, to be checked in the console) against the group's rule limit (60 by default). That is fine for one rule in this group. If AWS grows the list past the limit, the apply fails with a rules-per-group error; the fix is a quota increase, not a code change.
+- **`alb_url` output kept, description changed:** nothing in the workflows uses it, but the owner needs the address to check that it times out. The README lists it under `terraform output`.
+- **Caveat recorded under Unfinished:** the prefix list allows all of CloudFront, not only this distribution. A secret origin header checked by an ALB listener rule would close that; not built, because it is outside the review item.
+- **Expected during the apply:** Terraform revokes the old rule and adds the new one in place, so port 80 may drop for a few seconds.
+- **Verified:** `terraform fmt -check` and `validate` pass. No `plan` or `apply` was run, as agreed. Whether the list resolves and the rule works is checked after the owner applies.
