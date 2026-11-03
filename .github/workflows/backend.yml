@@ -26,6 +26,12 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # DynamoDB Local for the integration test; the test needs no AWS credentials
+    services:
+      dynamodb:
+        image: amazon/dynamodb-local
+        ports:
+          - 8000:8000
     steps:
       - uses: actions/checkout@v4
 
@@ -42,6 +48,14 @@ jobs:
           npm ci
           npm run lint
           npm test
+
+      # Also before any AWS step. The port opens before DynamoDB Local answers (curl gets an empty
+      # reply for a moment), so retry on any error until it replies with anything
+      - name: Integration test
+        working-directory: backend
+        run: |
+          curl --silent --output /dev/null --retry 30 --retry-delay 1 --retry-all-errors http://localhost:8000
+          npm run test:integration
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:

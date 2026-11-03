@@ -353,3 +353,11 @@ Small decisions the agent made while building, one entry per decision with the t
 - **Caveat recorded under Unfinished:** the prefix list allows all of CloudFront, not only this distribution. A secret origin header checked by an ALB listener rule would close that; not built, because it is outside the review item.
 - **Expected during the apply:** Terraform revokes the old rule and adds the new one in place, so port 80 may drop for a few seconds.
 - **Verified:** `terraform fmt -check` and `validate` pass. No `plan` or `apply` was run, as agreed. Whether the list resolves and the rule works is checked after the owner applies.
+
+## Task 37
+
+- **Service container on the default command:** `services:` cannot pass arguments to the image, so it runs `amazon/dynamodb-local` as is. Its default command is `-jar DynamoDBLocal.jar -inMemory`, so no files are written.
+- **Readiness: `curl --retry 30 --retry-delay 1 --retry-all-errors`, not a port check.** On a fresh container the port is open at once (Docker's proxy), but curl gets an empty reply (exit 52) for about a second until DynamoDB Local answers with an HTTP 400. A first version with `curl --retry-connrefused` exited 52 and would have failed the step with a healthy database; a second with a `/dev/tcp` port check returned instantly and waited for nothing. Both were found by running the step's own script against a fresh container. `--retry-all-errors` needs curl 7.71 or newer; the Ubuntu runner has 8.5.
+- **Wrong test runs caught on the way:** the first two local runs swapped the port in the wait only, so the tests ran against the long-running `dynamodb-local` container on 8000. Redone with `DYNAMODB_ENDPOINT` set to the same port.
+- **Only `backend.yml` changed:** the `ci.yml` part of the review's task belongs to Task 36, which is not taken.
+- **Verified locally:** the step's script (extracted from the YAML, port swapped) passes 13/13 on a fresh container started a moment before it, leaves no tables, and exits non-zero with no database. The YAML parses; the step runs before the first AWS step. The real CI run is checked on GitHub after the owner pushes.

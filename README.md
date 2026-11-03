@@ -45,7 +45,7 @@ npm start        # runs the compiled build
 open coverage/index.html   # HTML coverage report (after npm test)
 ```
 
-**Integration test (DynamoDB Local).** `DynamoTaskStore` runs the same contract test as the in-memory store, against a local DynamoDB in Docker. It is a separate script so `npm test` needs nothing but Node.
+**Integration test (DynamoDB Local).** `DynamoTaskStore` runs the same contract test as the in-memory store, against a local DynamoDB in Docker. It is a separate script so `npm test` needs nothing but Node. CI runs it on every backend deploy, against an `amazon/dynamodb-local` service container, before any AWS step.
 
 ```bash
 docker run --rm -d -p 8000:8000 --name dynamodb-local amazon/dynamodb-local -jar DynamoDBLocal.jar -inMemory
@@ -114,8 +114,8 @@ terraform output  # alb_url, cloudfront_url, ecr_repository_url, ...
 Two GitHub Actions workflows run on push to `main`, each only when its own folder, its own workflow file or `.nvmrc` changes (both read the Node version from it). They can also be run by hand from the Actions tab; the AWS role trusts only `main`, so run them on `main`. They assume the AWS role from the CI access section above, using the repository variables.
 
 - **Backend (`.github/workflows/backend.yml`, on `backend/**`):**
-  - **Steps:** `npm ci`, `npm run lint`, `npm test` (fails below 80% coverage), build the image, push it to ECR as `latest` and as the commit SHA, then force a new ECS deployment.
-  - **Gate:** a lint error or a failing test stops the run before anything reaches AWS.
+  - **Steps:** `npm ci`, `npm run lint`, `npm test` (fails below 80% coverage), `npm run test:integration` against a DynamoDB Local service container, build the image, push it to ECR as `latest` and as the commit SHA, then force a new ECS deployment.
+  - **Gate:** a lint error, a failing test or a failing integration test stops the run before anything reaches AWS.
   - **Rollout:** the run waits for the service to become stable, so a new task that never turns healthy fails the run instead of going green. The old task keeps serving until then.
   - **Overlap:** runs queue and never cancel each other mid-rollout.
 - **Frontend (`.github/workflows/frontend.yml`, on `frontend/**`):**
