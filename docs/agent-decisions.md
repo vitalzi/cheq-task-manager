@@ -319,3 +319,9 @@ Small decisions the agent made while building, one entry per decision with the t
 - **Brief's task numbers kept (31-42), worked out of order:** the commits then match the review's fix brief one to one; the tracker row order is the order of work.
 - **Skipped tasks recorded in the phase file, and their gaps in the README (Task 32):** a reader sees what was weighed and left, not just what was done.
 - **29b set to `[x]`:** it was committed in `7f62224`; the brief's Task 42 would have done this, and 42 is not taken.
+
+## Task 31
+
+- **Fake timers with `shouldAdvanceTime`:** MSW and `findBy*` need real time to pass, and the 5 s poll is skipped with `advanceTimersByTimeAsync` so the test stays under a second. Real timers are restored in `finally`.
+- **Uptime shown only in the `up` state:** checking `data` alone would print the stale uptime next to "API down".
+- **Verified:** the new test failed with the badge still reading `API up · uptime 1m`; removing the `state === 'up'` guard on its own also makes it fail.

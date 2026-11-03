@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { renderWithClient } from '../test/render';
 import { server } from '../test/server';
 import { HealthBadge } from './HealthBadge';
@@ -36,5 +36,23 @@ describe('HealthBadge', () => {
     renderWithClient(<HealthBadge />);
 
     expect(await screen.findByText('API down')).toBeInTheDocument();
+  });
+
+  it('turns to down when a later poll fails', async () => {
+    // shouldAdvanceTime lets MSW and findBy* run; the 5 s poll is skipped by hand
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      let calls = 0;
+      health(() => (++calls === 1 ? HttpResponse.json({ status: 'ok', uptime: 60 }) : HttpResponse.error()));
+      renderWithClient(<HealthBadge />);
+      await screen.findByText('API up');
+
+      await vi.advanceTimersByTimeAsync(5000);
+
+      expect(await screen.findByText('API down')).toBeInTheDocument();
+      expect(screen.getByRole('status')).not.toHaveTextContent('uptime');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

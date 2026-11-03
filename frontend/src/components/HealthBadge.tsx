@@ -17,13 +17,14 @@ export function HealthBadge() {
     retry: false,
   });
 
-  const state = data ? 'up' : isError ? 'down' : 'checking';
+  // Error first: after a failed poll TanStack Query keeps the last good data
+  const state = isError ? 'down' : data ? 'up' : 'checking';
   return (
     <span className={`${styles.badge} ${styles[state]}`} role="status">
       <span className={styles.dot} aria-hidden="true" />
       {state === 'checking' && 'Checking API…'}
       {state === 'down' && 'API down'}
-      {data && (
+      {state === 'up' && data && (
         <>
           <span>API up</span>
           <span> · uptime {formatUptime(data.uptime)}</span>
