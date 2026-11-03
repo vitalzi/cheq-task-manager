@@ -1,6 +1,6 @@
 # Task manager
 
-A small task manager: a REST API with a React frontend, deployed to AWS. Built as a hiring take-home; the assignment is in `cheq_assignment.pdf`. The assignment asks for three endpoints (`GET /health`, `GET /tasks`, `POST /tasks`); what was added on top is listed under "Beyond the brief".
+A small task manager: a REST API with a React frontend, deployed to AWS. Built as a hiring take-home; the assignment is in `cheq_assignment.pdf`. The assignment asks for three endpoints (`GET /health`, `GET /tasks`, `POST /tasks`); what the app has on top of that is listed under "Beyond the brief".
 
 ## Live deployment
 
@@ -8,15 +8,15 @@ A small task manager: a REST API with a React frontend, deployed to AWS. Built a
 - **API:** the same address (`GET /health`, `GET /tasks`, `POST /tasks`, `PATCH /tasks/:id`, `DELETE /tasks/:id`); CloudFront sends `/tasks*` and `/health` to the API
 - **Repository:** https://github.com/vitalzi/cheq-task-manager
 
-The site and the API share one HTTPS address with a valid certificate. The old S3 website URL no longer exists, and the ALB accepts connections only from CloudFront, so its own plain-HTTP address does not answer. Tasks are stored in DynamoDB, so they survive deploys and restarts.
+The site and the API share one HTTPS address with a valid certificate. The ALB accepts connections only from CloudFront, so its own plain-HTTP address does not answer. Tasks are stored in DynamoDB, so they survive deploys and restarts.
 
 ## Beyond the brief
 
-Added after the assignment's MVP was live (details and order in `docs/tasks/phase-2.md`):
+What the app has on top of the assignment's MVP (the task list for it is `docs/tasks/phase-2.md`):
 
 - **More endpoints:** `PATCH /tasks/:id` (partial update) and `DELETE /tasks/:id`
 - **More fields:** `done` and `priority` on every task
-- **DynamoDB store:** the deployed API uses DynamoDB; the in-memory store is still the local default
+- **DynamoDB store:** the deployed API uses DynamoDB; locally it runs on the in-memory store, which needs nothing installed
 - **HTTPS:** CloudFront in front of a private S3 bucket and the ALB, on one origin
 - **UI:** edit, mark done, prioritize and delete; Status and Priority filters, search and a By day view; styled from the design handoff in `docs/design/`
 - **Frontend tests:** Vitest, Testing Library and MSW
@@ -104,7 +104,7 @@ terraform output  # alb_url, cloudfront_url, ecr_repository_url, ...
 - **Storage:** one DynamoDB table (`task-manager-tasks`, on demand, `id` as the key). The container runs with its own IAM task role that may only `Scan`, `PutItem`, `UpdateItem` and `DeleteItem` on that table, the four calls the store makes (update and delete carry a condition that the item exists, so an unknown id is "not found", not a new item). Terraform passes the table name as `TABLE_NAME` and the region as `AWS_REGION`. Data survives deploys and restarts. The service stays at one task (see Scalability).
 - **Wiring:** the frontend build sets no `VITE_API_URL`, so the browser calls its own origin and the API needs no CORS. The container gets `PORT`, `TABLE_NAME` and `AWS_REGION`.
 - **First apply:** the ECS service is created before any image exists in ECR, so its task cannot start until the first image is pushed (the first push to `main` does this, or run the Backend and Frontend workflows by hand from the Actions tab, on `main`, so a fresh environment needs no dummy commit).
-- **CI access:** GitHub Actions authenticates with OpenID Connect (OIDC), so no AWS access keys are stored anywhere. Terraform creates the GitHub OIDC provider and one IAM role, `task-manager-ci`, that only workflow runs on `main` of this repository can assume. The trust rule matches the `sub` claim GitHub issues for the repo, which includes the owner and repo IDs (`github_sub_prefix`), so a deleted and re-created repo with the same name cannot reuse the role. Its policy allows only ECR push on the API repository, `ecs:UpdateService` and `ecs:DescribeServices` on the API service (the workflow waits for the rollout to become stable), S3 list/write/delete on the frontend bucket, and `cloudfront:CreateInvalidation` on the one distribution. The PDF asks for credentials as CI secrets; here the only thing stored in GitHub is the role ARN (a repository variable, not a secret), and access keys in secrets were the considered alternative.
+- **CI access:** GitHub Actions authenticates with OpenID Connect (OIDC), so no AWS access keys are stored anywhere. Terraform creates the GitHub OIDC provider and one IAM role, `task-manager-ci`, that only workflow runs on `main` of this repository can assume. The trust rule matches the `sub` claim GitHub issues for the repo, which includes the owner and repo IDs (`github_sub_prefix`), so a deleted and re-created repo with the same name cannot reuse the role. Its policy allows only ECR push on the API repository, `ecs:UpdateService` and `ecs:DescribeServices` on the API service (the workflow waits for the rollout to become stable), S3 list/write/delete on the frontend bucket, and `cloudfront:CreateInvalidation` on the one distribution. The PDF asks for credentials as CI secrets; here the only thing stored in GitHub is the role ARN (a repository variable, not a secret), and access keys in secrets are the alternative.
 - **GitHub variables:** after `apply`, the workflows read six repository variables (Settings → Secrets and variables → Actions → Variables), each set from a Terraform output with `gh variable set`: `CI_ROLE_ARN` (`ci_role_arn`), `ECR_REPOSITORY_URL` (`ecr_repository_url`), `ECS_CLUSTER_NAME` (`ecs_cluster_name`), `ECS_SERVICE_NAME` (`ecs_service_name`), `FRONTEND_BUCKET_NAME` (`frontend_bucket_name`) and `CLOUDFRONT_DISTRIBUTION_ID` (`cloudfront_distribution_id`). None is a secret.
 - **Region:** `eu-central-1`; change with `-var aws_region=...`.
 - **Teardown:** `terraform destroy` (the ECR repository and the S3 bucket are emptied automatically).
@@ -126,7 +126,7 @@ Two GitHub Actions workflows run on push to `main`, each only when its own folde
 ## Design choices
 
 - **ECS Fargate behind an ALB instead of the assignment's default EC2:** the ALB gives a real health check on `/health`, a stable DNS name and rolling deploys that keep the old task serving until the new one is healthy; deploying needs no SSH keys. Cost: about $25-30 a month, mostly the ALB.
-- **Async `TaskStore` interface with two implementations:** in-memory (the assignment allows it, and it is what runs locally) and DynamoDB (deployed). `buildApp(store)` takes the store as an argument, so switching needed no change to the routes or the service, and the same contract test runs against both.
+- **Async `TaskStore` interface with two implementations:** in-memory (the assignment allows it, and it is what runs locally) and DynamoDB (deployed). `buildApp(store)` takes the store as an argument, so the routes and the service do not know which store runs, and the same contract test runs against both.
 - **Frontend in its own private S3 bucket behind CloudFront:** it releases independently of the API. CloudFront serves the site and routes `/tasks*` and `/health` to the ALB, so the browser sees one HTTPS origin and needs no CORS. The API has no CORS plugin; locally the Vite dev proxy gives the same single origin.
 - **Validation:** the route's JSON Schema holds the rules (the title is trimmed first by the `transform` keyword from `ajv-keywords`, then `minLength`/`maxLength` apply, so a title of 200 characters plus surrounding spaces is valid and 201 after trimming is a `400`). The service gets already-validated input. Every error, including unknown routes and malformed JSON, is `{ "error": "<message>" }`.
 - **Tests in three layers:** service unit tests with a mocked store, HTTP tests through `app.inject()` against the real in-memory store, and the shared store contract test. Coverage is enforced at 80% in the Jest config.
@@ -136,7 +136,7 @@ Two GitHub Actions workflows run on push to `main`, each only when its own folde
 Where the assignment was unclear, these are the readings used:
 
 - **"Every push to main" deploys:** each pipeline runs only when its own code, its workflow file or `.nvmrc` changes, so a docs-only push deploys nothing. Manual runs are available.
-- **Storage:** the assignment names MongoDB or PostgreSQL, or in-memory / a JSON file with async access. The first version was in-memory. The deployed API now uses DynamoDB so data survives a deploy: it fits the same async `TaskStore` interface, is serverless with no connection pool to manage, and is billed per request, which suits a small app. RDS Postgres was the alternative considered; it would need a running instance, a connection pool and a migration tool for one table.
+- **Storage:** the assignment names MongoDB or PostgreSQL, or in-memory / a JSON file with async access. The deployed API uses DynamoDB so data survives a deploy; locally it runs in-memory. DynamoDB fits the same async `TaskStore` interface, is serverless with no connection pool to manage, and is billed per request, which suits a small app. RDS Postgres is the alternative; it would need a running instance, a connection pool and a migration tool for one table.
 - **Title:** a string, trimmed, 1-200 characters. The rules are in the route's JSON Schema; the trim is the `transform` keyword from `ajv-keywords`. Whitespace-only is a `400`. Unknown body fields are ignored.
 - **Fields:** `id` is a UUID from `crypto.randomUUID()`; `createdAt` is an ISO 8601 UTC string; `GET /tasks` returns oldest first.
 - **`done` and `priority`:** both are plain numbers. `done` is `0` (open) or `1` (done); the server sets `0` on create and ignores a `done` in the body. `priority` is `0` (high), `1` (medium) or `2` (low); it is optional on `POST /tasks` and defaults to `1`, and any other value (`3`, `1.5`, `"1"`, `null`) is a `400`.
@@ -156,7 +156,7 @@ Where the assignment was unclear, these are the readings used:
   curl -X DELETE localhost:3000/tasks/<id>
   ```
 - **Health:** liveness only (it does not check DynamoDB). `uptime` is whole seconds since the process started.
-- **HTTPS and domain:** not required, and no domain was bought. Users still get HTTPS on CloudFront's `*.cloudfront.net` certificate; only the hop from CloudFront to the ALB is plain HTTP (see Unfinished and known limits).
+- **HTTPS and domain:** not required, and there is no custom domain. Users get HTTPS on CloudFront's `*.cloudfront.net` certificate; only the hop from CloudFront to the ALB is plain HTTP (see Unfinished and known limits).
 - **EC2, SSH and CI secrets:** the assignment's default is EC2 with SSH keys in CI secrets. With ECS there is no SSH. CI logs in with GitHub OIDC and assumes an IAM role, so no AWS keys are stored; the only thing in GitHub is the role ARN, as a repository variable.
 - **Terraform state:** local and gitignored; the owner applies once. CI deploys the app, never the infrastructure.
 
@@ -169,7 +169,7 @@ Each item says how it would be completed.
 - **Terraform state on a laptop:** move it to an S3 backend with locking before a second person applies.
 - **No authentication, no rate limiting, unbounded list:** `GET /tasks` returns everything and any client can post. Add pagination (`limit` and a cursor) and an AWS WAF rate rule, and authentication if tasks become per-user.
 - **Frontend tests cover behavior, not looks:** Vitest and Testing Library run the real components and `api.ts`; MSW (Mock Service Worker) answers the network calls in-process, with small handlers in `src/test/fakeApi.ts` (the `PATCH` is kept in memory so the refetch shows it; the backend's rules are not copied, they are tested in the backend). The tests assert on the request the UI sent. A request with no handler fails the test. They cover the create form, the done toggle, editing (title and priority, blank title, cancel, Enter, Esc), delete with its confirmation, focus and failure, the Status and Priority filters and the counts, search, the By day switch, the pending state and the error alerts. The filter, sort, grouping and time logic has its own unit tests, and the health badge and the loading and error states are tested too. Not covered: how it looks, and the real network path (checked by hand in a browser).
-- **No alarms or error tracking yet:** see Observability.
+- **No alarms or error tracking:** see Observability.
 - **No automatic rollback:** CI pushes the image as `:latest` and forces a new deployment, so the task definition does not say which commit runs, and a bad image stays `:latest`. The run fails if the new task never turns healthy, and the old task keeps serving, but going back means pushing a fix. To finish: an ECS deployment circuit breaker with rollback, and CI registering a task definition revision per commit (`:<sha>`) and checking the rollout landed on it.
 - **No shutdown handler:** the API does not drain on SIGTERM. ECS first takes the task out of the ALB and waits up to 30 seconds for open requests to finish, so little is cut. To finish: on SIGTERM, `app.close()` and exit.
 - **Actions pinned by tag, not commit:** the workflows that can assume the AWS role use `@v4`-style tags, which can move. To finish: pin each `uses:` to a commit SHA. There is also no workflow on pull requests, because changes go straight to `main`.

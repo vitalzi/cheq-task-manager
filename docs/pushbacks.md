@@ -141,3 +141,15 @@ Every time the owner corrected the agent or scrutinized its output and asked for
 - **Pushback:** the owner said the delete queue adds too much complexity and asked to remove it and keep only the Yes/No confirmation.
 - **Outcome:** removed it all (queue, provider, toast, the hidden-ids filter, the `keepalive` helper, their tests and docs) and restored the Task 28 row-level delete. The delete tests were rewritten first and failed against the queue code, then passed once it was gone. A mutation check showed that nothing asserted the row returning to the Delete button after a failure; that assertion was added.
 - **Lesson:** when a handoff adds a feature that overlaps one just approved (here, a confirmation and an undo for the same delete), say what the extra step costs before building it, and offer the small version first. A feature with five listed edge cases is a signal that it is large, not just that it is specified.
+
+## Session: Review fixes (Tasks 31-38)
+
+### 16. README written as a change log instead of the current state (Task 32, 38)
+
+- **What the agent did:** when fixing the README, it wrote the new text as "what changed": "The old S3 website URL no longer exists", "The first version was in-memory. The deployed API now uses DynamoDB", "Added after the assignment's MVP was live", "no domain was bought". A reader had to reconstruct the system from its history.
+- **Pushback:** the owner said the README should describe the system as it is now, with no historical data; a reviewer who wants the history can read the docs.
+- **Outcome:**
+  - Rewrote the lines as present state: what the ALB accepts, what the deployed and the local store are, what the app has beyond the three endpoints
+  - Kept the "AI use" section's account of corrections, because the process is its subject; the history stays in `docs/pushbacks.md` and `docs/tasks/`
+  - One of the agent's own edits wrote a literal `PLACEHOLDER` into the Storage line through a mistyped parameter; it was found by reading the line back and fixed in the same turn
+- **Lesson:** a README answers "what is this and how does it work now". Write each sentence as a fact about the current system, and put "was", "no longer", "now", "still" and "yet" in the commit message or the docs. Read an edited line back instead of trusting a success message.
