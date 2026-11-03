@@ -7,11 +7,11 @@
 .group {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .groupHeading {
-  margin: 0;
+  margin: 0 4px;
   font-family: var(--font-mono);
   font-size: var(--text-label);
   font-weight: 500;
@@ -20,29 +20,42 @@
   color: var(--color-muted);
 }
 
-.list {
+.card {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-row);
-}
-
-.skeleton {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-row);
+  background: var(--color-surface);
+  outline: 1px solid var(--color-border-list);
+  outline-offset: -1px;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
 }
 
 .skeletonRow {
   display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 20px 18px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border-row);
-  border-radius: var(--radius-lg);
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 18px;
+  border-top: 1px solid var(--color-divider);
+}
+
+.skeletonRow:first-child {
+  border-top: 0;
+}
+
+.skeletonBox {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  background: var(--color-skeleton);
+}
+
+.skeletonText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .bar {
@@ -52,14 +65,14 @@
 }
 
 .barShort {
-  width: 48px;
+  width: 90px;
 }
 
 .empty {
   margin: 0;
   padding: 40px 24px;
   border: 1px dashed var(--color-border-dashed);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   text-align: center;
   font-size: var(--text-body);
   color: var(--color-muted);
@@ -102,7 +115,7 @@
   gap: 16px;
   padding: 14px 14px 14px 18px;
   border: 1px solid var(--color-danger-border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   background: var(--color-danger-bg);
   color: var(--color-danger-text);
 }

@@ -1,15 +1,13 @@
 import type { Task } from './api';
 
-export type Status = 'all' | 'open' | 'done';
+export type Status = 'open' | 'done' | 'all';
 
 export interface Filters {
   query: string;
   status: Status;
 }
 
-export const NO_FILTERS: Filters = { query: '', status: 'all' };
-
-export const isFiltering = ({ query, status }: Filters) => query.trim() !== '' || status !== 'all';
+export const DEFAULT_FILTERS: Filters = { query: '', status: 'open' };
 
 export function applyFilters(tasks: Task[], { query, status }: Filters): Task[] {
   const needle = query.trim().toLowerCase();
@@ -18,6 +16,17 @@ export function applyFilters(tasks: Task[], { query, status }: Filters): Task[] 
     if (status === 'done' && task.done === 0) return false;
     return needle === '' || task.title.toLowerCase().includes(needle);
   });
+}
+
+// Totals per tab; the search does not change them.
+export function statusCounts(tasks: Task[]): Record<Status, number> {
+  const done = tasks.filter((task) => task.done === 1).length;
+  return { open: tasks.length - done, done, all: tasks.length };
+}
+
+// Open tasks first, then done ones; each part newest first.
+export function sortTasks(tasks: Task[]): Task[] {
+  return [...tasks].sort((a, b) => a.done - b.done || b.createdAt.localeCompare(a.createdAt));
 }
 
 export type DayLabel = 'Today' | 'Yesterday' | 'Earlier';
@@ -34,18 +43,9 @@ export function dayLabel(createdAt: string, now: Date): DayLabel {
   return daysAgo <= 0 ? 'Today' : daysAgo === 1 ? 'Yesterday' : 'Earlier';
 }
 
-// By the viewer's local calendar day, newest first. Empty groups are left out.
+// By the viewer's local calendar day. Empty groups are left out.
 export function groupByDay(tasks: Task[], now = new Date()): DayGroup[] {
-  const newestFirst = [...tasks].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   return (['Today', 'Yesterday', 'Earlier'] as const)
-    .map((label) => ({ label, tasks: newestFirst.filter((task) => dayLabel(task.createdAt, now) === label) }))
+    .map((label) => ({ label, tasks: sortTasks(tasks.filter((task) => dayLabel(task.createdAt, now) === label)) }))
     .filter((group) => group.tasks.length > 0);
-}
-
-export function headingFor(tasks: Task[], shown: number, filters: Filters): string {
-  if (tasks.length === 0) return 'No tasks yet';
-  if (isFiltering(filters)) return `${shown} of ${tasks.length} tasks`;
-  const open = tasks.filter((task) => task.done === 0).length;
-  if (open === 0) return 'All done';
-  return open === 1 ? '1 open task' : `${open} open tasks`;
 }

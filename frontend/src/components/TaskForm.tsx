@@ -16,6 +16,7 @@ export function TaskForm() {
     mutationFn: createTask,
     onSuccess: () => {
       setTitle('');
+      setPriority(1);
       return queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
   });
@@ -34,10 +35,10 @@ export function TaskForm() {
 
   return (
     <form className={styles.form} onSubmit={handleSubmit} noValidate>
-      <label className={styles.label} htmlFor={inputId}>
-        New task
-      </label>
-      <div className={styles.row}>
+      <div className={styles.composer}>
+        <label className="sr-only" htmlFor={inputId}>
+          New task
+        </label>
         <input
           id={inputId}
           className={styles.input}
@@ -46,14 +47,21 @@ export function TaskForm() {
             setTitle(e.target.value);
             setValidationError(null);
           }}
-          placeholder="Type a task and press Enter"
+          placeholder="Add a task…"
           aria-invalid={validationError !== null}
           aria-describedby={validationError ? errorId : undefined}
         />
-        <PrioritySelect value={priority} onChange={setPriority} disabled={mutation.isPending} label="Priority" large />
-        <button className={styles.submit} type="submit" disabled={mutation.isPending}>
-          {mutation.isPending ? 'Adding…' : 'Add'}
-        </button>
+        <div className={styles.footer}>
+          <PrioritySelect value={priority} onChange={setPriority} disabled={mutation.isPending} />
+          <div className={styles.actions}>
+            <span className={styles.hint} aria-hidden="true">
+              Enter ↵
+            </span>
+            <button className={styles.submit} type="submit" disabled={mutation.isPending}>
+              {mutation.isPending ? 'Adding…' : 'Add task'}
+            </button>
+          </div>
+        </div>
       </div>
       {validationError && (
         <p className={styles.validation} id={errorId} role="alert">

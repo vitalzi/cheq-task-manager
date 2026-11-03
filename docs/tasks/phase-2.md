@@ -33,7 +33,8 @@ Phase 2 is the owner's own extras on top of the finished PDF MVP (`docs/tasks/ph
 | 26 | Update and delete: service and routes | Backend | [x] |
 | 27 | Frontend: priority on create, edit a task, mark done | Frontend | [x] |
 | 28 | Frontend: delete a task | Frontend | [x] |
-| 29 | Styling from the owner's mocks | Frontend | [~] |
+| 29 | Styling from the owner's mocks | Frontend | [x] |
+| 29b | Design update (layout D) | Frontend | [~] |
 | 30 | README update and clean-clone re-check | Docs | [ ] |
 
 ## HTTPS (CloudFront)
@@ -139,6 +140,11 @@ The goal is HTTPS for the user without buying a domain: CloudFront's free `https
 - **What:** the owner brings mocks from Claude Design. Restyle the existing components in their `.module.css` files (no styling library): colors and spacing as CSS variables in one place, typography, button and input states (hover, focus, disabled), clearer loading, empty and error states, and the controls from Tasks 27-28 (edit, done, priority, delete); works at about 375 px and at desktop width
 - **Before starting:** the agent reads the mocks and lists, in a few lines, what will change and what will not; the owner confirms
 - **Done when:** the screens match the mocks at both widths; keyboard focus is visible; no behavior changed (lint and build still pass)
+
+### 29b. Design update (layout D)
+
+- **What:** the owner updated the design handoff (`docs/design/`, layout D: tabs with counts, search and a By day switch, a composer card, two-line rows in one list card, a priority icon, an Esc-to-cancel edit form). Restyle and restructure the frontend to match. The handoff's undo toast was built, then dropped at the owner's request: delete keeps the inline Yes/No step from Task 28. No backend change
+- **Done when:** the screens match the handoff at about 375 px and at desktop width; delete still works as in Task 28; tests, lint and build pass
 
 ### 30. README update and clean-clone re-check
 

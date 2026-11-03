@@ -1,0 +1,27 @@
+.priority {
+  flex: none;
+}
+
+.high {
+  color: var(--color-priority-high);
+}
+
+.medium {
+  color: var(--color-priority-medium);
+}
+
+.low {
+  color: var(--color-priority-low);
+}
+
+.muted {
+  color: var(--color-muted);
+}
+
+.on {
+  fill: currentColor;
+}
+
+.off {
+  fill: var(--color-bar-off);
+}

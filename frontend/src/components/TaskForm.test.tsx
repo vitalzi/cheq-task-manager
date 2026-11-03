@@ -16,11 +16,11 @@ describe('TaskForm', () => {
   const titleInput = () => screen.getByRole('textbox', { name: 'New task' });
   const prioritySelect = () => screen.getByRole('combobox', { name: 'Priority' });
 
-  it('offers High, Medium and Low, starting on Medium', () => {
+  it('offers Low, Medium and High, starting on Medium', () => {
     renderWithClient(<TaskForm />);
 
     const options = Array.from(prioritySelect().querySelectorAll('option')).map((o) => o.textContent);
-    expect(options).toEqual(['High', 'Medium', 'Low']);
+    expect(options).toEqual(['Low', 'Medium', 'High']);
     expect(prioritySelect()).toHaveValue('1');
   });
 
@@ -29,7 +29,7 @@ describe('TaskForm', () => {
     renderWithClient(<TaskForm />);
 
     await user.type(titleInput(), 'Write the report');
-    await user.click(screen.getByRole('button', { name: 'Add' }));
+    await user.click(screen.getByRole('button', { name: 'Add task' }));
 
     await waitFor(() => expect(api.writes).toEqual([{ method: 'POST', path: '/tasks', body: { title: 'Write the report', priority: 1 } }]));
   });
@@ -40,21 +40,21 @@ describe('TaskForm', () => {
 
     await user.type(titleInput(), 'Urgent');
     await user.selectOptions(prioritySelect(), 'High');
-    await user.click(screen.getByRole('button', { name: 'Add' }));
+    await user.click(screen.getByRole('button', { name: 'Add task' }));
 
     await waitFor(() => expect(api.writes[0].body).toEqual({ title: 'Urgent', priority: 0 }));
   });
 
-  it('clears the title after adding but keeps the chosen priority', async () => {
+  it('clears the title after adding and goes back to Medium', async () => {
     const user = userEvent.setup();
     renderWithClient(<TaskForm />);
 
     await user.type(titleInput(), 'Later');
     await user.selectOptions(prioritySelect(), 'Low');
-    await user.click(screen.getByRole('button', { name: 'Add' }));
+    await user.click(screen.getByRole('button', { name: 'Add task' }));
 
     await waitFor(() => expect(titleInput()).toHaveValue(''));
-    expect(prioritySelect()).toHaveValue('2');
+    expect(prioritySelect()).toHaveValue('1');
   });
 
   it('sends nothing for a whitespace-only title and says why', async () => {
@@ -62,7 +62,7 @@ describe('TaskForm', () => {
     renderWithClient(<TaskForm />);
 
     await user.type(titleInput(), '   ');
-    await user.click(screen.getByRole('button', { name: 'Add' }));
+    await user.click(screen.getByRole('button', { name: 'Add task' }));
 
     expect(screen.getByRole('alert')).toHaveTextContent('Title must not be empty.');
     expect(api.writes).toEqual([]);
@@ -74,7 +74,7 @@ describe('TaskForm', () => {
     renderWithClient(<TaskForm />);
 
     await user.type(titleInput(), 'Once');
-    await user.dblClick(screen.getByRole('button', { name: 'Add' }));
+    await user.dblClick(screen.getByRole('button', { name: 'Add task' }));
     release();
 
     await waitFor(() => expect(titleInput()).toHaveValue(''));
@@ -100,7 +100,7 @@ describe('TaskForm', () => {
     renderWithClient(<TaskForm />);
 
     await user.type(titleInput(), 'Keep me');
-    await user.click(screen.getByRole('button', { name: 'Add' }));
+    await user.click(screen.getByRole('button', { name: 'Add task' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not add task: Something went wrong');
     expect(titleInput()).toHaveValue('Keep me');

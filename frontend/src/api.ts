@@ -1,10 +1,11 @@
 // Plain numbers on the wire, same as the API: 0 high, 1 medium, 2 low.
 export type Priority = 0 | 1 | 2;
 
-export const PRIORITIES: { value: Priority; label: string }[] = [
-  { value: 0, label: 'High' },
-  { value: 1, label: 'Medium' },
-  { value: 2, label: 'Low' },
+// Low to high, the order the select shows them in. `short` is the label on a row's meta line.
+export const PRIORITIES: { value: Priority; label: string; short: string }[] = [
+  { value: 2, label: 'Low', short: 'Low' },
+  { value: 1, label: 'Medium', short: 'Med' },
+  { value: 0, label: 'High', short: 'High' },
 ];
 
 export interface Task {

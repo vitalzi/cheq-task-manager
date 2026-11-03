@@ -1,23 +1,27 @@
-import { applyFilters, groupByDay, type Filters } from '../filters';
+import { applyFilters, groupByDay, sortTasks, type Filters } from '../filters';
 import { useTasks } from '../useTasks';
 import { TaskItem } from './TaskItem';
 import styles from './TaskList.module.css';
 
 interface Props {
   filters: Filters;
-  onClearFilters: () => void;
+  byDay: boolean;
+  onClearSearch: () => void;
 }
 
-export function TaskList({ filters, onClearFilters }: Props) {
+export function TaskList({ filters, byDay, onClearSearch }: Props) {
   const { data, isPending, error, refetch, isFetching } = useTasks();
 
   if (isPending) {
     return (
-      <div className={styles.skeleton} role="status" aria-label="Loading tasks" aria-busy="true">
-        {[55, 40, 65].map((width) => (
+      <div className={styles.card} role="status" aria-label="Loading tasks" aria-busy="true">
+        {[50, 38, 62].map((width) => (
           <div className={styles.skeletonRow} key={width}>
-            <div className={styles.bar} style={{ width: `${width}%` }} />
-            <div className={`${styles.bar} ${styles.barShort}`} />
+            <div className={styles.skeletonBox} />
+            <div className={styles.skeletonText}>
+              <div className={styles.bar} style={{ width: `${width}%` }} />
+              <div className={`${styles.bar} ${styles.barShort}`} />
+            </div>
           </div>
         ))}
       </div>
@@ -40,26 +44,41 @@ export function TaskList({ filters, onClearFilters }: Props) {
 
   if (data.length === 0) return <p className={styles.empty}>No tasks yet — add your first one above.</p>;
 
-  const groups = groupByDay(applyFilters(data, filters));
-  if (groups.length === 0) {
+  const shown = applyFilters(data, filters);
+  if (shown.length === 0) {
+    if (filters.query.trim() !== '') {
+      return (
+        <div className={`${styles.empty} ${styles.noMatch}`}>
+          <p>No tasks match your filter.</p>
+          <button type="button" onClick={onClearSearch}>
+            Clear search
+          </button>
+        </div>
+      );
+    }
     return (
-      <div className={`${styles.empty} ${styles.noMatch}`}>
-        <p>No tasks match your filter.</p>
-        <button type="button" onClick={onClearFilters}>
-          Clear filters
-        </button>
-      </div>
+      <p className={styles.empty}>{filters.status === 'open' ? 'Nothing open. Everything is done.' : 'Nothing done yet.'}</p>
+    );
+  }
+
+  if (!byDay) {
+    return (
+      <ul className={styles.card}>
+        {sortTasks(shown).map((task) => (
+          <TaskItem key={task.id} task={task} byDay={false} />
+        ))}
+      </ul>
     );
   }
 
   return (
     <div className={styles.groups}>
-      {groups.map((group) => (
+      {groupByDay(shown).map((group) => (
         <section className={styles.group} key={group.label}>
           <h2 className={styles.groupHeading}>{group.label}</h2>
-          <ul className={styles.list}>
+          <ul className={styles.card}>
             {group.tasks.map((task) => (
-              <TaskItem key={task.id} task={task} />
+              <TaskItem key={task.id} task={task} byDay />
             ))}
           </ul>
         </section>
