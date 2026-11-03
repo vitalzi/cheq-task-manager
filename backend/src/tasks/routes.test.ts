@@ -250,6 +250,21 @@ describe('task routes', () => {
     });
 
     it.each([
+      ['an empty object', {}],
+      ['only unknown fields', { extra: 1, id: 'other' }],
+    ])('says which fields to send for %s', async (_name, payload) => {
+      const res = await patch(created.id, payload);
+
+      expect(res.json()).toEqual({ error: 'body must include at least one of title, done, priority' });
+    });
+
+    it('keeps the plain message for a bad value', async () => {
+      const res = await patch(created.id, { done: 2 });
+
+      expect(res.json()).toEqual({ error: 'body/done must be equal to one of the allowed values' });
+    });
+
+    it.each([
       ['malformed JSON', '{"done": '],
       ['an empty body', ''],
       ['a null body', 'null'],

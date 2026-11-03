@@ -337,3 +337,10 @@ Small decisions the agent made while building, one entry per decision with the t
 - **README says to run the manual workflows on `main`:** the CI role trusts only `refs/heads/main`, so a manual run from another branch would fail at the AWS login.
 - **YAML checked with Ruby's parser:** PyYAML is not installed, and `npx yaml-lint` would download a package. Ruby ships with macOS.
 - **Verified:** both files parse; each has the three `paths`, the `main` branch filter and `workflow_dispatch`. The first real manual run is checked on GitHub after the owner pushes.
+
+## Task 34
+
+- **Message for `PATCH {}` set in the error handler, by the `anyOf` keyword on the validation error:** only the PATCH body schema uses `anyOf`, so no other message changes, and no dependency (such as `ajv-errors`) is needed. The route tests assert the exact text for `{}` and for a body with only unknown fields, and that a bad value keeps Ajv's own message.
+- **Frontend ESLint `coverage/` ignore not added:** the review said `npm run lint` fails after `npm test`. It does not: the frontend has no coverage provider installed and no coverage script, so no `coverage/` folder is created, and lint exits 0 after the tests. The ignore would guard against a case that cannot happen. Add it with the first coverage run.
+- **Uptime test now mocks `process.uptime` (12.7) and asserts `{ status: 'ok', uptime: 12 }`:** the old integer check passed for a hard-coded `0`.
+- **Verified by mutation:** `uptime: 0` and a missing `Math.floor` both fail the uptime test; always using Ajv's text, and using the new text for every validation error, both fail the route tests. The red run showed only the two message tests failing, before the fix.

@@ -36,7 +36,12 @@ function registerErrorHandler(app: FastifyInstance): void {
   app.setErrorHandler((error: FastifyError, request, reply) => {
     // Fastify's own 4xx errors: schema validation, malformed JSON, unsupported media type.
     if (error.statusCode && error.statusCode >= 400 && error.statusCode < 500) {
-      return reply.code(error.statusCode).send({ error: error.message });
+      // Only the PATCH body uses anyOf; Ajv would list "required property" once per field.
+      const noFieldGiven = error.validation?.some((e) => e.keyword === 'anyOf');
+      const message = noFieldGiven
+        ? 'body must include at least one of title, done, priority'
+        : error.message;
+      return reply.code(error.statusCode).send({ error: message });
     }
     request.log.error(error);
     return reply.code(500).send({ error: 'Internal Server Error' });

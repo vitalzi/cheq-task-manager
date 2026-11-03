@@ -41,7 +41,7 @@ Phase 2 is the owner's own extras on top of the finished PDF MVP (`docs/tasks/ph
 | 32 | README: correctness, scope, structure, AI example | Docs | [x] |
 | 41 | Data model reasoning made honest | Backend, docs | [x] |
 | 35 | CI triggers: `workflow_dispatch` and `.nvmrc` | CI | [x] |
-| 34 | Small fixes (uptime test, ESLint ignore, validation message, stale comment) | Backend, frontend | [ ] |
+| 34 | Small fixes (uptime test, ESLint ignore, validation message, stale comment) | Backend, frontend | [x] |
 | 38 | ALB accepts traffic only from CloudFront (Terraform) | Infra | [ ] |
 | 37 | DynamoDB integration test in CI | CI | [ ] |
 | 30 | README update and clean-clone re-check (runs last) | Docs | [ ] |
@@ -206,7 +206,7 @@ From an independent review at commit `fb11022`. Task numbers follow the review's
 ### 34. Small fixes
 
 - **Uptime test:** mock `process.uptime` (e.g. `12.7`) and assert `12`
-- **Frontend ESLint:** ignore `coverage/`, as the backend does
+- **Frontend ESLint:** not done. The brief said `npm run lint` fails after `npm test` because of `coverage/`, but the frontend has no coverage provider, so no such folder is ever created (lint exits 0 after the tests)
 - **Validation message:** `PATCH {}` returns `body must include at least one of title, done, priority`, with a route test for the exact text; other Ajv messages unchanged; no new dependency
 - **Stale comment:** `api.ts` no longer says the deployed build uses the ALB URL
 - **Done when:** backend and frontend `npm test && npm run lint` are green, in that order

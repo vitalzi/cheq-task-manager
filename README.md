@@ -147,7 +147,7 @@ Where the assignment was unclear, these are the readings used:
   # {"id":"...","title":"Urgent","createdAt":"...","done":0,"priority":0}
   ```
 - **Update and delete:**
-  - `PATCH /tasks/:id` takes any of `title`, `done` and `priority` and changes only those. `id` and `createdAt` never change; other fields are ignored. A body with none of the three fields is a `400`. It returns `200` with the task.
+  - `PATCH /tasks/:id` takes any of `title`, `done` and `priority` and changes only those. `id` and `createdAt` never change; other fields are ignored. A body with none of the three fields is a `400` with the message `body must include at least one of title, done, priority`. It returns `200` with the task.
   - `DELETE /tasks/:id` returns `204` with no body.
   - An unknown id is a `404` `{ "error": "Task not found" }` for both.
   ```bash

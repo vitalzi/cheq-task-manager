@@ -23,7 +23,7 @@ export interface Health {
   uptime: number;
 }
 
-// Empty in local dev (Vite proxy); the ALB URL in the deployed build.
+// Empty in local dev (Vite proxy) and in the deployed build: the browser calls its own origin.
 const baseUrl = import.meta.env.VITE_API_URL ?? '';
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
