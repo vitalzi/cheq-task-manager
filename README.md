@@ -1,6 +1,6 @@
 # Task manager
 
-A small task manager: a REST API (create and list tasks) with a React frontend, deployed to AWS. Built as a hiring take-home; the assignment is in `cheq_assignment.pdf`.
+A small task manager: a REST API with a React frontend, deployed to AWS. Built as a hiring take-home; the assignment is in `cheq_assignment.pdf`. The assignment asks for three endpoints (`GET /health`, `GET /tasks`, `POST /tasks`); what was added on top is listed under "Beyond the brief".
 
 ## Live deployment
 
@@ -10,13 +10,24 @@ A small task manager: a REST API (create and list tasks) with a React frontend, 
 
 The site and the API share one HTTPS address with a valid certificate. The old S3 website URL no longer exists, and the ALB's plain-HTTP address still answers but is not the entry point (see Unfinished and known limits). Tasks are stored in DynamoDB, so they survive deploys and restarts.
 
+## Beyond the brief
+
+Added after the assignment's MVP was live (details and order in `docs/tasks/phase-2.md`):
+
+- **More endpoints:** `PATCH /tasks/:id` (partial update) and `DELETE /tasks/:id`
+- **More fields:** `done` and `priority` on every task
+- **DynamoDB store:** the deployed API uses DynamoDB; the in-memory store is still the local default
+- **HTTPS:** CloudFront in front of a private S3 bucket and the ALB, on one origin
+- **UI:** edit, mark done, prioritize and delete; Status and Priority filters, search and a By day view; styled from the design handoff in `docs/design/`
+- **Frontend tests:** Vitest, Testing Library and MSW
+
 ## Folder map
 
 - **`backend/`:** Fastify API in TypeScript
 - **`frontend/`:** React app (Vite, TypeScript)
 - **`infra/`:** Terraform for the AWS resources
 - **`.github/workflows/`:** CI/CD pipelines, one per deployable
-- **`docs/`:** requirements, decisions, plan and task list
+- **`docs/`:** `requirements.md` (checklist from the PDF), `decisions.md` (approved decisions), `agent-decisions.md` (small implementation decisions), `pushbacks.md` (every correction of the AI agent), `plan.md`, `tasks/` (per phase) and `design/` (the UI handoff)
 
 ## Backend
 
@@ -58,8 +69,8 @@ npm test         # Vitest + Testing Library, in jsdom; no API or browser needed
 npm run build    # type-check, then build to frontend/dist
 ```
 
-- **Design:** the layout follows the handoff in `docs/design/` (layout D). `src/tokens.css` is a copy of `docs/design/tokens.css` and holds every colour, font, radius and spacing as CSS variables; the `*.module.css` files use only those variables. There is no styling library. A Status dropdown (Open, Done, All, with counts), a Priority dropdown and a title search filter the list on the client, and combine; a "By day" switch groups it by day; done tasks sort after open ones. The page works from about 360 px up.
-- **Delete asks first:** the trash icon turns the row red with "Delete <title>?", Cancel (focused, so a stray Enter does not delete) and Delete (no browser dialog). Esc or Cancel backs out. Delete sends the `DELETE` and shows "Deleting…" until the API answers; if it fails, the row stays in the confirmation with the message. Afterwards focus moves to the next row. Only one row is in edit or confirm mode at a time. The design once described an undo toast with a deferred `DELETE`; it was built and then removed as more machinery than a task list needs (see `docs/pushbacks.md`).
+- **Design:** follows the handoff in `docs/design/`; every colour, font and spacing is a CSS variable in `src/tokens.css`, used by the `*.module.css` files, with no styling library. Filters, search and the By day view run on the client. Works from about 360 px up.
+- **Delete asks first:** an inline confirmation in the row (Cancel is focused, Esc backs out), no browser dialog; a failed delete keeps the row and shows the error.
 - **`VITE_API_URL`:** the API base URL baked into the build. Leave it unset locally: the app calls its own origin and the Vite dev server proxies `/health` and `/tasks` to `http://localhost:3000`. The deployed build leaves it unset too, because CloudFront serves the site and the API from one origin. The API sends no CORS headers, so a build pointed at a different API origin would be blocked by the browser.
 
 ## Docker
@@ -91,10 +102,10 @@ terraform output  # alb_url, cloudfront_url, ecr_repository_url, ...
 - **Frontend and HTTPS:** a CloudFront distribution is the entry point at `https://<id>.cloudfront.net` (`cloudfront_url`), which has a valid certificate without a domain. Its default behavior serves the site from a private S3 bucket; `/tasks*` and `/health` go to the ALB with caching off and all methods allowed. The hop from CloudFront to the ALB is plain HTTP inside AWS.
 - **Why the bucket is private:** Block Public Access is on, website hosting is off, and the bucket policy lets only this one distribution read objects (Origin Access Control). Nobody can reach the files except through CloudFront, so there is one front door that serves HTTPS.
 - **Storage:** one DynamoDB table (`task-manager-tasks`, on demand, `id` as the key). The container runs with its own IAM task role that may only `Scan`, `PutItem`, `UpdateItem` and `DeleteItem` on that table, the four calls the store makes (update and delete carry a condition that the item exists, so an unknown id is "not found", not a new item). Terraform passes the table name as `TABLE_NAME` and the region as `AWS_REGION`. Data survives deploys and restarts. The service stays at one task (see Scalability).
-- **Wiring:** the frontend build sets no `VITE_API_URL`, so the browser calls its own origin and the API needs no CORS. The container gets only `PORT`.
+- **Wiring:** the frontend build sets no `VITE_API_URL`, so the browser calls its own origin and the API needs no CORS. The container gets `PORT`, `TABLE_NAME` and `AWS_REGION`.
 - **First apply:** the ECS service is created before any image exists in ECR, so its task cannot start until the first image is pushed (the first push to `main` does this).
 - **CI access:** GitHub Actions authenticates with OpenID Connect (OIDC), so no AWS access keys are stored anywhere. Terraform creates the GitHub OIDC provider and one IAM role, `task-manager-ci`, that only workflow runs on `main` of this repository can assume. The trust rule matches the `sub` claim GitHub issues for the repo, which includes the owner and repo IDs (`github_sub_prefix`), so a deleted and re-created repo with the same name cannot reuse the role. Its policy allows only ECR push on the API repository, `ecs:UpdateService` and `ecs:DescribeServices` on the API service (the workflow waits for the rollout to become stable), S3 list/write/delete on the frontend bucket, and `cloudfront:CreateInvalidation` on the one distribution. The PDF asks for credentials as CI secrets; here the only thing stored in GitHub is the role ARN (a repository variable, not a secret), and access keys in secrets were the considered alternative.
-- **GitHub variables:** after `apply`, the workflows read six repository variables (Settings → Secrets and variables → Actions → Variables), each set from a Terraform output with `gh variable set`: `CI_ROLE_ARN` (`ci_role_arn`), `ECR_REPOSITORY_URL` (`ecr_repository_url`), `ECS_CLUSTER_NAME` (`ecs_cluster_name`), `ECS_SERVICE_NAME` (`ecs_service_name`), `FRONTEND_BUCKET_NAME` (`frontend_bucket_name`) and `CLOUDFRONT_DISTRIBUTION_ID` (`cloudfront_distribution_id`). None is a secret. The old `API_URL` variable is no longer used and can be deleted.
+- **GitHub variables:** after `apply`, the workflows read six repository variables (Settings → Secrets and variables → Actions → Variables), each set from a Terraform output with `gh variable set`: `CI_ROLE_ARN` (`ci_role_arn`), `ECR_REPOSITORY_URL` (`ecr_repository_url`), `ECS_CLUSTER_NAME` (`ecs_cluster_name`), `ECS_SERVICE_NAME` (`ecs_service_name`), `FRONTEND_BUCKET_NAME` (`frontend_bucket_name`) and `CLOUDFRONT_DISTRIBUTION_ID` (`cloudfront_distribution_id`). None is a secret.
 - **Region:** `eu-central-1`; change with `-var aws_region=...`.
 - **Teardown:** `terraform destroy` (the ECR repository and the S3 bucket are emptied automatically).
 
@@ -124,7 +135,7 @@ Two GitHub Actions workflows run on push to `main`, each only when its own folde
 
 Where the assignment was unclear, these are the readings used:
 
-- **Storage:** the assignment accepts in-memory. The first version used it; the deployed API now uses DynamoDB so data survives a deploy.
+- **Storage:** the assignment names MongoDB or PostgreSQL, or in-memory / a JSON file with async access. The first version was in-memory. The deployed API now uses DynamoDB so data survives a deploy: it fits the same async `TaskStore` interface, is serverless with no connection pool to manage, and is billed per request, which suits a small app. RDS Postgres was the alternative considered; it would need a running instance, a connection pool and a migration tool for one table.
 - **Title:** a string, trimmed, 1-200 characters. The rules are in the route's JSON Schema; the trim is the `transform` keyword from `ajv-keywords`. Whitespace-only is a `400`. Unknown body fields are ignored.
 - **Fields:** `id` is a UUID from `crypto.randomUUID()`; `createdAt` is an ISO 8601 UTC string; `GET /tasks` returns oldest first.
 - **`done` and `priority`:** both are plain numbers. `done` is `0` (open) or `1` (done); the server sets `0` on create and ignores a `done` in the body. `priority` is `0` (high), `1` (medium) or `2` (low); it is optional on `POST /tasks` and defaults to `1`, and any other value (`3`, `1.5`, `"1"`, `null`) is a `400`.
@@ -144,7 +155,7 @@ Where the assignment was unclear, these are the readings used:
   curl -X DELETE localhost:3000/tasks/<id>
   ```
 - **Health:** liveness only (it does not check DynamoDB). `uptime` is whole seconds since the process started.
-- **HTTPS and domain:** not required, so the API and the website use plain HTTP on the AWS-generated hostnames. This also avoids browser mixed-content blocking.
+- **HTTPS and domain:** not required, and no domain was bought. Users still get HTTPS on CloudFront's `*.cloudfront.net` certificate; only the hop from CloudFront to the ALB is plain HTTP (see Unfinished and known limits).
 - **EC2, SSH and CI secrets:** the assignment's default is EC2 with SSH keys in CI secrets. With ECS there is no SSH. CI logs in with GitHub OIDC and assumes an IAM role, so no AWS keys are stored; the only thing in GitHub is the role ARN, as a repository variable.
 - **Terraform state:** local and gitignored; the owner applies once. CI deploys the app, never the infrastructure.
 
@@ -157,19 +168,30 @@ Each item says how it would be completed.
 - **No authentication, no rate limiting, unbounded list:** `GET /tasks` returns everything and any client can post. Add pagination (`limit` and a cursor) and an AWS WAF rate rule, and authentication if tasks become per-user.
 - **Frontend tests cover behavior, not looks:** Vitest and Testing Library run the real components and `api.ts`; MSW (Mock Service Worker) answers the network calls in-process, with small handlers in `src/test/fakeApi.ts` (the `PATCH` is kept in memory so the refetch shows it; the backend's rules are not copied, they are tested in the backend). The tests assert on the request the UI sent. A request with no handler fails the test. They cover the create form, the done toggle, editing (title and priority, blank title, cancel, Enter, Esc), delete with its confirmation, focus and failure, the Status and Priority filters and the counts, search, the By day switch, the pending state and the error alerts. The filter, sort, grouping and time logic has its own unit tests, and the health badge and the loading and error states are tested too. Not covered: how it looks, and the real network path (checked by hand in a browser).
 - **No alarms or error tracking yet:** see Observability.
+- **No automatic rollback:** CI pushes the image as `:latest` and forces a new deployment, so the task definition does not say which commit runs, and a bad image stays `:latest`. The run fails if the new task never turns healthy, and the old task keeps serving, but going back means pushing a fix. To finish: an ECS deployment circuit breaker with rollback, and CI registering a task definition revision per commit (`:<sha>`) and checking the rollout landed on it.
+- **No shutdown handler:** the API does not drain on SIGTERM. ECS first takes the task out of the ALB and waits up to 30 seconds for open requests to finish, so little is cut. To finish: on SIGTERM, `app.close()` and exit.
+- **Actions pinned by tag, not commit:** the workflows that can assume the AWS role use `@v4`-style tags, which can move. To finish: pin each `uses:` to a commit SHA. There is also no workflow on pull requests, because changes go straight to `main`.
 
-## Scalability: 10x traffic tomorrow
+## System Architecture
 
-What would change in this design, in order:
+```
+Browser ──HTTPS──> CloudFront ─┬─ /* ──────────────> S3 (private bucket, static site)
+                               └─ /tasks*, /health ─HTTP─> ALB ──> ECS Fargate (Fastify API)
+                                                                          │
+                                                                          └──> DynamoDB
+```
 
-1. **Replace the in-memory store.** This is the blocker: each container holds its own tasks, so a second task would show a different list per request. Move to DynamoDB on-demand, which scales with no capacity planning for this access pattern.
-2. **Run several tasks.** Set `desired_count` to at least 2, spread over the default VPC's subnets in different availability zones (the ALB already spans them), and add ECS service auto scaling with target tracking, for example on `ALBRequestCountPerTarget` with CPU as a second signal. The rolling-deploy settings (`minimum_healthy_percent = 100`) already keep capacity during a release.
-3. **Cap the list response.** `GET /tasks` grows with the data; add pagination before the table is large.
-4. **Take static and read traffic off the origin.** The site is already static files on S3; CloudFront in front adds caching and absorbs spikes. A short cache on `GET /tasks` would only be safe once reads are the bulk of traffic and slightly stale lists are acceptable.
-5. **Protect the API.** AWS WAF rate limiting on the ALB so one noisy client cannot use up the capacity.
-6. **Size.** The task is 0.25 vCPU and 512 MB. Load-test one task first (for example with `autocannon` against `POST /tasks` and `GET /tasks`) and set the size and the scaling target from the measured requests per second, not a guess.
+### Scalability: 10x traffic tomorrow
 
-## Observability
+The API keeps no state in the container, so the steps are about capacity, not a redesign. In order:
+
+1. **Run several tasks.** Set `desired_count` to at least 2, spread over availability zones (the ALB already spans them), and add ECS service auto scaling with target tracking, for example on `ALBRequestCountPerTarget` with CPU as a second signal. The rolling-deploy settings (`minimum_healthy_percent = 100`) already keep capacity during a release.
+2. **Fix the list query.** `GET /tasks` is the first hot spot: a full `Scan` with `ConsistentRead`, sorted in code, so its cost grows with the table. Add pagination (`limit` and a cursor) and a key that reads in time order: a global secondary index or a time-sortable key, so the list becomes a `Query`. DynamoDB on demand scales the point reads and writes with no capacity planning.
+3. **Protect the API.** AWS WAF rate limiting on CloudFront so one noisy client cannot use up the capacity.
+4. **Size from a load test.** The task is 0.25 vCPU and 512 MB. Load-test one task first (for example with `autocannon` against `POST /tasks` and `GET /tasks`) and set the size and the scaling target from the measured requests per second, not a guess.
+5. **Static traffic is already at the edge.** CloudFront serves the site from its cache. The API paths are not cached on purpose, so a list is never stale; a short cache on `GET /tasks` would only pay off once reads are the bulk of traffic.
+
+### Observability
 
 What exists today:
 
@@ -185,11 +207,11 @@ What I would add, in order:
 - **Request IDs:** return Fastify's request id in a response header and in the error body, so a user's failed request can be found in the logs.
 - **Container Insights** for CPU and memory per task, which also feeds the scaling policy.
 
-## AI use
+### AI use
 
 Claude Code (Anthropic's CLI agent) wrote most of the code and Terraform, one task at a time, from a requirements checklist and task list I reviewed. I made the hard-to-reverse choices (stack, hosting, storage, serving the frontend) and approved them before any code was written; the agent proposed, I decided. Where it helped: scaffolding, test-first work on the service and routes, the Terraform and the OIDC trust rule, and finding the causes of deployment failures from the logs (a wrong OIDC subject, a missing ECR permission).
 
 Every time I corrected it is recorded with the lesson in `docs/pushbacks.md`. Two concrete cases:
 
-- **Tests reported complete too early.** After writing the store tests, the agent said they were complete having broken the code only once to see a test fail. I doubted it, so it broke the store four more ways. All were caught. After that, every test set was checked by breaking the production code on purpose before being called done, and a logging test that asserted nothing was deleted.
-- **A confident wrong diagnosis.** When the editor showed type errors in the test files, the agent stated as fact that `tsconfig.json` excluded them. That was a guess; the real cause was the editor's bundled TypeScript no longer loading `@types/*` automatically, fixed with an explicit `types` list. It then removed the working setup on the strength of an empty result from a diagnostics tool that had not re-checked the file, and the errors came back. The rule since: treat a diagnosis as a hypothesis until it is confirmed in the place the problem is seen.
+- **A database built without a design pass (pushback #11).** The agent built the DynamoDB store and table with `id` as the key because the task text said so, without writing down the access patterns or the consistency model. I asked for that design review. It found a real bug: the list used DynamoDB's default eventually consistent `Scan`, so a task created a moment earlier could be missing from the list. DynamoDB Local cannot show this, so the integration test was green. Fixed test first with `ConsistentRead: true`.
+- **A deploy that could go green on a broken image (pushback #9).** The agent's CI plan ran `aws ecs update-service` and stopped there, because the task list said only that. I asked for the standard check: without `aws ecs wait services-stable`, the pipeline reports success while the new task is still failing its health checks. The `ecs:DescribeServices` permission went into the CI role before its first apply, and the wait into the pipeline.

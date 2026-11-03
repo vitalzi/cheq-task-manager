@@ -325,3 +325,9 @@ Small decisions the agent made while building, one entry per decision with the t
 - **Fake timers with `shouldAdvanceTime`:** MSW and `findBy*` need real time to pass, and the 5 s poll is skipped with `advanceTimersByTimeAsync` so the test stays under a second. Real timers are restored in `finally`.
 - **Uptime shown only in the `up` state:** checking `data` alone would print the stale uptime next to "API down".
 - **Verified:** the new test failed with the badge still reading `API up · uptime 1m`; removing the `state === 'up'` guard on its own also makes it fail.
+
+## Task 32
+
+- **WAF moved from the ALB to CloudFront in Scalability:** CloudFront is the entry point, and Task 38 closes the ALB to everything else, so a rule on the ALB would see only CloudFront's addresses.
+- **Line 11's "the ALB's plain-HTTP address still answers" left as is:** it is true until Task 38 is applied, which rewrites it.
+- **Frontend tests paragraph under Unfinished not trimmed:** the review asked to shorten only the two UX paragraphs; that one is the record of what the tests cover.

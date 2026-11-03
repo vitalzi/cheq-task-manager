@@ -38,7 +38,7 @@ Phase 2 is the owner's own extras on top of the finished PDF MVP (`docs/tasks/ph
 | 29c | Design update (layout D v2) | Frontend | [x] |
 | | **Review fixes** (in this order) | | |
 | 31 | Health badge shows "down" when the API fails mid-session | Frontend | [x] |
-| 32 | README: correctness, scope, structure, AI example | Docs | [ ] |
+| 32 | README: correctness, scope, structure, AI example | Docs | [x] |
 | 41 | Data model reasoning made honest | Backend, docs | [ ] |
 | 35 | CI triggers: `workflow_dispatch` and `.nvmrc` | CI | [ ] |
 | 34 | Small fixes (uptime test, ESLint ignore, validation message, stale comment) | Backend, frontend | [ ] |
