@@ -395,3 +395,7 @@ Small decisions the agent made while building, one entry per decision with the t
 - **Moves done with `git mv`:** Git reports all 24 as renames. Only import paths changed.
 - **A shell glob error stopped the first import-rewrite script half way** (zsh aborts on a pattern with no match; the component folders have no plain `.ts` files). It was rerun with the `.tsx` glob only; the type-check afterwards is what confirmed every import.
 - **Verified:** `tsc` failed on 45 imports right after the move and was clean after the fix. 80 tests, lint and build pass, and the build's file sizes and content hashes are identical to the build before the move.
+
+## README edits by the owner's request
+
+- **"Frontend tests cover behavior, not looks" and "No shutdown handler" removed from Unfinished and known limits.** The owner considers the frontend tests documented elsewhere and shutdown handled. Note for the record: the Dockerfile itself has no shutdown handling; the signal is delivered through the init process (`docker run --init`, `initProcessEnabled = true` in `infra/ecs.tf`), and the API still has no SIGTERM handler.
