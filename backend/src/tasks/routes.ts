@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import type { NewTask, TaskService } from './taskService';
-import type { TaskChanges } from './taskStore';
+import type { TaskChanges } from './store/taskStore';
 
 // Fastify validates the body against these before the handler runs. The title is trimmed
 // first (the transform keyword comes from ajv-keywords, see app.ts), so minLength rejects

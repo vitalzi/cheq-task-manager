@@ -377,3 +377,11 @@ Small decisions the agent made while building, one entry per decision with the t
 - **`ignoreDeprecations: "6.0"` rejected:** TypeScript 5.9, the project's version, does not accept that value, and it would only hide the warning.
 - **Checked with a one-off `npx -p typescript@6` (not added to the project):** the old config fails with TS5107, the new one compiles clean under 6.0.3 and under the project's 5.9.3.
 - **Verified:** lint, 119 unit tests (95% coverage), 13 integration tests, build and a start with `/health` all pass.
+
+## Task 44
+
+- **`storeFromEnv` moved into `tasks/store/` too:** it picks between the two stores, so it belongs with them; `src/` is left with `app.ts`, `server.ts` and their tests.
+- **`routes` and `taskService` stay in `tasks/`:** they are the HTTP and business layers; only the storage code gets its own folder.
+- **Moves done with `git mv`** so file history follows. Only import paths changed: 15 lines in 10 files, no logic.
+- **Old paths in earlier docs left alone:** `agent-decisions.md` and `pushbacks.md` mention files by their old location as a record of what was decided at the time. The README and code use the new paths.
+- **Verified:** `tsc` failed on 15 imports right after the move and was clean after the fix. Lint, 119 unit tests (95.2% coverage, same as before), 13 integration tests, `npm run build` (the test and contract files are still left out of `dist/`), and a `docker build` with a `/health` check on the running container.

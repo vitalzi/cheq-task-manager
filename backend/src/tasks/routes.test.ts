@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../app';
-import { InMemoryTaskStore } from './inMemoryTaskStore';
-import type { Task, TaskStore } from './taskStore';
+import { InMemoryTaskStore } from './store/inMemoryTaskStore';
+import type { Task, TaskStore } from './store/taskStore';
 
 const json = { 'content-type': 'application/json' };
 

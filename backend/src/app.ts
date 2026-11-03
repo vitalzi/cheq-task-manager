@@ -3,7 +3,7 @@ import ajvKeywords from 'ajv-keywords';
 import Fastify, { FastifyError, FastifyInstance, FastifyServerOptions, LogController } from 'fastify';
 import { registerTaskRoutes } from './tasks/routes';
 import { TaskService } from './tasks/taskService';
-import type { TaskStore } from './tasks/taskStore';
+import type { TaskStore } from './tasks/store/taskStore';
 
 export interface AppOptions {
   logger?: FastifyServerOptions['logger'];

@@ -47,7 +47,7 @@ Phase 2 is the owner's own extras on top of the finished PDF MVP (`docs/tasks/ph
 | 30 | README update and clean-clone re-check | Docs | [x] |
 | | **Structure and config** | | |
 | 43 | Backend tsconfig: `node16` module resolution | Backend | [x] |
-| 44 | Backend: group the store files in `tasks/store/` | Backend | [ ] |
+| 44 | Backend: group the store files in `tasks/store/` | Backend | [x] |
 | 45 | Frontend: `api/`, `lib/` and a folder per component | Frontend | [ ] |
 
 ## HTTPS (CloudFront)

@@ -1,5 +1,5 @@
 import { buildApp } from './app';
-import { storeFromEnv } from './storeFromEnv';
+import { storeFromEnv } from './tasks/store/storeFromEnv';
 
 const port = Number(process.env.PORT) || 3000;
 

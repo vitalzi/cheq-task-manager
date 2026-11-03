@@ -1,5 +1,5 @@
-import { DynamoTaskStore } from './tasks/dynamoTaskStore';
-import { InMemoryTaskStore } from './tasks/inMemoryTaskStore';
+import { DynamoTaskStore } from './dynamoTaskStore';
+import { InMemoryTaskStore } from './inMemoryTaskStore';
 import { storeFromEnv } from './storeFromEnv';
 
 describe('storeFromEnv', () => {

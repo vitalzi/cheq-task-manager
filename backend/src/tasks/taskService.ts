@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { Priority, Task, TaskChanges, TaskStore } from './taskStore';
+import type { Priority, Task, TaskChanges, TaskStore } from './store/taskStore';
 
 // Already validated by the route schema; the service only adds what the server owns.
 export interface NewTask {

@@ -1,5 +1,5 @@
 import { buildApp } from './app';
-import { InMemoryTaskStore } from './tasks/inMemoryTaskStore';
+import { InMemoryTaskStore } from './tasks/store/inMemoryTaskStore';
 
 describe('GET /health', () => {
   afterEach(() => jest.restoreAllMocks());

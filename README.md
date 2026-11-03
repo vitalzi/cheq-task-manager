@@ -23,7 +23,7 @@ What the app has on top of the assignment's MVP (the task list for it is `docs/t
 
 ## Folder map
 
-- **`backend/`:** Fastify API in TypeScript
+- **`backend/`:** Fastify API in TypeScript. `src/app.ts` builds the app, `src/tasks/` holds the routes and the service, and `src/tasks/store/` holds the `TaskStore` interface, its two implementations and the shared contract test
 - **`frontend/`:** React app (Vite, TypeScript)
 - **`infra/`:** Terraform for the AWS resources
 - **`.github/workflows/`:** CI/CD pipelines, one per deployable

@@ -1,6 +1,6 @@
 import { NotFoundError, TaskService } from './taskService';
-import { Priority } from './taskStore';
-import type { Task, TaskStore } from './taskStore';
+import { Priority } from './store/taskStore';
+import type { Task, TaskStore } from './store/taskStore';
 
 function mockStore(): jest.Mocked<TaskStore> {
   return {
