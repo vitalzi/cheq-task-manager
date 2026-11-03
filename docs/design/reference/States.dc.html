@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tasks, UI states</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#17181B}a:hover{color:#5E636B}
+input::placeholder{color:#7A7F87}
+</style>
+</helmet>
+<div style="width: 1280px; height: 2300px; box-sizing: border-box; padding: 64px; background: #F5F4F0; color: #17181B; font-family: 'IBM Plex Sans', system-ui, sans-serif; display: flex; flex-direction: column; gap: 40px">
+<h1 style="margin: 0; font-size: 36px; font-weight: 600; letter-spacing: -0.02em">UI states</h1>
+
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 48px 40px">
+
+<!-- 1. Filters, default -->
+<section style="grid-column: 1 / -1; display: flex; flex-direction: column; gap: 12px">
+<p style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #5E636B">Toolbar · default</p>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px 16px; flex-wrap: wrap">
+<div style="display: flex; gap: 8px; flex-wrap: wrap">
+<label style="position: relative; display: inline-flex; align-items: center">
+<span style="position: absolute; left: 12px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #5E636B">Status</span>
+<select style="height: 44px; padding: 0 34px 0 70px; appearance: none; -webkit-appearance: none; border: 1px solid #DEDBD3; border-radius: 10px; background: #FFFFFF; color: #17181B; font-family: inherit; font-size: 14px; font-weight: 500"><option>Open · 3</option></select>
+<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#5E636B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; right: 12px"><path d="M6 9l6 6 6-6"></path></svg>
+</label>
+<label style="position: relative; display: inline-flex; align-items: center">
+<span style="position: absolute; left: 12px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #5E636B">Priority</span>
+<select style="height: 44px; padding: 0 34px 0 82px; appearance: none; -webkit-appearance: none; border: 1px solid #DEDBD3; border-radius: 10px; background: #FFFFFF; color: #17181B; font-family: inherit; font-size: 14px; font-weight: 500"><option>Any</option></select>
+<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#5E636B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; right: 12px"><path d="M6 9l6 6 6-6"></path></svg>
+</label>
+</div>
+<div style="display: flex; align-items: center; gap: 12px">
+<div style="position: relative; width: 200px">
+<svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5E636B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 12px; top: 14px"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+<input type="search" aria-label="Filter tasks by title" placeholder="Search" style="width: 100%; height: 44px; padding: 0 12px 0 34px; border: 1px solid #DEDBD3; border-radius: 10px; background: #FFFFFF; font-family: inherit; font-size: 14px; box-sizing: border-box">
+</div>
+<button type="button" role="switch" aria-checked="true" style="height: 44px; display: inline-flex; align-items: center; gap: 8px; padding: 0 2px; border: 0; background: transparent; color: #17181B; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px">
+<span aria-hidden="true" style="position: relative; display: inline-block; width: 32px; height: 18px; border-radius: 999px; background: #17181B"><span style="position: absolute; top: 2px; left: 16px; width: 14px; height: 14px; border-radius: 50%; background: #FFFFFF"></span></span>
+By day
+</button>
+</div>
+</div>
+</section>
+
+<!-- 2. Filters, active -->
+<section style="grid-column: 1 / -1; display: flex; flex-direction: column; gap: 12px">
+<p style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #5E636B">Toolbar · filters active (dark border = not default), By day off</p>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px 16px; flex-wrap: wrap">
+<div style="display: flex; gap: 8px; flex-wrap: wrap">
+<label style="position: relative; display: inline-flex; align-items: center">
+<span style="position: absolute; left: 12px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #5E636B">Status</span>
+<select style="height: 44px; padding: 0 34px 0 70px; appearance: none; -webkit-appearance: none; border: 1px solid #17181B; border-radius: 10px; background: #FFFFFF; color: #17181B; font-family: inherit; font-size: 14px; font-weight: 500"><option>All · 5</option></select>
+<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#5E636B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; right: 12px"><path d="M6 9l6 6 6-6"></path></svg>
+</label>
+<label style="position: relative; display: inline-flex; align-items: center">
+<span style="position: absolute; left: 12px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #5E636B">Priority</span>
+<select style="height: 44px; padding: 0 34px 0 82px; appearance: none; -webkit-appearance: none; border: 1px solid #17181B; border-radius: 10px; background: #FFFFFF; color: #B42318; font-family: inherit; font-size: 14px; font-weight: 500"><option>High</option></select>
+<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#5E636B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; right: 12px"><path d="M6 9l6 6 6-6"></path></svg>
+</label>
+</div>
+<div style="display: flex; align-items: center; gap: 12px">
+<div style="position: relative; width: 200px">
+<svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5E636B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 12px; top: 14px"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+<input type="search" aria-label="Filter tasks by title" value="readme" style="width: 100%; height: 44px; padding: 0 12px 0 34px; border: 1px solid #DEDBD3; border-radius: 10px; background: #FFFFFF; color: #17181B; font-family: inherit; font-size: 14px; box-sizing: border-box">
+</div>
+<button type="button" role="switch" aria-checked="false" style="height: 44px; display: inline-flex; align-items: center; gap: 8px; padding: 0 2px; border: 0; background: transparent; color: #17181B; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px">
+<span aria-hidden="true" style="position: relative; display: inline-block; width: 32px; height: 18px; border-radius: 999px; background: #7A7F87"><span style="position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #FFFFFF"></span></span>
+By day
+</button>
+</div>
+</div>
+</section>
+
+<!-- 3. Status dropdown open -->
+<section style="display: flex; flex-direction: column; gap: 12px">
+<p style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #5E636B">Status dropdown · open</p>
+<div style="display: flex; flex-direction: column; gap: 6px; align-items: flex-start">
+<label style="position: relative; display: inline-flex; align-items: center">
+<span style="position: absolute; left: 12px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #5E636B">Status</span>
+<select style="width: 200px; height: 44px; padding: 0 34px 0 70px; appearance: none; -webkit-appearance: none; border: 1px solid #17181B; border-radius: 10px; background: #FFFFFF; color: #17181B; font-family: inherit; font-size: 14px; font-weight: 500"><option>Open · 3</option></select>
+<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#5E636B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; right: 12px"><path d="M18 15l-6-6-6 6"></path></svg>
+</label>
+<div style="width: 200px; padding: 4px; box-sizing: border-box; background: #FFFFFF; border: 1px solid #DEDBD3; border-radius: 10px; box-shadow: 0 8px 24px rgba(23, 24, 27, 0.12); display: flex; flex-direction: column; gap: 2px; font-size: 14px">
+<div style="height: 40px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; border-radius: 7px; background: #F5F4F0; font-weight: 600">Open · 3<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#17181B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"></path></svg></div>
+<div style="height: 40px; display: flex; align-items: center; padding: 0 10px; border-radius: 7px">Done · 2</div>
+<div style="height: 40px; display: flex; align-items: center; padding: 0 10px; border-radius: 7px">All · 5</div>
+</div>
+</div>
+</section>
+
+<!-- 4. Priority dropdown open -->
+<section style="display: flex; flex-direction: column; gap: 12px">
+<p style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #5E636B">Priority dropdown · open</p>
+<div style="display: flex; flex-direction: column; gap: 6px; align-items: flex-start">
+<label style="position: relative; display: inline-flex; align-items: center">
+<span style="position: absolute; left: 12px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #5E636B">Priority</span>
+<select style="width: 200px; height: 44px; padding: 0 34px 0 82px; appearance: none; -webkit-appearance: none; border: 1px solid #17181B; border-radius: 10px; background: #FFFFFF; color: #17181B; font-family: inherit; font-size: 14px; font-weight: 500"><option>Any</option></select>
+<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#5E636B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; right: 12px"><path d="M18 15l-6-6-6 6"></path></svg>
+</label>
+<div style="width: 200px; padding: 4px; box-sizing: border-box; background: #FFFFFF; border: 1px solid #DEDBD3; border-radius: 10px; box-shadow: 0 8px 24px rgba(23, 24, 27, 0.12); display: flex; flex-direction: column; gap: 2px; font-size: 14px">
+<div style="height: 40px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; border-radius: 7px; background: #F5F4F0; font-weight: 600">Any<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#17181B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"></path></svg></div>
+<div style="height: 40px; display: flex; align-items: center; gap: 8px; padding: 0 10px; border-radius: 7px; color: #B42318"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12"><rect x="0" y="7" width="3" height="5" rx="1" fill="#B42318"></rect><rect x="4.5" y="4" width="3" height="8" rx="1" fill="#B42318"></rect><rect x="9" y="1" width="3" height="11" rx="1" fill="#B42318"></rect></svg>High</div>
+<div style="height: 40px; display: flex; align-items: center; gap: 8px; padding: 0 10px; border-radius: 7px; color: #8A5A00"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12"><rect x="0" y="7" width="3" height="5" rx="1" fill="#8A5A00"></rect><rect x="4.5" y="4" width="3" height="8" rx="1" fill="#8A5A00"></rect><rect x="9" y="1" width="3" height="11" rx="1" fill="#D3CFC6"></rect></svg>Medium</div>
+<div style="height: 40px; display: flex; align-items: center; gap: 8px; padding: 0 10px; border-radius: 7px; color: #4A5361"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12"><rect x="0" y="7" width="3" height="5" rx="1" fill="#4A5361"></rect><rect x="4.5" y="4" width="3" height="8" rx="1" fill="#D3CFC6"></rect><rect x="9" y="1" width="3" height="11" rx="1" fill="#D3CFC6"></rect></svg>Low</div>
+</div>
+</div>
+</section>
+
+<!-- 5. Confirm delete -->
+<section style="display: flex; flex-direction: column; gap: 12px">
+<p style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #5E636B">Delete · confirm (focus on Cancel)</p>
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1px; background: #EFEDE7; border: 1px solid #E4E1DA; border-radius: 14px; overflow: hidden">
+<li style="background: #FEF3F2; box-shadow: inset 0 0 0 1px #F1C9C4">
+<div role="group" aria-label="Confirm deleting Write the README" style="display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap; padding: 6px 6px 6px 18px; min-height: 56px; box-sizing: border-box">
+<span style="flex: 1 1 200px; min-width: 0; font-size: 15px; line-height: 1.4; color: #8F1F15">Delete <strong style="font-weight: 600">Write the README</strong>?</span>
+<div style="display: inline-flex; gap: 8px">
+<button type="button" style="height: 44px; padding: 0 14px; border: 1px solid #E3B5AF; border-radius: 8px; background: #FFFFFF; color: #17181B; font-family: inherit; font-size: 15px; outline: 2px solid #17181B; outline-offset: 2px">Cancel</button>
+<button type="button" style="height: 44px; padding: 0 16px; border: 0; border-radius: 8px; background: #B42318; color: #FFFFFF; font-family: inherit; font-size: 15px; font-weight: 600">Delete</button>
+</div>
+</div>
+</li>
+<li style="background: #FFFFFF">
+<div style="display: flex; align-items: flex-start; gap: 4px; padding: 6px">
+<span style="flex: none; width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center"><input type="checkbox" aria-label="Mark as done: Record a short demo of the deploy" style="width: 20px; height: 20px; margin: 0; accent-color: #17181B"></span>
+<div style="flex: 1 1 auto; min-width: 0; padding: 9px 0 6px">
+<span style="display: block; font-size: 16px; line-height: 1.4">Record a short demo of the deploy</span>
+<span style="display: flex; align-items: center; gap: 8px; margin-top: 4px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #5E636B"><span style="display: inline-flex; align-items: center; gap: 5px; color: #4A5361"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12"><rect x="0" y="7" width="3" height="5" rx="1" fill="#4A5361"></rect><rect x="4.5" y="4" width="3" height="8" rx="1" fill="#D3CFC6"></rect><rect x="9" y="1" width="3" height="11" rx="1" fill="#D3CFC6"></rect></svg>Low</span>·<span>08:10</span></span>
+</div>
+</div>
+</li>
+</ul>
+</section>
+
+<!-- 6. Deleting in flight -->
+<section style="display: flex; flex-direction: column; gap: 12px">
+<p style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #5E636B">Delete · request in flight</p>
+<ul style="list-style: none; margin: 0; padding: 0; background: #EFEDE7; border: 1px solid #E4E1DA; border-radius: 14px; overflow: hidden">
+<li style="background: #FEF3F2; box-shadow: inset 0 0 0 1px #F1C9C4">
+<div aria-busy="true" style="display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap; padding: 6px 6px 6px 18px; min-height: 56px; box-sizing: border-box">
+<span style="flex: 1 1 200px; min-width: 0; font-size: 15px; line-height: 1.4; color: #8F1F15">Delete <strong style="font-weight: 600">Write the README</strong>?</span>
+<div style="display: inline-flex; gap: 8px">
+<button type="button" disabled="disabled" style="height: 44px; padding: 0 14px; border: 1px solid #E3B5AF; border-radius: 8px; background: #FFFFFF; color: #17181B; font-family: inherit; font-size: 15px; opacity: 0.55">Cancel</button>
+<button type="button" disabled="disabled" style="height: 44px; padding: 0 16px; border: 0; border-radius: 8px; background: #B42318; color: #FFFFFF; font-family: inherit; font-size: 15px; font-weight: 600; opacity: 0.7">Deleting…</button>
+</div>
+</div>
+</li>
+</ul>
+</section>
+
+<!-- 7. Delete failed -->
+<section style="display: flex; flex-direction: column; gap: 12px">
+<p style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #5E636B">Delete · failed</p>
+<ul style="list-style: none; margin: 0; padding: 0; background: #EFEDE7; border: 1px solid #E4E1DA; border-radius: 14px; overflow: hidden">
+<li style="background: #FEF3F2; box-shadow: inset 0 0 0 1px #F1C9C4">
+<div style="display: flex; flex-direction: column; gap: 4px; padding: 6px 6px 10px 18px">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap; min-height: 44px">
+<span style="flex: 1 1 200px; min-width: 0; font-size: 15px; line-height: 1.4; color: #8F1F15">Delete <strong style="font-weight: 600">Write the README</strong>?</span>
+<div style="display: inline-flex; gap: 8px">
+<button type="button" style="height: 44px; padding: 0 14px; border: 1px solid #E3B5AF; border-radius: 8px; background: #FFFFFF; color: #17181B; font-family: inherit; font-size: 15px">Cancel</button>
+<button type="button" style="height: 44px; padding: 0 16px; border: 0; border-radius: 8px; background: #B42318; color: #FFFFFF; font-family: inherit; font-size: 15px; font-weight: 600">Delete</button>
+</div>
+</div>
+<p role="alert" style="margin: 0; font-size: 13px; color: #B42318">Couldn’t delete the task. Request failed (500)</p>
+</div>
+</li>
+</ul>
+</section>
+
+<!-- 8. Editing invalid -->
+<section style="display: flex; flex-direction: column; gap: 12px">
+<p style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #5E636B">Edit · invalid title</p>
+<ul style="list-style: none; margin: 0; padding: 0; background: #EFEDE7; border: 1px solid #E4E1DA; border-radius: 14px; overflow: hidden">
+<li style="background: #FFFFFF; box-shadow: inset 0 0 0 1px #17181B">
+<div style="display: flex; flex-direction: column; gap: 8px; padding: 10px 10px 10px 14px">
+<input type="text" aria-label="Edit task title" aria-invalid="true" style="width: 100%; height: 44px; padding: 0 12px; border: 1px solid #D92D20; border-radius: 8px; background: #FFFFFF; font-family: inherit; font-size: 16px; box-sizing: border-box">
+<p style="margin: 0 2px; font-size: 13px; color: #B42318">Title is required</p>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap">
+<label style="display: inline-flex; align-items: center; gap: 10px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #5E636B">
+Priority
+<span style="position: relative; display: inline-flex; align-items: center">
+<svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" style="position: absolute; left: 12px"><rect x="0" y="7" width="3" height="5" rx="1" fill="#B42318"></rect><rect x="4.5" y="4" width="3" height="8" rx="1" fill="#B42318"></rect><rect x="9" y="1" width="3" height="11" rx="1" fill="#B42318"></rect></svg>
+<select style="height: 44px; padding: 0 34px 0 32px; appearance: none; -webkit-appearance: none; border: 1px solid #DEDBD3; border-radius: 10px; background: #FFFFFF; color: #B42318; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; letter-spacing: 0; text-transform: none"><option>High</option></select>
+<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#5E636B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; right: 12px"><path d="M6 9l6 6 6-6"></path></svg>
+</span>
+</label>
+<div style="display: inline-flex; gap: 8px">
+<button type="button" style="height: 44px; padding: 0 14px; border: 1px solid #DEDBD3; border-radius: 8px; background: transparent; color: #17181B; font-family: inherit; font-size: 15px">Cancel</button>
+<button type="button" style="height: 44px; padding: 0 16px; border: 0; border-radius: 8px; background: #17181B; color: #FFFFFF; font-family: inherit; font-size: 15px; font-weight: 600">Save</button>
+</div>
+</div>
+</div>
+</li>
+</ul>
+</section>
+
+<!-- 9. Create invalid -->
+<section style="display: flex; flex-direction: column; gap: 12px">
+<p style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #5E636B">Create · invalid title</p>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; flex-direction: column; background: #FFFFFF; border: 1px solid #D92D20; border-radius: 14px">
+<input type="text" aria-label="New task" aria-invalid="true" placeholder="Add a task…" style="height: 56px; padding: 0 18px; border: 0; border-radius: 14px 14px 0 0; background: transparent; font-family: inherit; font-size: 17px; box-sizing: border-box">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 8px 8px 8px 18px; border-top: 1px solid #EFEDE7">
+<label style="display: inline-flex; align-items: center; gap: 10px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #5E636B">
+Priority
+<span style="position: relative; display: inline-flex; align-items: center">
+<svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" style="position: absolute; left: 12px"><rect x="0" y="7" width="3" height="5" rx="1" fill="#8A5A00"></rect><rect x="4.5" y="4" width="3" height="8" rx="1" fill="#8A5A00"></rect><rect x="9" y="1" width="3" height="11" rx="1" fill="#D3CFC6"></rect></svg>
+<select style="height: 44px; padding: 0 34px 0 32px; appearance: none; -webkit-appearance: none; border: 1px solid #DEDBD3; border-radius: 10px; background: #FFFFFF; color: #8A5A00; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; letter-spacing: 0; text-transform: none"><option>Medium</option></select>
+<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#5E636B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; right: 12px"><path d="M6 9l6 6 6-6"></path></svg>
+</span>
+</label>
+<button type="button" style="height: 44px; padding: 0 20px; border: 0; border-radius: 10px; background: #F5A524; color: #1A1300; font-family: inherit; font-size: 15px; font-weight: 600">Add task</button>
+</div>
+</div>
+<p style="margin: 0 4px; font-size: 13px; color: #B42318">Title is required</p>
+</div>
+</section>
+
+<!-- 10. Loading -->
+<section style="display: flex; flex-direction: column; gap: 12px">
+<p style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #5E636B">Loading</p>
+<div role="status" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; background: #FFFFFF; border: 1px solid #DEDBD3; border-radius: 8px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #5E636B">
+<span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; background: #A3A8AF"></span>
+Checking API…
+</div>
+<div aria-busy="true" style="display: flex; flex-direction: column; gap: 1px; background: #EFEDE7; border: 1px solid #E4E1DA; border-radius: 14px; overflow: hidden">
+<div style="display: flex; align-items: flex-start; gap: 16px; padding: 18px; background: #FFFFFF"><div style="flex: none; width: 20px; height: 20px; border-radius: 6px; background: #ECEAE4"></div><div style="flex: 1 1 auto; display: flex; flex-direction: column; gap: 8px"><div style="width: 55%; height: 12px; border-radius: 6px; background: #ECEAE4"></div><div style="width: 90px; height: 10px; border-radius: 6px; background: #ECEAE4"></div></div></div>
+<div style="display: flex; align-items: flex-start; gap: 16px; padding: 18px; background: #FFFFFF"><div style="flex: none; width: 20px; height: 20px; border-radius: 6px; background: #ECEAE4"></div><div style="flex: 1 1 auto; display: flex; flex-direction: column; gap: 8px"><div style="width: 40%; height: 12px; border-radius: 6px; background: #ECEAE4"></div><div style="width: 90px; height: 10px; border-radius: 6px; background: #ECEAE4"></div></div></div>
+<div style="display: flex; align-items: flex-start; gap: 16px; padding: 18px; background: #FFFFFF"><div style="flex: none; width: 20px; height: 20px; border-radius: 6px; background: #ECEAE4"></div><div style="flex: 1 1 auto; display: flex; flex-direction: column; gap: 8px"><div style="width: 65%; height: 12px; border-radius: 6px; background: #ECEAE4"></div><div style="width: 90px; height: 10px; border-radius: 6px; background: #ECEAE4"></div></div></div>
+</div>
+</section>
+
+<!-- 11. API down -->
+<section style="display: flex; flex-direction: column; gap: 12px">
+<p style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #5E636B">API down · load error</p>
+<div role="status" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; background: #FFFFFF; border: 1px solid #F1C9C4; border-radius: 8px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #A6261B">
+<span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; background: #D92D20"></span>
+API down
+</div>
+<div role="alert" style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 14px 14px 14px 18px; background: #FEF3F2; border: 1px solid #F1C9C4; border-radius: 14px; color: #8F1F15">
+<div style="display: flex; flex-direction: column; gap: 2px">
+<span style="font-size: 15px; font-weight: 600">Couldn’t load tasks</span>
+<span style="font-size: 14px">Cannot reach the API</span>
+</div>
+<button type="button" style="height: 44px; padding: 0 16px; border: 1px solid #E3B5AF; border-radius: 10px; background: #FFFFFF; color: #17181B; font-family: inherit; font-size: 15px">Retry</button>
+</div>
+</section>
+
+<!-- 12. Empty -->
+<section style="display: flex; flex-direction: column; gap: 12px">
+<p style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #5E636B">Empty · no tasks at all</p>
+<div style="padding: 40px 24px; border: 1px dashed #D3CFC6; border-radius: 14px; text-align: center; font-size: 16px; color: #5E636B">No tasks yet — add your first one above.</div>
+</section>
+
+<!-- 13. All done -->
+<section style="display: flex; flex-direction: column; gap: 12px">
+<p style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #5E636B">All done · Open view, nothing open</p>
+<div style="padding: 40px 24px; border: 1px dashed #D3CFC6; border-radius: 14px; text-align: center; font-size: 16px; color: #5E636B">Nothing open. Everything is done.</div>
+</section>
+
+<!-- 14. No matches -->
+<section style="display: flex; flex-direction: column; gap: 12px">
+<p style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #5E636B">No matches · filters hide everything</p>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 32px 24px; border: 1px dashed #D3CFC6; border-radius: 14px; text-align: center">
+<p style="margin: 0; font-size: 16px">No tasks match your filters.</p>
+<button type="button" style="height: 44px; padding: 0 16px; border: 1px solid #DEDBD3; border-radius: 10px; background: #FFFFFF; color: #17181B; font-family: inherit; font-size: 15px">Clear filters</button>
+</div>
+</section>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":2300}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

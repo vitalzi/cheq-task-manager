@@ -13,16 +13,14 @@
   /* Surfaces and lines */
   --color-bg: #f5f4f0;            /* page ground */
   --color-surface: #ffffff;       /* composer, list card, inputs */
-  --color-subtle: #eae7e0;        /* tab count pill */
   --color-skeleton: #eceae4;      /* loading bars */
-  --color-border: #dedbd3;        /* inputs, composer, badge, secondary buttons */
-  --color-border-list: #e4e1da;   /* list card outline, toolbar underline */
+  --color-border: #dedbd3;        /* inputs, selects, composer, badge, secondary buttons */
+  --color-border-list: #e4e1da;   /* list card outline */
   --color-divider: #efede7;       /* between rows, composer inner divider */
   --color-border-dashed: #d3cfc6; /* empty / no-match / all-done cards */
 
   /* Text */
-  --color-text: #17181b;          /* primary text, active tab, Save button, edit ring */
-  --color-text-count: #3d4148;    /* tab count pill text */
+  --color-text: #17181b;          /* primary text, active filter border, Save button, edit ring */
   --color-muted: #5e636b;         /* labels, meta line, icons, done titles (4.5:1+ on bg and surface) */
   --color-placeholder: #7a7f87;
   --color-switch-off: #7a7f87;    /* switch track when off (3:1 on bg) */
@@ -44,14 +42,11 @@
   --color-danger: #b42318;        /* inline validation text */
   --color-danger-strong: #a6261b; /* "API down" text */
   --color-danger-dot: #d92d20;    /* "API down" dot, invalid input border */
-  --color-danger-bg: #fef3f2;     /* error alert background */
-  --color-danger-border: #f1c9c4;
-  --color-danger-text: #8f1f15;
-
-  /* Toast */
-  --color-toast-bg: #17181b;
-  --color-toast-text: #f5f4f0;
-  --color-toast-action: #f5a524;
+  --color-danger-bg: #fef3f2;     /* error alert and confirm-delete row background */
+  --color-danger-border: #f1c9c4; /* error alert border, confirm-delete row ring */
+  --color-danger-border-strong: #e3b5af; /* Cancel button border in confirm-delete */
+  --color-danger-text: #8f1f15;   /* error alert and confirm-delete text */
+  --color-danger-solid: #b42318;  /* Delete button background (white text 6.5:1) */
 
   /* Type */
   --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
@@ -60,16 +55,16 @@
   --text-title: 36px;     /* h1 "Tasks", weight 600, letter-spacing -0.02em, line-height 1.1 */
   --text-composer: 17px;  /* composer input */
   --text-body: 16px;      /* task titles, edit input */
-  --text-control: 15px;   /* tabs, buttons */
-  --text-search: 14px;    /* search input */
-  --text-small: 13px;     /* select text, inline errors */
-  --text-label: 12px;     /* mono labels, meta line, tab counts; uppercase labels use letter-spacing 0.08em */
+  --text-control: 15px;   /* buttons, confirm-delete text */
+  --text-search: 14px;    /* search input, filter select text */
+  --text-small: 13px;     /* priority select text, inline errors */
+  --text-label: 12px;     /* mono labels, meta line; uppercase labels use letter-spacing 0.08em */
+  --text-label-inset: 11px; /* label drawn inside a filter select */
 
   /* Shape and spacing */
   --radius-xl: 14px;      /* composer, list card, empty cards */
-  --radius-lg: 12px;      /* toast */
-  --radius-md: 10px;      /* select, search, Add button, icon buttons */
-  --radius-sm: 8px;       /* badge, edit input, Save/Cancel */
+  --radius-md: 10px;      /* selects, search, Add button, icon buttons */
+  --radius-sm: 8px;       /* badge, edit input, Save/Cancel/Delete */
 
   --space-section: 28px;  /* gap between page sections */
   --space-group: 24px;    /* gap between day groups */
@@ -77,11 +72,10 @@
   --content-max: 720px;
   --control-composer: 56px; /* composer input height */
   --control-md: 44px;       /* every other control, also the minimum touch target */
-  --control-search: 40px;   /* search input height (its row is 44px+) */
 
-  --shadow-toast: 0 8px 24px rgba(23, 24, 27, 0.18);
   --shadow-knob: 0 1px 2px rgba(23, 24, 27, 0.25);
   --ring-editing: inset 0 0 0 1px var(--color-text);
+  --ring-danger: inset 0 0 0 1px var(--color-danger-border);
   --focus-ring: 2px solid var(--color-text);
 }
 
