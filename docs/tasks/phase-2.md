@@ -44,7 +44,11 @@ Phase 2 is the owner's own extras on top of the finished PDF MVP (`docs/tasks/ph
 | 34 | Small fixes (uptime test, ESLint ignore, validation message, stale comment) | Backend, frontend | [x] |
 | 38 | ALB accepts traffic only from CloudFront (Terraform) | Infra | [x] |
 | 37 | DynamoDB integration test in CI | CI | [x] |
-| 30 | README update and clean-clone re-check (runs last) | Docs | [x] |
+| 30 | README update and clean-clone re-check | Docs | [x] |
+| | **Structure and config** | | |
+| 43 | Backend tsconfig: `node16` module resolution | Backend | [x] |
+| 44 | Backend: group the store files in `tasks/store/` | Backend | [ ] |
+| 45 | Frontend: `api/`, `lib/` and a folder per component | Frontend | [ ] |
 
 ## HTTPS (CloudFront)
 
@@ -220,6 +224,25 @@ From an independent review at commit `fb11022`. Task numbers follow the review's
 
 - **What:** `backend.yml` runs `npm run test:integration` against an `amazon/dynamodb-local` service container on port 8000, before any AWS step, so a failure stops the deploy. README: the Integration test paragraph and the CI/CD steps
 - **Done when:** the YAML parses; locally DynamoDB Local plus `npm run test:integration` passes; the CI run is verified after the owner pushes
+
+## Structure and config
+
+Owner's requests after the review fixes: a tsconfig warning, and source folders that are hard to read. No behavior change in any of them.
+
+### 43. Backend tsconfig: `node16` module resolution
+
+- **What:** `module` and `moduleResolution` in `backend/tsconfig.json` become `node16` (they must match). The old `node` value (node10) is deprecated in TypeScript 6 and removed in 7; the editor's TypeScript 6 flags it. The package is CommonJS, so existing imports need no `.js` extensions
+- **Done when:** TypeScript 6 and 5.9 both compile the backend clean; `npm run lint`, `npm test` and `npm run build` pass in `backend/`
+
+### 44. Backend: group the store files in `tasks/store/`
+
+- **What:** `taskStore.ts`, `taskStore.contract.ts`, the in-memory and DynamoDB stores with their tests (including the integration test) and `storeFromEnv.ts` with its test move to `backend/src/tasks/store/`; imports follow. `routes` and `taskService` stay in `tasks/`
+- **Done when:** moves are `git mv`; `tsc`, lint, `npm test` (same test count, coverage at or above 80%), `npm run test:integration`, build and `docker build` pass
+
+### 45. Frontend: `api/`, `lib/` and a folder per component
+
+- **What:** `api.ts` and `useTasks.ts` move to `src/api/`; `filters` and `time` with their tests to `src/lib/`; each component gets its own folder with its `.tsx`, `.module.css` and test. No barrel files. `test/` stays
+- **Done when:** moves are `git mv`; `tsc`, lint, `npm test` (same 80 tests) and build pass
 
 ## Open questions (to settle when the task comes up)
 

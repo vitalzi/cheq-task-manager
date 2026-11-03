@@ -370,3 +370,10 @@ Small decisions the agent made while building, one entry per decision with the t
 - **`frontend/package-lock.json` regenerated on Node 24 (npm 11):** the committed file had an extra entry for `graphql`, an optional peer of `msw` that is not installed, so a plain `npm install` left a dirty `git status` in a fresh clone. The regenerated file removes those 12 lines, `npm ci` passes with it and a second `npm install` leaves it unchanged. CI used `npm ci`, so it was never affected. Done in the scratch clone and copied over, so the owner's running dev server was not touched.
 - **Two README lines added from the report:** how to get Node 24 (`nvm use` or `fnm use`), and that the Vite dev proxy is fixed to port 3000. Not taken: "Vite may pick another port" (Vite prints the URL it uses) and a `--name` on `docker run` (the run is in the foreground and stops with Ctrl+C).
 - **Not verified by the clone check:** the Infrastructure and CI/CD sections (no `aws` or `terraform`; checked against the code and the live CI runs instead), the literal `-p 3000:3000` run (port in use; ran on 3010), the dev proxy against a backend the subagent started (the proxy target is fixed to 3000), and any browser check.
+
+## Task 43
+
+- **`module` and `moduleResolution` both `node16`:** `node16` resolution requires `module: node16`. The package has no `"type": "module"`, so TypeScript treats the files as CommonJS and the imports need no `.js` extensions.
+- **`ignoreDeprecations: "6.0"` rejected:** TypeScript 5.9, the project's version, does not accept that value, and it would only hide the warning.
+- **Checked with a one-off `npx -p typescript@6` (not added to the project):** the old config fails with TS5107, the new one compiles clean under 6.0.3 and under the project's 5.9.3.
+- **Verified:** lint, 119 unit tests (95% coverage), 13 integration tests, build and a start with `/health` all pass.
