@@ -24,6 +24,17 @@ describe('DynamoTaskStore', () => {
     expect(send.mock.calls[1][0].input).toMatchObject({ TableName: 'tasks', ExclusiveStartKey: { id: 'id-1' } });
   });
 
+  it('reads with strong consistency on every page, so a task created a moment ago is listed', async () => {
+    const send = jest
+      .fn()
+      .mockResolvedValueOnce({ Items: [task(1)], LastEvaluatedKey: { id: 'id-1' } })
+      .mockResolvedValueOnce({ Items: [task(2)] });
+
+    await storeWith(send).list();
+
+    expect(send.mock.calls.map((call) => call[0].input.ConsistentRead)).toEqual([true, true]);
+  });
+
   it('lists nothing when the scan returns no items', async () => {
     const send = jest.fn().mockResolvedValueOnce({});
 

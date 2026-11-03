@@ -183,7 +183,7 @@ Small decisions the agent made while building, one entry per decision with the t
 - **Plain `<`/`>` comparison for the sort, not `localeCompare`:** ISO 8601 UTC strings sort by time as text, and collation rules could treat the punctuation differently.
 - **Constructor is `(tableName, client)` with a `DynamoDBDocumentClient`:** no manual attribute marshalling, and tests pass a fake client for the pagination case.
 - **Small unit test with a fake client (in `npm test`) for pagination and the table name:** a real scan only paginates above 1 MB, which is not worth building in DynamoDB Local. Everything else is tested against the real thing.
-- **`create` is a plain `Put`, no condition:** the service generates random UUIDs, and the in-memory store does not reject duplicates either. Update and delete in Task 24 do need existence conditions.
+- **`create` is a plain `Put`, no condition:** the service generates random UUIDs, and the in-memory store does not reject duplicates either. Update and delete in Task 25 do need existence conditions.
 - **Integration test: one table per test (`tasks-<uuid>`), deleted in `afterAll`:** tests cannot see each other's data. Dummy credentials and region `local`, because DynamoDB Local ignores them. The endpoint is `DYNAMODB_ENDPOINT`, default `http://localhost:8000`.
 - **Separate `jest.integration.config.js`, standalone (no `require` of the base config):** importing the base config tripped two lint rules, and the integration run needs only three settings. `jest.config.js` ignores `*.integration.test.ts`, so `npm test` stays dependency-free.
 - **`npm audit`:** 0 findings in production dependencies after adding the SDK. The 30 findings in the dev tree (Jest, typescript-eslint) are not new and I did not touch them.
@@ -192,10 +192,26 @@ Small decisions the agent made while building, one entry per decision with the t
 ## Task 22: DynamoDB table, IAM and wiring
 
 - **A new task role, separate from the execution role:** the execution role lets ECS pull the image and write logs, and the container never runs under it. App permissions go on a task role, so the app can read and write the table and nothing else.
-- **Policy lists only `dynamodb:Scan` and `dynamodb:PutItem`, on the table ARN:** that is what `DynamoTaskStore` calls today. Task 24 adds `UpdateItem` and `DeleteItem` with the code that uses them.
+- **Policy lists only `dynamodb:Scan` and `dynamodb:PutItem`, on the table ARN:** that is what `DynamoTaskStore` calls today. Task 25 adds `UpdateItem` and `DeleteItem` with the code that uses them.
 - **`AWS_REGION` passed explicitly in the task definition:** the SDK needs a region to find DynamoDB. I did not rely on Fargate setting it, because an unset region fails at the first request, not at startup.
 - **`storeFromEnv(env)` in its own file:** `server.ts` starts listening when imported, so it cannot be tested. The function takes `env` as an argument, so the test needs no environment changes. An empty `TABLE_NAME` counts as unset.
 - **Checked the DynamoDB path locally before AWS:** the SDK reads `AWS_ENDPOINT_URL_DYNAMODB`, so the real server ran against DynamoDB Local with no code for it. A task created before a restart was still listed after it.
 - **`desired_count` stays 1 and its comment is reworded:** more than one task is possible with DynamoDB, but scaling is not part of this task (see "Open questions").
 - **README "Scalability" and the Phase 1 Assumptions text are only partly updated:** the Scalability section is rewritten in Task 29, as planned. Assumptions now says the deployed API uses DynamoDB.
+
+## Task 22 follow-up: database design review (owner's questions)
+
+- **Key stays `id` (partition key only, no sort key):** the operations are create, update and delete by id, which are point operations on the key, and a list. A unique random key spreads load evenly. The one weak operation is list, a full `Scan` sorted in code, which is harmless at this size. A global secondary index can be added to a live table later; the base key is the part that cannot change, so it should suit the writes.
+- **`ConsistentRead: true` on the scan (found in the review):** a `Scan` is eventually consistent by default, and the UI lists right after a create, so the new task could be missing on real DynamoDB. DynamoDB Local is always consistent, so the integration test cannot show it. The unit test pins the setting on every page. It costs twice the read units.
+- **Not a constant partition key, not a timestamp sort key:** a constant key would make list a `Query` but make update and delete by id awkward (the URL has no `createdAt`), and it is not a stepping stone to a per-user key. A `createdAt` sort key collides for two tasks in the same millisecond. If time is wanted in the key later, use a time-sortable id (UUIDv7 or ULID) as the sort key.
+- **Multi-user, if it comes:** `userId` as the partition key and a time-sortable id as the sort key, with a table migration (scan plus put, a small script at this size) and a store, service and route change. Only the store knows DynamoDB, so the change stays in those layers. To be designed with the real access patterns when authentication is added, not built now.
+
+## Task 23 planning: `done` and `priority` (owner's decisions)
+
+- **`priority` is a numeric enum, `High = 0`, `Medium = 1`, `Low = 2`; `done` is a numeric enum too, `0` open and `1` done:** the owner's choice (the owner's words on `done` were short, so this is my reading: an enum like `priority`, not a bare number). Numbers sort high first without a mapping, and unlike a boolean they can be a DynamoDB index key.
+- **`priority` is optional on create and defaults to Medium (the owner changed this from required):** the server fills it in, so a client that sends only `title` keeps working. A present but invalid value is still a `400`, including `null`.
+- **`done` is not accepted on create (my call):** a new task is never done, so the service sets `0`, like `id` and `createdAt`. A `done` in the body is ignored, as other unknown fields are.
+- **No frontend work in Task 23:** with the server default, the live form keeps working unchanged. The priority select on the create form moves into Task 27 with the list display and the done toggle. This also removes the deploy-order care the required `priority` had.
+- **Plan renumbered:** new Task 23, the old 23-29 are now 24-30. Task 25 also carries the IAM change for `UpdateItem` and `DeleteItem`, which the policy comment already promised.
+- **Partial `PATCH`:** a body with none of `title`, `done` and `priority` is a `400`, because there is nothing to update.
 

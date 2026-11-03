@@ -13,7 +13,11 @@ export class DynamoTaskStore implements TaskStore {
     let startKey: Record<string, unknown> | undefined;
     // A scan returns at most 1 MB per call; keep going until DynamoDB stops returning a key
     do {
-      const page = await this.client.send(new ScanCommand({ TableName: this.tableName, ExclusiveStartKey: startKey }));
+      // Strongly consistent: the UI lists right after a create, and the default (eventually
+      // consistent) read could miss the task just written. Costs twice the read units.
+      const page = await this.client.send(
+        new ScanCommand({ TableName: this.tableName, ExclusiveStartKey: startKey, ConsistentRead: true }),
+      );
       tasks.push(...((page.Items ?? []) as Task[]));
       startKey = page.LastEvaluatedKey;
     } while (startKey);

@@ -102,3 +102,14 @@ Every time the owner corrected the agent or scrutinized its output and asked for
   - The first config (full type-checked preset) produced 37 errors on working code; it was narrowed to the standard rules plus three async rules
   - The linter was proved by planting violations, not just by seeing a clean run
 - **Lesson:** "only what the PDF requires" does not cover basic engineering hygiene a senior reviewer expects. Propose the one-sentence addition early, as the agreement says, instead of waiting to be asked. Also: a clean run proves nothing about a linter; plant a violation.
+
+### 11. Database key chosen without a design pass (Task 21-22)
+
+- **What the agent did:** implemented `DynamoTaskStore` and the table with `id` as the only key, because the task text said so, and never wrote down the access patterns, the key's trade-offs or the consistency model. The Scan used the default eventually consistent read.
+- **Pushback:** the owner said the database design phase had been skipped and asked whether a separate partition per task was a good call, then asked about a constant key, a per-user key, and a timestamp sort key.
+- **Outcome:**
+  - The key stays `id`, now with the reasons recorded in `docs/agent-decisions.md`: point operations on the key, even load, and a list that can get a secondary index later
+  - The review found a real bug: the scan could miss a task created a moment earlier on real DynamoDB. DynamoDB Local cannot show it. Fixed with `ConsistentRead: true`, test first
+  - The owner's new fields (`done`, `priority`) were designed in at the same time, as a new Task 23, before any data exists
+- **Lesson:** a key choice cannot be changed later, so write the access patterns and the trade-offs down before building the store, even when the task text already names the key. A local emulator behaves differently from the real service (consistency here), so list the differences instead of trusting a green integration test.
+
